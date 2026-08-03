@@ -6,8 +6,6 @@ interface AuthState {
   setUser: (user: any) => void;
 <<<<<<< HEAD
   setLoading: (loading: boolean) => void;
-=======
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
   logout: () => void;
 }
 
