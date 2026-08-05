@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Базовые переменные (будут переопределяться) ──── */
+  :root {
+    --bg: #0D1117;
+    --bg-secondary: #161B22;
+    --bg-tertiary: #21262D;
+    --card: #161B22;
+    --card-hover: #1C2128;
+    --border: #30363D;
+    --border-subtle: #21262D;
+    --text: #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-tertiary: #6E7681;
+    --accent-blue: #58A6FF;
+    --accent-green: #3FB950;
+    --accent-gold: #D29922;
+    --accent-orange: #F0883E;
+    --accent-red: #F85149;
+    --accent-purple: #BB86FC;
+  }
+
+  /* ── Тема: тёмно-синяя (по умолчанию) ────────────── */
+  .dark {
+    --bg: #0D1117;
+    --bg-secondary: #161B22;
+    --bg-tertiary: #21262D;
+    --card: #161B22;
+    --card-hover: #1C2128;
+    --border: #30363D;
+    --border-subtle: #21262D;
+    --text: #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-tertiary: #6E7681;
+    --accent-blue: #58A6FF;
+    --accent-green: #3FB950;
+    --accent-gold: #D29922;
+    --accent-orange: #F0883E;
+    --accent-red: #F85149;
+    --accent-purple: #BB86FC;
+  }
+
+  /* ── Тема: светлая ──────────────────────────────────── */
+  .light {
+    --bg: #FFFFFF;
+    --bg-secondary: #F6F8FA;
+    --bg-tertiary: #EAEEF2;
+    --card: #F0F2F5;
+    --card-hover: #E1E7ED;
+    --border: #D0D7DE;
+    --border-subtle: #EAEEF2;
+    --text: #1F2937;
+    --text-secondary: #656D76;
+    --text-tertiary: #848D97;
+    --accent-blue: #2563EB;
+    --accent-green: #1A7F37;
+    --accent-gold: #9A6700;
+    --accent-orange: #BC4C00;
+    --accent-red: #CF222E;
+    --accent-purple: #7C3AED;
+  }
+
+  /* ── Тема: серая ────────────────────────────────────── */
+  .gray {
+    --bg: #1E1E1E;
+    --bg-secondary: #252525;
+    --bg-tertiary: #2C2C2C;
+    --card: #2C2C2C;
+    --card-hover: #383838;
+    --border: #404040;
+    --border-subtle: #333333;
+    --text: #D4D4D4;
+    --text-secondary: #A0A0A0;
+    --text-tertiary: #777777;
+    --accent-blue: #58A6FF;
+    --accent-green: #3FB950;
+    --accent-gold: #D29922;
+    --accent-orange: #F0883E;
+    --accent-red: #F85149;
+    --accent-purple: #BB86FC;
+  }
+
+  /* ── Тема: чёрная ───────────────────────────────────── */
+  .black {
+    --bg: #0A0A0A;
+    --bg-secondary: #0F0F0F;
+    --bg-tertiary: #1A1A1A;
+    --card: #121212;
+    --card-hover: #1E1E1E;
+    --border: #2A2A2A;
+    --border-subtle: #1A1A1A;
+    --text: #E0E0E0;
+    --text-secondary: #A0A0A0;
+    --text-tertiary: #666666;
+    --accent-blue: #BB86FC;
+    --accent-green: #03DAC6;
+    --accent-gold: #FFB74D;
+    --accent-orange: #FF7043;
+    --accent-red: #CF6679;
+    --accent-purple: #BB86FC;
+  }
+  /* Единый стиль карточек */
+.card-modern {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.card-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border-color: var(--accent-blue);
+}
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--accent-blue);
+    color: #FFFFFF;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.15);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.15s ease;
+  }
+  .btn-secondary:hover {
+    background-color: var(--card-hover);
+    border-color: var(--text-tertiary);
+  }
+
+  .input-field {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    transition: border-color 0.15s ease;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue) 20%, transparent);
+  }
+  .input-field::placeholder {
+    color: var(--text-tertiary);
+  }
+}
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slide-up 0.4s ease forwards;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease forwards;
+  }
+  .animate-bounce-dot {
+    animation: bounce-dot 0.8s ease-in-out infinite;
+  }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bounce-dot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
