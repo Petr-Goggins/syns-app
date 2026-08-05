@@ -105,7 +105,7 @@ VITE_API_URL=http://localhost:8000
 
 bash
 npm run dev
-После этого приложение доступно по http://localhost:5173.
+После этого приложение доступно по http://localhost:5173.```
 
 📖 API-документация
 Swagger доступен по адресу: http://localhost:8000/docs
@@ -138,11 +138,8 @@ text
 
 ---
 
-### 📄 2. `LICENSE` (пользовательская, с запретом коммерческого использования)
+LICENSE
 
-**Если у тебя нет файла `LICENSE` — создай его в корне репозитория. Если есть — замени содержимое на этот текст:**
-
-```text
 Лицензия на использование программного обеспечения Sync
 
 Copyright (c) 2026 Petr Goggins (https://github.com/Petr-Goggins)
