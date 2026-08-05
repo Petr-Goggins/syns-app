@@ -69,7 +69,7 @@ text
 ### Инструкция
 
 1. **Клонируйте репозиторий**
-```bash
+bash
 git clone https://github.com/Petr-Goggins/syns-app.git
 cd syns-app
 Бэкенд
@@ -105,7 +105,7 @@ VITE_API_URL=http://localhost:8000
 
 bash
 npm run dev
-После этого приложение доступно по http://localhost:5173.```
+После этого приложение доступно по http://localhost:5173.
 
 📖 API-документация
 Swagger доступен по адресу: http://localhost:8000/docs
