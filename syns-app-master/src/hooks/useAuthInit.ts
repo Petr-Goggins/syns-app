@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-<<<<<<< HEAD
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 
@@ -40,7 +39,6 @@ export const useAuthInit = () => {
     };
   }, []);
 };
-=======
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -80,4 +78,3 @@ export function useAuthInit() {
     };
   }, [setUser, setLoading]);
 }
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6

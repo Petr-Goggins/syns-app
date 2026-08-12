@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
@@ -222,7 +221,6 @@ export default function ReportsPage({ onOpenSidebar }: { onOpenSidebar?: () => v
               <Line type="monotone" dataKey="hours" stroke="#BB86FC" strokeWidth={2} dot={{ fill: '#BB86FC' }} />
             </LineChart>
           </ResponsiveContainer>
-=======
 import React from 'react';
 
 export default function ReportsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
@@ -242,7 +240,6 @@ export default function ReportsPage({ onOpenSidebar }: { onOpenSidebar?: () => v
         <div className="bg-bg-secondary p-4 rounded-lg border border-border text-center">
           <p className="text-text-secondary text-sm">За месяц</p>
           <p className="text-2xl font-bold text-text">0</p>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
         </div>
       </div>
     </div>

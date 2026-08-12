@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-<<<<<<< HEAD
-=======
 import { mapAuthError } from '@/lib/errorMapper';
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -14,11 +11,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-<<<<<<< HEAD
   const [showPassword, setShowPassword] = useState(false);
-=======
   const [showPassword, setShowPassword] = useState(false); // <-- НОВОЕ
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +33,6 @@ export default function AuthPage() {
           }
         }
       } else {
-<<<<<<< HEAD
         const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         if (data.user) {
@@ -51,7 +44,6 @@ export default function AuthPage() {
     } catch (err: any) {
       console.error('❌ Auth error:', err);
       setError(err.message || 'Произошла ошибка. Попробуйте ещё раз.');
-=======
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
       }
@@ -59,7 +51,6 @@ export default function AuthPage() {
     } catch (err) {
       console.error('Auth error:', err);
       setError(mapAuthError(err));
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
     } finally {
       setLoading(false);
     }

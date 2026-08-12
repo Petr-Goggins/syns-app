@@ -63,10 +63,7 @@ function AppRoutes() {
                 <Route path="/profile" element={<ProfilePage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/workouts" element={<WorkoutLogPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/sleep" element={<SleepLogPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-<<<<<<< HEAD
-=======
                 {/* TrackingPage удалён */}
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
                 <Route path="/achievements" element={<AchievementsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/settings" element={<SettingsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/progress" element={<ProgressPage onOpenSidebar={() => setSidebarOpen(true)} />} />

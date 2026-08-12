@@ -24,22 +24,15 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [showAIModal, setShowAIModal] = useState(false);
   const [budget, setBudget] = useState<number>(3000);
   const [favoriteFoods, setFavoriteFoods] = useState<string>('');
-<<<<<<< HEAD
-=======
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
   const [productName, setProductName] = useState('');
   const [protein, setProtein] = useState('');
   const [fat, setFat] = useState('');
   const [carbs, setCarbs] = useState('');
   const [calories, setCalories] = useState('');
-<<<<<<< HEAD
-  const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
-=======
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
 
   useEffect(() => {
     const loadMealPlans = async () => {
@@ -63,15 +56,14 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     loadMealPlans();
   }, []);
 
-<<<<<<< HEAD
   const filteredPlans = mealPlans.filter(
     (plan) =>
       plan.diet === selectedDiet &&
       plan.type === selectedType &&
       plan.time === selectedTime
   );
-=======
-  // Поиск продуктов (заглушка)
+
+  // Поиск продуктов через Open Food Facts API на бэкенде
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.length < 2) {
@@ -79,16 +71,28 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       return;
     }
     setIsSearching(true);
-    // Имитация поиска
-    const mockProducts = [
-      { name: 'Гречка отварная', brand: 'Макфа', calories: 130, proteins: 5, fats: 1, carbs: 30 },
-      { name: 'Куриная грудка вареная', brand: 'Петелинка', calories: 130, proteins: 25, fats: 2, carbs: 0 },
-      { name: 'Рис отварной', brand: 'Мистраль', calories: 120, proteins: 2.5, fats: 0.5, carbs: 28 },
-    ].filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brand.toLowerCase().includes(query.toLowerCase()));
-    setSearchResults(mockProducts);
-    setIsSearching(false);
+    try {
+      const response = await fetch(`http://localhost:8000/products/search?query=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error('Ошибка запроса');
+      }
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (e) {
+      console.error(e);
+      // Фоллбэк на заглушку, если бэкенд недоступен
+      const mockProducts = [
+        { name: 'Гречка отварная', brand: 'Макфа', calories: 130, proteins: 5, fats: 1, carbs: 30 },
+        { name: 'Куриная грудка вареная', brand: 'Петелинка', calories: 130, proteins: 25, fats: 2, carbs: 0 },
+        { name: 'Рис отварной', brand: 'Мистраль', calories: 120, proteins: 2.5, fats: 0.5, carbs: 28 },
+        { name: 'Пельмени Домашние', brand: 'Разные', calories: 250, proteins: 12, fats: 14, carbs: 28 },
+        { name: 'Пельмени Сибирские', brand: 'Разные', calories: 280, proteins: 15, fats: 18, carbs: 25 },
+      ].filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brand?.toLowerCase().includes(query.toLowerCase()));
+      setSearchResults(mockProducts);
+    } finally {
+      setIsSearching(false);
+    }
   };
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
 
   const handleAddMeal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,27 +115,27 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       setFat('');
       setCarbs('');
       setCalories('');
+      setSearchQuery('');
+      setSearchResults([]);
     } else {
       toast.error('Ошибка: ' + error.message);
     }
   };
 
-<<<<<<< HEAD
-=======
-  const filteredPlans = mealPlans.filter(p => p.diet === selectedDiet && p.type === selectedType && p.time === selectedTime);
+  const handleSelectProduct = (product: any) => {
+    setProductName(product.name);
+    setProtein(String(product.proteins || product.protein || 0));
+    setFat(String(product.fats || product.fat || 0));
+    setCarbs(String(product.carbs || product.carbohydrates || 0));
+    setCalories(String(product.calories || product.energy_kcal || 0));
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
   return (
     <div className="p-4 max-w-6xl mx-auto animate-fade-in">
       <h1 className="text-2xl font-bold text-text mb-6">Питание</h1>
 
-<<<<<<< HEAD
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <span className="text-text-secondary text-sm flex items-center gap-2">
-            <Filter size={18} /> Фильтры
-          </span>
-=======
       {/* Готовые рационы */}
       <div className="mb-8">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -139,82 +143,10 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             <Filter size={18} />
             <span>Фильтры</span>
           </div>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
           <button
             onClick={() => setShowAIModal(true)}
             className="flex items-center gap-2 bg-accent-green text-bg px-4 py-2 rounded-xl hover:opacity-90 transition shadow-lg shadow-accent-green/20"
           >
-<<<<<<< HEAD
-            <Sparkles size={18} /> Сгенерировать с ИИ
-          </button>
-        </div>
-
-        {/* Фильтры — кастомные кнопки */}
-        <div className="flex flex-wrap gap-3 mb-4">
-          <div>
-            <span className="text-text-secondary text-xs block mb-1">Диета</span>
-            <div className="flex gap-1.5 flex-wrap">
-              {['none', 'vegetarian', 'vegan', 'halal', 'kosher'].map((value) => (
-                <button
-                  key={value}
-                  onClick={() => setSelectedDiet(value)}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-                    selectedDiet === value
-                      ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
-                      : 'border-border text-text-secondary hover:border-text-tertiary'
-                  }`}
-                >
-                  {value === 'none' && 'Без ограничений'}
-                  {value === 'vegetarian' && 'Вегетарианский'}
-                  {value === 'vegan' && 'Веганский'}
-                  {value === 'halal' && 'Халяль'}
-                  {value === 'kosher' && 'Кошер'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-text-secondary text-xs block mb-1">Тип</span>
-            <div className="flex gap-1.5 flex-wrap">
-              {['balanced', 'high-protein', 'low-carb', 'keto'].map((value) => (
-                <button
-                  key={value}
-                  onClick={() => setSelectedType(value)}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-                    selectedType === value
-                      ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
-                      : 'border-border text-text-secondary hover:border-text-tertiary'
-                  }`}
-                >
-                  {value === 'balanced' && 'Сбалансированный'}
-                  {value === 'high-protein' && 'Высокобелковый'}
-                  {value === 'low-carb' && 'Низкоуглеводный'}
-                  {value === 'keto' && 'Кетогенный'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-text-secondary text-xs block mb-1">Время</span>
-            <div className="flex gap-1.5 flex-wrap">
-              {['fast', 'medium', 'long'].map((value) => (
-                <button
-                  key={value}
-                  onClick={() => setSelectedTime(value)}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-                    selectedTime === value
-                      ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
-                      : 'border-border text-text-secondary hover:border-text-tertiary'
-                  }`}
-                >
-                  {value === 'fast' && 'Быстрый (<20мин)'}
-                  {value === 'medium' && 'Средний (20-40мин)'}
-                  {value === 'long' && 'Долгий (>40мин)'}
-                </button>
-              ))}
-            </div>
-          </div>
-=======
             <Sparkles size={18} />
             Сгенерировать с ИИ
           </button>
@@ -251,7 +183,6 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             <option value="medium">Средний (20-40 мин)</option>
             <option value="long">Долгий (&gt;40 мин)</option>
           </select>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
         </div>
 
         {filteredPlans.length > 0 ? (
@@ -263,15 +194,11 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
                     <h3 className="font-semibold text-text">{plan.name}</h3>
                     <p className="text-text-secondary text-sm">{plan.description}</p>
                   </div>
-<<<<<<< HEAD
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     plan.time === 'fast' ? 'bg-accent-green/10 text-accent-green' :
                     plan.time === 'medium' ? 'bg-accent-gold/10 text-accent-gold' :
                     'bg-accent-red/10 text-accent-red'
                   }`}>
-=======
-                  <span className={`text-xs px-2 py-1 rounded-full ${plan.time === 'fast' ? 'bg-accent-green/10 text-accent-green' : plan.time === 'medium' ? 'bg-accent-gold/10 text-accent-gold' : 'bg-accent-red/10 text-accent-red'}`}>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
                     {plan.time === 'fast' ? '⚡' : plan.time === 'medium' ? '⏱️' : '🐢'}
                   </span>
                 </div>
@@ -288,9 +215,52 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
       <hr className="border-border my-6" />
 
-<<<<<<< HEAD
+      {/* Добавление приёма пищи с поиском */}
       <div>
         <h2 className="text-lg font-semibold text-text mb-4">Добавить приём пищи</h2>
+        
+        {/* Поиск продукта */}
+        <div className="card-modern space-y-4 mb-4">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+            <input
+              type="text"
+              placeholder="Найти продукт (например, пельмени)"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="input-field w-full pl-10 pr-3 py-2.5 rounded-lg"
+            />
+          </div>
+          
+          {searchResults.length > 0 && (
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {searchResults.map((product, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleSelectProduct(product)}
+                  className="flex justify-between items-center p-3 bg-bg-tertiary rounded-lg cursor-pointer hover:bg-bg-secondary transition"
+                >
+                  <div>
+                    <p className="text-text font-medium">{product.name}</p>
+                    {product.brand && <p className="text-text-secondary text-xs">{product.brand}</p>}
+                  </div>
+                  <div className="text-right text-text-secondary text-sm">
+                    <p>{product.calories || product.energy_kcal} ккал</p>
+                    <p className="text-xs">Б:{product.proteins || product.protein} Ж:{product.fats || product.fat} У:{product.carbs || product.carbohydrates}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {isSearching && (
+            <div className="flex justify-center py-4">
+              <div className="w-6 h-6 border-2 border-accent-blue border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Форма добавления */}
         <form onSubmit={handleAddMeal} className="card-modern space-y-4">
           <input
             type="text"
@@ -300,23 +270,6 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             className="input-field w-full px-3 py-2.5 rounded-lg"
             required
           />
-=======
-      {/* Добавление приёма пищи */}
-      <div>
-        <h2 className="text-lg font-semibold text-text mb-4">Добавить приём пищи</h2>
-        <form onSubmit={handleAddMeal} className="card-modern space-y-4">
-          <div className="relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-            <input
-              type="text"
-              placeholder="Название продукта"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              className="input-field w-full pl-10 pr-3 py-2.5 rounded-lg"
-              required
-            />
-          </div>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <input
               type="number"
@@ -365,10 +318,7 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </form>
       </div>
 
-<<<<<<< HEAD
-=======
       {/* Модалка ИИ */}
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
       {showAIModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-bg-secondary p-6 rounded-2xl max-w-md w-full border border-border shadow-2xl">
@@ -378,23 +328,31 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              toast.success('Рацион сгенерирован! (заглушка)');
-              setShowAIModal(false);
-            }} className="space-y-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Бюджет на неделю (руб)</label>
-                <input type="number" value={budget} onChange={(e) => setBudget(Number(e.target.value))} className="input-field w-full px-3 py-2 rounded-lg" min="1000" step="500" />
+                <label className="text-text-secondary text-sm">Бюджет на день (₽)</label>
+                <input
+                  type="number"
+                  value={budget}
+                  onChange={(e) => setBudget(Number(e.target.value))}
+                  className="input-field w-full mt-1"
+                />
               </div>
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Любимые продукты (через запятую)</label>
-                <input type="text" value={favoriteFoods} onChange={(e) => setFavoriteFoods(e.target.value)} className="input-field w-full px-3 py-2 rounded-lg" placeholder="Курица, гречка, овощи" />
+                <label className="text-text-secondary text-sm">Любимые продукты</label>
+                <textarea
+                  value={favoriteFoods}
+                  onChange={(e) => setFavoriteFoods(e.target.value)}
+                  placeholder="Курица, гречка, овощи..."
+                  className="input-field w-full mt-1"
+                  rows={3}
+                />
               </div>
-              <button type="submit" className="btn-primary w-full py-2 rounded-lg flex items-center justify-center gap-2">
-                <Sparkles size={18} /> Сгенерировать
+              <button className="w-full btn-primary py-3 flex items-center justify-center gap-2">
+                <Sparkles size={18} />
+                Сгенерировать
               </button>
-            </form>
+            </div>
           </div>
         </div>
       )}

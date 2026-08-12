@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-<<<<<<< HEAD
 import { Check, User, Ruler, Weight, Cake, Activity, Target, Church, Utensils } from 'lucide-react';
 
 const RELIGION_OPTIONS = [
@@ -19,19 +18,14 @@ const DIET_OPTIONS = [
   { id: 'halal', label: 'Халяль', icon: '🕌' },
   { id: 'kosher', label: 'Кошер', icon: '✡️' },
 ];
-=======
 import { User, Weight, Ruler, Calendar, Activity, Target, Dumbbell, Save, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
 
 export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
   const [profile, setProfile] = useState<any>({});
-=======
   const [saving, setSaving] = useState(false);
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
   const [form, setForm] = useState({
     full_name: '',
     weight: '',
@@ -41,16 +35,12 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     activity_level: 'moderate',
     goal: 'maintain',
     religion: 'none',
-<<<<<<< HEAD
     diet: 'none',
-=======
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
     equipment: [] as string[],
   });
 
   useEffect(() => {
     if (!user) return;
-<<<<<<< HEAD
     loadProfile();
   }, [user]);
 
@@ -82,7 +72,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-=======
     const loadProfile = async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -111,33 +100,25 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     e.preventDefault();
     if (!user) return;
     setSaving(true);
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
     const { error } = await supabase
       .from('profiles')
       .update({
         full_name: form.full_name,
-<<<<<<< HEAD
         weight: Number(form.weight),
         height: Number(form.height),
         age: Number(form.age),
-=======
         weight: Number(form.weight) || 0,
         height: Number(form.height) || 0,
         age: Number(form.age) || 0,
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
         gender: form.gender,
         activity_level: form.activity_level,
         goal: form.goal,
         religion: form.religion,
-<<<<<<< HEAD
         diet: form.diet,
-=======
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
         equipment: form.equipment,
       })
       .eq('id', user.id);
     if (!error) {
-<<<<<<< HEAD
       alert('Профиль обновлён');
     } else {
       alert('Ошибка: ' + error.message);
@@ -186,7 +167,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-text-secondary mb-1">Имя</label>
-=======
       toast.success('Профиль обновлён!');
     } else {
       toast.error('Ошибка сохранения: ' + error.message);
@@ -211,12 +191,10 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
           </h2>
           <div>
             <label className="block text-sm text-text-secondary mb-1">Полное имя</label>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
             <input
               type="text"
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-<<<<<<< HEAD
               className="input-field w-full px-4 py-2.5 rounded-lg"
               placeholder="Ваше имя"
             />
@@ -280,7 +258,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               value={form.activity_level}
               onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
-=======
               className="input-field w-full px-4 py-2.5"
               placeholder="Введите имя"
             />
@@ -342,7 +319,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               value={form.activity_level}
               onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
               className="input-field w-full px-4 py-2.5"
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
             >
               <option value="sedentary">Сидячий</option>
               <option value="moderate">Средний</option>
@@ -354,18 +330,14 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <select
               value={form.goal}
               onChange={(e) => setForm({ ...form, goal: e.target.value })}
-<<<<<<< HEAD
               className="input-field w-full px-4 py-2.5 rounded-lg"
-=======
               className="input-field w-full px-4 py-2.5"
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
             >
               <option value="lose">Похудеть</option>
               <option value="maintain">Поддерживать</option>
               <option value="gain">Набрать массу</option>
             </select>
           </div>
-<<<<<<< HEAD
         </div>
 
         <SelectCard
@@ -404,7 +376,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
 
         <button type="submit" className="btn-primary w-full py-3 rounded-xl font-semibold">
           Сохранить
-=======
           <div>
             <label className="block text-sm text-text-secondary mb-1">Инвентарь (через запятую)</label>
             <input
@@ -440,7 +411,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         >
           {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
           {saving ? 'Сохранение...' : 'Сохранить профиль'}
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
         </button>
       </form>
     </div>
