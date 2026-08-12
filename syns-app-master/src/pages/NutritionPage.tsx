@@ -72,7 +72,8 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     }
     setIsSearching(true);
     try {
-      const response = await fetch(`http://localhost:8000/products/search?query=${encodeURIComponent(query)}`);
+      // Используем правильный путь к API с префиксом /api
+      const response = await fetch(`http://localhost:8000/api/products/search?query=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error('Ошибка запроса');
       }

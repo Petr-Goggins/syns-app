@@ -12,6 +12,7 @@ import httpx
 
 from ai_service import ask_ai
 from rag_service import index_knowledge_base
+from routers import products as products_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +33,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Sync App AI Backend", lifespan=lifespan)
+
+# Подключаем роутер для работы с продуктами (Open Food Facts)
+app.include_router(products_router.router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -239,71 +243,23 @@ async def generate_meal_plan(request: GenerateMealPlanRequest):
 # ================================================
 # ЭНДПОИНТЫ ДЛЯ ПРОДУКТОВ (Open Food Facts)
 # ================================================
+# Примечание: основные эндпоинты вынесены в routers/products.py
+# и подключены через app.include_router выше.
+# Здесь оставлены заглушки для обратной совместимости.
 
-OPENFOODFACTS_API_URL = "https://world.openfoodfacts.org/api/v2/search"
-
-@app.get("/products/search")
-async def search_products(query: str):
+@app.get("/products/search-deprecated")
+async def search_products_deprecated(query: str):
     """
-    Поиск продуктов по названию через Open Food Facts.
+    Устаревший эндпоинт поиска продуктов.
+    Используйте /api/products/search вместо этого.
     """
-    params = {
-        "search_terms": query,
-        "page_size": 10,
-        "json": 1,
-    }
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(OPENFOODFACTS_API_URL, params=params)
-            response.raise_for_status()
-            data = response.json()
-            
-            products = data.get("products", [])
-            formatted = []
-            for p in products:
-                nutriments = p.get("nutriments", {})
-                formatted.append({
-                    "name": p.get("product_name", "Неизвестный продукт"),
-                    "brand": p.get("brands", "Неизвестный бренд"),
-                    "barcode": p.get("code", ""),
-                    "calories": nutriments.get("energy-kcal_100g"),
-                    "proteins": nutriments.get("proteins_100g"),
-                    "fats": nutriments.get("fat_100g"),
-                    "carbs": nutriments.get("carbohydrates_100g"),
-                })
-            return formatted
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail="Ошибка запроса к Open Food Facts")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(status_code=410, detail="Используйте /api/products/search")
 
 
 @app.get("/products/barcode/{barcode}")
-async def get_product_by_barcode(barcode: str):
+async def get_product_by_barcode_deprecated(barcode: str):
     """
-    Получение продукта по штрих-коду.
+    Устаревший эндпоинт получения продукта по штрих-коду.
+    Используйте /api/products/barcode/{barcode} вместо этого.
     """
-    url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
-            if data.get("status") == 0:
-                raise HTTPException(status_code=404, detail="Продукт не найден")
-            p = data.get("product", {})
-            nutriments = p.get("nutriments", {})
-            return {
-                "name": p.get("product_name", "Неизвестный продукт"),
-                "brand": p.get("brands", "Неизвестный бренд"),
-                "barcode": barcode,
-                "calories": nutriments.get("energy-kcal_100g"),
-                "proteins": nutriments.get("proteins_100g"),
-                "fats": nutriments.get("fat_100g"),
-                "carbs": nutriments.get("carbohydrates_100g"),
-            }
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail="Ошибка запроса к Open Food Facts")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(status_code=410, detail="Используйте /api/products/barcode/{barcode}")
