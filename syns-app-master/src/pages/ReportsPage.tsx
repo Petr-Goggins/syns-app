@@ -221,25 +221,6 @@ export default function ReportsPage({ onOpenSidebar }: { onOpenSidebar?: () => v
               <Line type="monotone" dataKey="hours" stroke="#BB86FC" strokeWidth={2} dot={{ fill: '#BB86FC' }} />
             </LineChart>
           </ResponsiveContainer>
-import React from 'react';
-
-export default function ReportsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
-  return (
-    <div className="p-4 max-w-4xl">
-      <h1 className="text-2xl font-bold text-text">Статистика</h1>
-      <p className="text-text-secondary mt-2">Здесь будут графики и аналитика за день, неделю, месяц.</p>
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-bg-secondary p-4 rounded-lg border border-border text-center">
-          <p className="text-text-secondary text-sm">За день</p>
-          <p className="text-2xl font-bold text-text">0</p>
-        </div>
-        <div className="bg-bg-secondary p-4 rounded-lg border border-border text-center">
-          <p className="text-text-secondary text-sm">За неделю</p>
-          <p className="text-2xl font-bold text-text">0</p>
-        </div>
-        <div className="bg-bg-secondary p-4 rounded-lg border border-border text-center">
-          <p className="text-text-secondary text-sm">За месяц</p>
-          <p className="text-2xl font-bold text-text">0</p>
         </div>
       </div>
     </div>
