@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { Moon, Trash2, ChevronLeft, ChevronRight, Calendar, Plus, Smile, Meh, Frown, Sun, Cloud, CloudRain } from 'lucide-react';
-=======
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { Moon, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
 
 export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
   const [date, setDate] = useState(new Date());
 
   // Форма сна
@@ -34,14 +30,12 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
 
   if (!user) {
     return <div className="p-4 text-text-secondary">Пожалуйста, войдите.</div>;
-=======
   const [hours, setHours] = useState(7);
   const [quality, setQuality] = useState<'Да' | 'Нет' | 'Не очень'>('Да');
   const [date, setDate] = useState(new Date());
 
   if (!user) {
     return <div className="p-4">Пожалуйста, войдите в аккаунт.</div>;
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
   }
 
   const formatDate = (d: Date) => d.toISOString().split('T')[0];
@@ -70,7 +64,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-<<<<<<< HEAD
 
     const { error } = await supabase.from('sleep_logs').insert({
       user_id: user.id,
@@ -85,7 +78,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
     if (!error) {
       loadLogs();
       // alert убран
-=======
     const { error } = await supabase.from('sleep_logs').insert({
       user_id: user.id,
       hours: hours,
@@ -94,7 +86,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
     });
     if (!error) {
       loadLogs();
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
     } else {
       alert('Ошибка: ' + error.message);
     }
@@ -105,7 +96,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
     loadLogs();
   };
 
-<<<<<<< HEAD
   // Статистика за 7 дней
   const [weeklyAvg, setWeeklyAvg] = useState(0);
   useEffect(() => {
@@ -178,7 +168,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
         </span>
         <button onClick={() => changeDate(1)} className="text-text-secondary hover:text-text p-1 transition">
           <ChevronRight size={22} />
-=======
   return (
     <div className="p-4 max-w-2xl">
       <h1 className="text-2xl font-bold text-text">Сон</h1>
@@ -189,14 +178,12 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
         <span className="text-text font-medium">{date.toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         <button onClick={() => changeDate(1)} className="text-text-secondary hover:text-text">
           <ChevronRight size={20} />
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
         </button>
         <button onClick={() => setDate(new Date())} className="text-xs text-accent-blue hover:underline">
           Сегодня
         </button>
       </div>
 
-<<<<<<< HEAD
       {weeklyAvg > 0 && (
         <div className="mb-4 p-3 bg-bg-secondary rounded-xl border border-border text-center">
           <p className="text-text-secondary text-xs">Средний сон за 7 дней</p>
@@ -320,7 +307,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
         >
           <Plus size={18} /> Записать сон
         </button>
-=======
       <form onSubmit={handleAdd} className="mt-4 bg-bg-secondary p-4 rounded-lg border border-border space-y-3">
         <div className="flex gap-3">
           <input
@@ -345,12 +331,10 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
           </select>
           <button type="submit" className="btn-primary px-4">Добавить</button>
         </div>
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
       </form>
 
       <div className="mt-6 space-y-2">
         {loading ? (
-<<<<<<< HEAD
           <p className="text-text-secondary text-center py-4">Загрузка...</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-12">
@@ -379,7 +363,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
                 onClick={() => handleDelete(log.id)}
                 className="text-text-secondary hover:text-accent-red transition opacity-0 group-hover:opacity-100"
               >
-=======
           <p className="text-text-secondary">Загрузка...</p>
         ) : logs.length === 0 ? (
           <p className="text-text-secondary text-center py-4">Нет записей за этот день</p>
@@ -391,7 +374,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
                 <p className="text-text-secondary text-sm">Качество: {log.quality}</p>
               </div>
               <button onClick={() => handleDelete(log.id)} className="text-text-secondary hover:text-accent-red">
->>>>>>> 6946a4955e76153e38721c207ba4d118934cd0c6
                 <Trash2 size={18} />
               </button>
             </div>
