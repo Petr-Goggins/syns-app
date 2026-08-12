@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { Check, User, Ruler, Weight, Cake, Activity, Target, Church, Utensils } from 'lucide-react';
+import { User, Dumbbell, Target, Save, Loader2, Check } from 'lucide-react';
 
 const RELIGION_OPTIONS = [
   { id: 'none', label: 'Нет', icon: '⛔' },
@@ -18,13 +18,10 @@ const DIET_OPTIONS = [
   { id: 'halal', label: 'Халяль', icon: '🕌' },
   { id: 'kosher', label: 'Кошер', icon: '✡️' },
 ];
-import { User, Weight, Ruler, Calendar, Activity, Target, Dumbbell, Save, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     full_name: '',
@@ -49,15 +46,14 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', user!.id)
       .single();
     if (!error && data) {
-      setProfile(data);
       setForm({
         full_name: data.full_name || '',
-        weight: data.weight || '',
-        height: data.height || '',
-        age: data.age || '',
+        weight: data.weight?.toString() || '',
+        height: data.height?.toString() || '',
+        age: data.age?.toString() || '',
         gender: data.gender || '',
         activity_level: data.activity_level || 'moderate',
         goal: data.goal || 'maintain',
@@ -72,41 +68,11 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const loadProfile = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (!error && data) {
-        setForm({
-          full_name: data.full_name || '',
-          weight: data.weight?.toString() || '',
-          height: data.height?.toString() || '',
-          age: data.age?.toString() || '',
-          gender: data.gender || '',
-          activity_level: data.activity_level || 'moderate',
-          goal: data.goal || 'maintain',
-          religion: data.religion || 'none',
-          equipment: data.equipment || [],
-        });
-      }
-      setLoading(false);
-    };
-    loadProfile();
-  }, [user]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
     setSaving(true);
     const { error } = await supabase
       .from('profiles')
       .update({
         full_name: form.full_name,
-        weight: Number(form.weight),
-        height: Number(form.height),
-        age: Number(form.age),
         weight: Number(form.weight) || 0,
         height: Number(form.height) || 0,
         age: Number(form.age) || 0,
@@ -123,6 +89,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     } else {
       alert('Ошибка: ' + error.message);
     }
+    setSaving(false);
   };
 
   const toggleEquipment = (item: string) => {
@@ -158,22 +125,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     </div>
   );
 
-  if (loading) return <div className="p-4">Загрузка...</div>;
-
-  return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-text mb-6">Профиль</h1>
-      <form onSubmit={handleSave} className="space-y-5 bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Имя</label>
-      toast.success('Профиль обновлён!');
-    } else {
-      toast.error('Ошибка сохранения: ' + error.message);
-    }
-    setSaving(false);
-  };
-
   if (loading) return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-accent-blue" size={32} /></div>;
 
   return (
@@ -184,7 +135,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
       </h1>
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* Основная информация */}
         <div className="card-modern space-y-4">
           <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <User size={16} /> Основное
@@ -251,64 +201,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Активность</label>
-            <select
-              value={form.activity_level}
-              onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
-              className="input-field w-full px-4 py-2.5 rounded-lg"
-              className="input-field w-full px-4 py-2.5"
-              placeholder="Введите имя"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-text-secondary mb-1">Вес (кг)</label>
-              <input
-                type="number"
-                value={form.weight}
-                onChange={(e) => setForm({ ...form, weight: e.target.value })}
-                className="input-field w-full px-4 py-2.5"
-                placeholder="70"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-text-secondary mb-1">Рост (см)</label>
-              <input
-                type="number"
-                value={form.height}
-                onChange={(e) => setForm({ ...form, height: e.target.value })}
-                className="input-field w-full px-4 py-2.5"
-                placeholder="175"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-text-secondary mb-1">Возраст</label>
-              <input
-                type="number"
-                value={form.age}
-                onChange={(e) => setForm({ ...form, age: e.target.value })}
-                className="input-field w-full px-4 py-2.5"
-                placeholder="25"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Пол</label>
-            <select
-              value={form.gender}
-              onChange={(e) => setForm({ ...form, gender: e.target.value })}
-              className="input-field w-full px-4 py-2.5"
-            >
-              <option value="">Выберите пол</option>
-              <option value="male">Мужской</option>
-              <option value="female">Женский</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Параметры тренировок */}
         <div className="card-modern space-y-4">
           <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <Dumbbell size={16} /> Тренировки
@@ -318,7 +210,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <select
               value={form.activity_level}
               onChange={(e) => setForm({ ...form, activity_level: e.target.value })}
-              className="input-field w-full px-4 py-2.5"
+              className="input-field w-full px-4 py-2.5 rounded-lg"
             >
               <option value="sedentary">Сидячий</option>
               <option value="moderate">Средний</option>
@@ -331,7 +223,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               value={form.goal}
               onChange={(e) => setForm({ ...form, goal: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
-              className="input-field w-full px-4 py-2.5"
             >
               <option value="lose">Похудеть</option>
               <option value="maintain">Поддерживать</option>
@@ -372,36 +263,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               </button>
             ))}
           </div>
-        </div>
-
-        <button type="submit" className="btn-primary w-full py-3 rounded-xl font-semibold">
-          Сохранить
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Инвентарь (через запятую)</label>
-            <input
-              type="text"
-              placeholder="гантели, коврик, турник"
-              value={form.equipment.join(', ')}
-              onChange={(e) => setForm({ ...form, equipment: e.target.value.split(',').map(s => s.trim()) })}
-              className="input-field w-full px-4 py-2.5"
-            />
-          </div>
-        </div>
-
-        {/* Религия */}
-        <div className="card-modern space-y-4">
-          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
-            <Target size={16} /> Религиозные предпочтения
-          </h2>
-          <select
-            value={form.religion}
-            onChange={(e) => setForm({ ...form, religion: e.target.value })}
-            className="input-field w-full px-4 py-2.5"
-          >
-            <option value="none">Нет</option>
-            <option value="halal">Халяль</option>
-            <option value="kosher">Кошер</option>
-          </select>
         </div>
 
         <button

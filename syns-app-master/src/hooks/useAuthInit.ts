@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 
 export const useAuthInit = () => {
   const { setUser, setLoading } = useAuthStore();
-
+  
   useEffect(() => {
     const initAuth = async () => {
       setLoading(true);
@@ -39,42 +39,3 @@ export const useAuthInit = () => {
     };
   }, []);
 };
-import { Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/store/authStore';
-
-export function useAuthInit() {
-  const setUser = useAuthStore((s) => s.setUser);
-  const setLoading = useAuthStore((s) => s.setLoading);
-
-  useEffect(() => {
-    let mounted = true;
-
-    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
-      if (!mounted) return;
-      if (data.session?.user) {
-        setUser({ id: data.session.user.id, email: data.session.user.email ?? '' });
-      }
-      setLoading(false);
-    }).catch((err) => {
-      console.error('Session restore error:', err);
-      if (mounted) setLoading(false);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        if (session?.user) {
-          setUser({ id: session.user.id, email: session.user.email ?? '' });
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      })();
-    });
-
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [setUser, setLoading]);
-}

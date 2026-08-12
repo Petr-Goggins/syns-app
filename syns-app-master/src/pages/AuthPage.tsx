@@ -12,7 +12,6 @@ export default function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // <-- НОВОЕ
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,13 +43,6 @@ export default function AuthPage() {
     } catch (err: any) {
       console.error('❌ Auth error:', err);
       setError(err.message || 'Произошла ошибка. Попробуйте ещё раз.');
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-      }
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Auth error:', err);
-      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
