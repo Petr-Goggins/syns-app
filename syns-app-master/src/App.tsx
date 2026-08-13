@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthInit } from '@/hooks/useAuthInit';
-import BottomNav from '@/components/BottomNav';
+import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AuthPage from '@/pages/AuthPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -21,19 +20,10 @@ import ReportsPage from '@/pages/ReportsPage';
 import CyclePage from '@/pages/CyclePage';
 import LongPathPage from '@/pages/LongPathPage';
 
-function MainLayout() {
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      <Outlet />
-      <BottomNav />
-    </div>
-  );
-}
-
 function AppRoutes() {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -51,57 +41,59 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/auth"
-        element={user ? <Navigate to="/" replace /> : <AuthPage />}
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="long-path" element={<LongPathPage />} />
-        <Route path="coach" element={<CoachPage />} />
-        <Route path="plan" element={<PlanPage />} />
-        <Route path="nutrition" element={<NutritionPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="cycle" element={<CyclePage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="workouts" element={<WorkoutLogPage />} />
-        <Route path="sleep" element={<SleepLogPage />} />
-        <Route path="achievements" element={<AchievementsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="progress" element={<ProgressPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/auth"
+          element={user ? <Navigate to="/" replace /> : <AuthPage />}
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Outlet />
+              </Layout>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="long-path" element={<LongPathPage />} />
+          <Route path="coach" element={<CoachPage />} />
+          <Route path="plan" element={<PlanPage />} />
+          <Route path="nutrition" element={<NutritionPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="cycle" element={<CyclePage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="workouts" element={<WorkoutLogPage />} />
+          <Route path="sleep" element={<SleepLogPage />} />
+          <Route path="achievements" element={<AchievementsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="progress" element={<ProgressPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
 export default function App() {
   useAuthInit();
   return (
-    <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'var(--card)',
-            color: 'var(--text)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '12px 16px',
-          },
-        }}
-      />
-      <AppRoutes />
-    </BrowserRouter>
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        style: {
+          background: 'var(--card)',
+          color: 'var(--text)',
+          border: '1px solid var(--border)',
+          borderRadius: '12px',
+          padding: '12px 16px',
+        },
+      }}
+    />
+    <AppRoutes />
   );
 }
