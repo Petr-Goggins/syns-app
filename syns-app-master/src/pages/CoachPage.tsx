@@ -88,6 +88,8 @@ const STEPS = [
   { icon: Trophy, title: 'Глобальная цель и акценты' },
   { icon: Clock, title: 'Режим тренировок' },
   { icon: Heart, title: 'Здоровье и восстановление' },
+  { icon: Dumbbell, title: 'Личная цель' },
+  { icon: Sparkles, title: 'Предпочтения' },
 ];
 
 export default function CoachPage() {
@@ -121,6 +123,9 @@ export default function CoachPage() {
     goal_amount: null,
     goal_unit: '',
     goal_weeks: 12,
+    personal_goal: '',
+    exercise_likes: '',
+    exercise_dislikes: '',
   });
 
   // Cycle data (saved directly to profile)
@@ -138,7 +143,7 @@ export default function CoachPage() {
     setForm({ ...form, [key]: value });
 
   const isFemale = profile?.gender === 'female';
-  const totalSteps = 4; // 4 шага с глобальной целью
+  const totalSteps = 6; // 6 шагов: цель+опыт, глобальная цель, режим, здоровье, личная цель, предпочтения
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
@@ -147,6 +152,8 @@ export default function CoachPage() {
       case 1: return !!selectedLongPathGoal && (selectedLongPathGoal !== 'weight_loss' || targetWeight > 0);
       case 2: return !!form.days_per_week && !!form.preferred_time && !!form.workout_duration;
       case 3: return !!form.stress_level;
+      case 4: return true; // Личная цель необязательна
+      case 5: return true; // Предпочтения необязательны
       default: return true;
     }
   };
@@ -519,6 +526,60 @@ export default function CoachPage() {
                   </div>
                 </div>
               )}
+            </>
+          )}
+
+          {/* Step 4: Personal Goal */}
+          {step === 4 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <Target size={18} className="text-accent-blue" />
+                <p className="text-sm text-text-secondary">Ваша конкретная цель поможет нам создать более точный план</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Личная цель</label>
+                <textarea
+                  value={form.personal_goal ?? ''}
+                  onChange={(e) => set('personal_goal', e.target.value)}
+                  placeholder="Например: присесть 150 кг, пробежать марафон, сбросить 10 кг..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[120px] resize-none"
+                />
+                <p className="text-xs text-text-secondary mt-2">Опишите вашу цель максимально конкретно</p>
+              </div>
+              <div className="mt-6 p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                <p className="text-sm text-text-secondary">
+                  💡 Совет: Чем конкретнее цель, тем точнее будет программа тренировок
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Step 5: Exercise Preferences */}
+          {step === 5 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={18} className="text-accent-gold" />
+                <p className="text-sm text-text-secondary">Предпочтения по упражнениям помогут сделать тренировки комфортнее</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Любимые упражнения (необязательно)</label>
+                <textarea
+                  value={form.exercise_likes ?? ''}
+                  onChange={(e) => set('exercise_likes', e.target.value)}
+                  placeholder="Например: люблю приседания, тягу гантели в наклоне..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none mb-4"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Нелюбимые упражнения (необязательно)</label>
+                <textarea
+                  value={form.exercise_dislikes ?? ''}
+                  onChange={(e) => set('exercise_dislikes', e.target.value)}
+                  placeholder="Например: не люблю берпи, прыжки..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none"
+                />
+                <p className="text-xs text-text-secondary mt-2">Мы учтём ваши предпочтения при составлении программы</p>
+              </div>
             </>
           )}
         </div>

@@ -1,1 +1,74 @@
-Nothing should be ignored based on the provided file changes. The only modified file is 'syns-app-master/src/pages/DashboardPage.tsx', which is a source code file and should not be added to .gitignore.
+```
+# Database migrations
+supabase/migrations/*.sql
+
+# Dependencies
+node_modules/
+.yarn/
+npm-debug.log*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+.env
+.env.local
+.env.*
+.env~*
+.env.local~
+# Build outputs
+dist/
+build/
+target/
+# Logs
+*.log
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+# Coverage
+coverage/
+htmlcov/
+.coverage
+# Testing
+.pytest_cache/
+.mypy_cache/
+# Compressed
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```
