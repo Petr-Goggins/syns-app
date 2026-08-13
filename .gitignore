@@ -5,89 +5,51 @@ node_modules/
 # Build outputs
 dist/
 build/
-target/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.py.class
-*.py.obj
-*.py.out
-*.py.dll
-*.py.so
-*.py.a
-*.py.o
-*.py.obj
-*.py.out
-
-# Virtual environments
-venv/
-.venv/
-env/
-ENV/
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.swp
-*.swo
-
-# OS generated files
-.DS_Store
-Thumbs.db
-desktop.ini
+*.js
+*.ts
+*.tsx
 
 # Environment variables
 .env
 .env.local
 .env.*
 
-# IDE specific
+# IDE files
 .vscode/
 .idea/
-*.iml
-*.ipr
-*.iws
+*.swp
+*.swo
 
-# Coverage reports
+# Logs
+*.log
+
+# Coverage
 coverage/
 htmlcov/
 .coverage
 
-# MyPy cache
-.mypy_cache/
-.pytest_cache/
+# Temporary files
+*.tmp
+.DS_Store
+Thumbs.db
 
-# Gradle
-.gradle/
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+# TypeScript
+*.d.ts
+*.map
+
+# React/Vue build artifacts
+.next/
+.nuxt/
+.vuepress/dist/
+output/
+_out/
+
+# Bundler cache
+.nyc_output/
+coverage/
 ```
