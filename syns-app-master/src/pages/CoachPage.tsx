@@ -11,13 +11,16 @@ import {
   Target,
   CalendarDays,
   Sparkles,
+  Trophy,
 } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useLongPathStore } from '@/store/longPathStore';
 import { supabase } from '@/lib/supabase';
 import type { CoachData } from '@/types';
+import MuscleSilhouette from '@/components/MuscleSilhouette';
 
 const MAIN_GOAL_OPTIONS = [
   { id: 'gain_muscle', label: 'Набор мышечной массы' },
@@ -43,6 +46,16 @@ const FOCUS_MUSCLES = [
   { id: 'грудь', label: 'Грудь' }, { id: 'спина', label: 'Спина' }, { id: 'ноги', label: 'Ноги' },
   { id: 'плечи', label: 'Плечи' }, { id: 'руки', label: 'Руки' }, { id: 'пресс', label: 'Пресс' },
   { id: 'ягодицы', label: 'Ягодицы' },
+];
+
+// Глобальные цели для "Длинного пути"
+const LONG_PATH_GOALS = [
+  { id: 'strength_squat', label: 'Набор силы (Присед 150 кг)', type: 'strength', targetValue: 150, unit: 'кг' },
+  { id: 'strength_bench', label: 'Набор силы (Жим 100 кг)', type: 'strength', targetValue: 100, unit: 'кг' },
+  { id: 'strength_deadlift', label: 'Набор силы (Становая 200 кг)', type: 'strength', targetValue: 200, unit: 'кг' },
+  { id: 'weight_loss', label: 'Похудение', type: 'weight_loss', targetValue: 0, unit: 'кг' },
+  { id: 'maintain', label: 'Поддержание формы', type: 'maintain', targetValue: 0, unit: '' },
+  { id: 'recovery', label: 'Реабилитация', type: 'recovery', targetValue: 0, unit: '' },
 ];
 
 const toggleArr = (arr: string[], id: string): string[] =>
@@ -72,6 +85,7 @@ function OptionButton({ active, onClick, label }: OptionButtonProps) {
 
 const STEPS = [
   { icon: Target, title: 'Цель и опыт' },
+  { icon: Trophy, title: 'Глобальная цель и акценты' },
   { icon: Clock, title: 'Режим тренировок' },
   { icon: Heart, title: 'Здоровье и восстановление' },
 ];
@@ -81,6 +95,7 @@ export default function CoachPage() {
   const user = useAuthStore((s) => s.user);
   const { saveCoachData, saving } = useCoachStore();
   const { profile, fetchProfile } = useProfileStore();
+  const { createUserGoal } = useLongPathStore();
   const [step, setStep] = useState(0);
 
   const [form, setForm] = useState<Partial<CoachData>>({
@@ -102,11 +117,20 @@ export default function CoachPage() {
     focus_type: '',
     focus_muscle: '',
     focus_event: '',
+    goal_type: '',
+    goal_amount: null,
+    goal_unit: '',
+    goal_weeks: 12,
   });
 
   // Cycle data (saved directly to profile)
   const [cycleLastPeriod, setCycleLastPeriod] = useState('');
   const [cycleLength, setCycleLength] = useState(28);
+  
+  // Глобальная цель и акцентные мышцы
+  const [selectedLongPathGoal, setSelectedLongPathGoal] = useState<string>('');
+  const [targetWeight, setTargetWeight] = useState<number>(0);
+  const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
 
   if (!user) return null;
 
@@ -114,14 +138,15 @@ export default function CoachPage() {
     setForm({ ...form, [key]: value });
 
   const isFemale = profile?.gender === 'female';
-  const totalSteps = 3; // Всегда 3 шага
+  const totalSteps = 4; // 4 шага с глобальной целью
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
     switch (step) {
       case 0: return !!form.main_goal && !!form.experience_duration;
-      case 1: return !!form.days_per_week && !!form.preferred_time && !!form.workout_duration;
-      case 2: return !!form.stress_level;
+      case 1: return !!selectedLongPathGoal && (selectedLongPathGoal !== 'weight_loss' || targetWeight > 0);
+      case 2: return !!form.days_per_week && !!form.preferred_time && !!form.workout_duration;
+      case 3: return !!form.stress_level;
       default: return true;
     }
   };
@@ -136,6 +161,46 @@ export default function CoachPage() {
 
   const handleFinish = async () => {
     if (!user) return;
+    
+    // Сохраняем глобальную цель в longPathStore и Supabase
+    if (selectedLongPathGoal && user) {
+      const goal = LONG_PATH_GOALS.find(g => g.id === selectedLongPathGoal);
+      if (goal) {
+        let targetType = goal.type;
+        let targetValue = goal.targetValue;
+        let unit = goal.unit;
+        
+        // Для похудения используем целевой вес из профиля или введённый
+        if (goal.type === 'weight_loss') {
+          targetValue = targetWeight > 0 ? targetWeight : (profile?.weight || 0) - 10;
+          unit = 'кг';
+        }
+        
+        // Определяем тип цели для store
+        const storeGoalType = goal.type === 'strength' ? 'strength' : 
+                              goal.type === 'weight_loss' ? 'weight_loss' : 'maintain';
+        
+        await createUserGoal(
+          user.id,
+          storeGoalType,
+          targetValue,
+          unit,
+          form.goal_weeks || 12,
+          profile?.weight || 0
+        );
+        
+        // Сохраняем также в coach data
+        set('goal_type', goal.type);
+        set('goal_amount', targetValue);
+        set('goal_unit', unit);
+      }
+    }
+    
+    // Сохраняем акцентные мышцы
+    if (selectedMuscles.length > 0) {
+      set('focus_muscle', selectedMuscles.join(','));
+    }
+    
     const ok = await saveCoachData(user.id, form);
     if (ok && isFemale && cycleLastPeriod) {
       // Save cycle data to profile
@@ -146,6 +211,12 @@ export default function CoachPage() {
       if (profile) fetchProfile(user.id);
     }
     if (ok) navigate('/plan');
+  };
+
+  const toggleMuscle = (muscleId: string) => {
+    setSelectedMuscles(prev => 
+      prev.includes(muscleId) ? prev.filter(m => m !== muscleId) : [...prev, muscleId]
+    );
   };
 
   const StepIcon = STEPS[step].icon;
@@ -240,8 +311,64 @@ export default function CoachPage() {
             </>
           )}
 
-          {/* Step 1: Schedule + Preferences */}
+          {/* Step 1: Global Goal + Muscle Silhouette */}
           {step === 1 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy size={18} className="text-accent-gold" />
+                <p className="text-sm text-text-secondary">Выберите вашу большую цель на ближайшие месяцы</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Глобальная цель</label>
+                <div className="space-y-2">
+                  {LONG_PATH_GOALS.map((goal) => (
+                    <OptionButton
+                      key={goal.id}
+                      active={selectedLongPathGoal === goal.id}
+                      onClick={() => setSelectedLongPathGoal(goal.id)}
+                      label={goal.label}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Поле для ввода целевого веса при похудении */}
+              {selectedLongPathGoal === 'weight_loss' && (
+                <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20 animate-fade-in">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Целевой вес (кг)</label>
+                  <input
+                    type="number"
+                    value={targetWeight || ''}
+                    onChange={(e) => setTargetWeight(Number(e.target.value))}
+                    placeholder={`Текущий: ${profile?.weight || '--'} кг`}
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="1"
+                    step="0.5"
+                  />
+                  <p className="text-xs text-text-secondary mt-2">
+                    Рекомендуемая потеря: 0.5-1 кг в неделю
+                  </p>
+                </div>
+              )}
+              
+              <div className="pt-4 border-t border-border">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  Акцентные мышцы (кликните на силуэте)
+                </label>
+                <MuscleSilhouette
+                  selectedMuscles={selectedMuscles}
+                  onMuscleClick={toggleMuscle}
+                  mode="selection"
+                  size="md"
+                  showLabels={true}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Step 2: Schedule + Preferences */}
+          {step === 2 && (
             <>
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">Дней в неделю</label>
@@ -306,8 +433,8 @@ export default function CoachPage() {
             </>
           )}
 
-          {/* Step 2: Health + Recovery + Nutrition */}
-          {step === 2 && (
+          {/* Step 3: Health + Recovery + Nutrition */}
+          {step === 3 && (
             <>
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">Уровень стресса</label>

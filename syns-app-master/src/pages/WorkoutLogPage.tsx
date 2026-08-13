@@ -5,6 +5,7 @@ import { useWorkoutLogStore } from '../store/workoutLogStore';
 import { useRestTimerStore, calculateRestTime } from '../store/restTimerStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import MuscleHeatmap from '../components/MuscleHeatmap';
+import ForecastWidget from '../components/ForecastWidget';
 
 const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
   'жим лёжа': ['chest', 'triceps'],
@@ -59,7 +60,7 @@ export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () =
   });
   const [date, setDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'log' | 'progress'>('log');
+  const [activeTab, setActiveTab] = useState<'log' | 'progress' | 'forecast'>('log');
   const [exerciseHistory, setExerciseHistory] = useState<any[]>([]);
   const [showGraph, setShowGraph] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<string>('');
@@ -201,7 +202,7 @@ export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () =
         </span>
       </div>
 
-      {/* Вкладки: Дневник / Прогресс */}
+      {/* Вкладки: Дневник / Прогресс / Прогноз */}
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setActiveTab('log')}
@@ -222,6 +223,16 @@ export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () =
           }`}
         >
           Прогресс
+        </button>
+        <button
+          onClick={() => setActiveTab('forecast')}
+          className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
+            activeTab === 'forecast'
+              ? 'bg-accent-blue text-white shadow-lg'
+              : 'bg-bg-secondary text-text-secondary hover:text-text'
+          }`}
+        >
+          Прогноз
         </button>
       </div>
 
