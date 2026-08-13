@@ -9,6 +9,7 @@ interface WorkoutLogState {
   saving: boolean;
   error: string | null;
   fetchByDate: (userId: string, date: string) => Promise<void>;
+  fetchLogs: (userId: string, startDate?: string, endDate?: string) => Promise<void>;
   fetchHistory: (userId: string, limit?: number) => Promise<WorkoutLog[]>;
   addLog: (
     userId: string,
@@ -45,6 +46,26 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
       return;
     }
     set({ logs: (data as WorkoutLog[]) ?? [], loading: false });
+  },
+
+  fetchLogs: async (userId, startDate, endDate) => {
+    set({ loading: true });
+    let query = supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('log_date', { ascending: false });
+
+    if (startDate) query = query.gte('log_date', startDate);
+    if (endDate) query = query.lte('log_date', endDate);
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching logs:', error);
+      set({ loading: false });
+      return;
+    }
+    set({ logs: data || [], loading: false });
   },
 
   fetchHistory: async (userId, limit = 50) => {
