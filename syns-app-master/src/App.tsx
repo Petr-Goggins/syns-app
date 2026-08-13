@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthInit } from '@/hooks/useAuthInit';
-import Layout from '@/components/Layout';
+import BottomNav from '@/components/BottomNav';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AuthPage from '@/pages/AuthPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -20,11 +20,19 @@ import CoachPage from '@/pages/CoachPage';
 import ReportsPage from '@/pages/ReportsPage';
 import CyclePage from '@/pages/CyclePage';
 
+function MainLayout() {
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      <Outlet />
+      <BottomNav />
+    </div>
+  );
+}
+
 function AppRoutes() {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -48,31 +56,29 @@ function AppRoutes() {
         element={user ? <Navigate to="/" replace /> : <AuthPage />}
       />
       <Route
-        path="/*"
+        path="/"
         element={
           <ProtectedRoute>
-            <Layout sidebarOpen={sidebarOpen} onCloseSidebar={() => setSidebarOpen(false)}>
-              <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/coach" element={<CoachPage />} />
-                <Route path="/plan" element={<PlanPage />} />
-                <Route path="/nutrition" element={<NutritionPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/cycle" element={<CyclePage />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/workouts" element={<WorkoutLogPage />} />
-                <Route path="/sleep" element={<SleepLogPage />} />
-                <Route path="/achievements" element={<AchievementsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/progress" element={<ProgressPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Layout>
+            <MainLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<DashboardPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="coach" element={<CoachPage />} />
+        <Route path="plan" element={<PlanPage />} />
+        <Route path="nutrition" element={<NutritionPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="cycle" element={<CyclePage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="workouts" element={<WorkoutLogPage />} />
+        <Route path="sleep" element={<SleepLogPage />} />
+        <Route path="achievements" element={<AchievementsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="progress" element={<ProgressPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
     </Routes>
   );
 }

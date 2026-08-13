@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useWaterStore } from '@/store/waterStore';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock } from 'lucide-react';
+import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus } from 'lucide-react';
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -85,11 +85,45 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   };
   if (loading) return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>;
 
+  // Приглашающие сообщения вместо нулей
   const widgets = [
-    { label: 'Калории', value: `${stats.calories} ккал`, icon: Utensils, color: 'text-accent-orange', bg: 'bg-accent-orange/10', path: '/nutrition' },
-    { label: 'Вода', value: `${stats.water.toFixed(1)} л`, icon: Droplet, color: 'text-accent-blue', bg: 'bg-accent-blue/10', path: '/nutrition' },
-    { label: 'Сон', value: `${stats.sleep} ч`, icon: Moon, color: 'text-accent-purple', bg: 'bg-accent-purple/10', path: '/sleep' },
-    { label: 'Тренировки', value: `${stats.workouts} сегодня`, icon: Dumbbell, color: 'text-accent-green', bg: 'bg-accent-green/10', path: '/workouts' },
+    { 
+      label: 'Калории', 
+      value: stats.calories > 0 ? `${stats.calories} ккал` : 'Добавь первый приём пищи',
+      subValue: stats.calories === 0 ? 'Начни свой день с завтрака' : '',
+      icon: Utensils, 
+      color: 'text-accent-orange', 
+      bg: 'bg-accent-orange/10', 
+      path: '/nutrition' 
+    },
+    { 
+      label: 'Вода', 
+      value: stats.water > 0 ? `${stats.water.toFixed(1)} л` : 'Выпей стакан воды',
+      subValue: stats.water === 0 ? 'Вода — источник энергии' : '',
+      icon: Droplet, 
+      color: 'text-accent-blue', 
+      bg: 'bg-accent-blue/10', 
+      path: '/nutrition' 
+    },
+    { 
+      label: 'Сон', 
+      value: stats.sleep > 0 ? `${stats.sleep} ч` : 'Запиши свой сон',
+      subValue: stats.sleep === 0 ? 'Отдых важен для восстановления' : '',
+      icon: Moon, 
+      color: 'text-accent-purple', 
+      bg: 'bg-accent-purple/10', 
+      path: '/sleep' 
+    },
+    { 
+      label: 'Тренировки', 
+      value: stats.workouts > 0 ? `${stats.workouts} сегодня` : 'Начни первую тренировку',
+      subValue: stats.workouts === 0 ? 'Движение — это жизнь' : '',
+      actionLabel: stats.workouts === 0 ? 'Начать' : '',
+      icon: Dumbbell, 
+      color: 'text-accent-green', 
+      bg: 'bg-accent-green/10', 
+      path: '/workouts' 
+    },
     { label: 'Прогресс', value: `${stats.progress}%`, icon: TrendingUp, color: 'text-accent-blue', bg: 'bg-accent-blue/10', path: '/reports' },
     { label: 'Серия', value: `${stats.streak} дней`, icon: Zap, color: 'text-accent-gold', bg: 'bg-accent-gold/10', path: '/achievements' },
   ];
@@ -129,18 +163,27 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         {widgets.map((widget) => (
           <div
             key={widget.label}
-            onClick={() => navigate(widget.path)}
-            className="card-modern cursor-pointer hover:border-accent-blue transition-all"
+            onClick={() => widget.actionLabel ? navigate(widget.path) : navigate(widget.path)}
+            className="card-modern cursor-pointer hover:border-accent-blue transition-all min-h-[100px]"
           >
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-full ${widget.bg}`}>
                 <widget.icon size={20} className={widget.color} />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-text-secondary text-xs">{widget.label}</p>
-                <p className="text-text font-bold text-base">{widget.value}</p>
+                <p className="text-text font-bold text-sm leading-tight">{widget.value}</p>
+                {widget.subValue && <p className="text-text-tertiary text-xs mt-1">{widget.subValue}</p>}
               </div>
             </div>
+            {widget.actionLabel && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); navigate(widget.path); }}
+                className="mt-2 w-full btn-primary py-1.5 text-sm"
+              >
+                {widget.actionLabel}
+              </button>
+            )}
           </div>
         ))}
       </div>
