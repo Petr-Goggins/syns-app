@@ -1,47 +1,32 @@
-```gitignore
+```
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Editors
+.vscode/
+.idea/
+
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-venv/
-.venv/
-.env
-.env.local
-.env.*
 
-# Build artifacts
-build/
+# Build outputs
 dist/
-*.egg-info/
+build/
+*.min.js
+*.bundle.js
 
-# Logs
-*.log
-
-# Editor/IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
-
-# Coverage
-.coverage
-coverage/
-htmlcov/
-.coverage
-
-# MyPy
-.mypy_cache/
-
-# PyTest
-.pytest_cache/
-
-# Gradle
-.gradle/
-
-# OS
-.DS_Store
-Thumbs.db
+# Package lock files (since we're tracking package-lock.json in this case)
+# package-lock.json is tracked, so not ignoring it
 ```

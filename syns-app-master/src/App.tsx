@@ -53,20 +53,20 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout sidebarOpen={sidebarOpen} onCloseSidebar={() => setSidebarOpen(false)}>
               <Routes>
-                <Route path="/" element={<DashboardPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/dashboard" element={<DashboardPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/coach" element={<CoachPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/plan" element={<PlanPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/nutrition" element={<NutritionPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/reports" element={<ReportsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/cycle" element={<CyclePage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/chat" element={<ChatPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/profile" element={<ProfilePage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/workouts" element={<WorkoutLogPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/sleep" element={<SleepLogPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/achievements" element={<AchievementsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/settings" element={<SettingsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="/progress" element={<ProgressPage onOpenSidebar={() => setSidebarOpen(true)} />} />
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/coach" element={<CoachPage />} />
+                <Route path="/plan" element={<PlanPage />} />
+                <Route path="/nutrition" element={<NutritionPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/cycle" element={<CyclePage />} />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/workouts" element={<WorkoutLogPage />} />
+                <Route path="/sleep" element={<SleepLogPage />} />
+                <Route path="/achievements" element={<AchievementsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/progress" element={<ProgressPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
