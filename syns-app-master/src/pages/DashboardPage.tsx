@@ -271,13 +271,13 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
       {/* Блок выбора глобальной цели */}
       <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
-        {!longPathStore.userGoal || longPathStore.userGoal.length === 0 ? (
+        {!longPathStore.userGoals || longPathStore.userGoals.length === 0 ? (
           <div className="flex flex-col items-center text-center py-4">
             <Target size={40} className="text-accent-blue mb-3" />
             <p className="text-text font-semibold text-lg mb-2">Выбери свою цель</p>
             <p className="text-text-secondary text-sm mb-4">Определи направление движения к лучшей версии себя</p>
             <button 
-              onClick={() => navigate('/long-path')}
+              onClick={() => navigate('/coach')}
               className="btn-primary px-6 py-2.5 rounded-xl flex items-center gap-2"
             >
               Начать путь <ChevronRight size={18} />
@@ -290,9 +290,9 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
                 <p className="text-text-secondary text-xs uppercase tracking-wide">Глобальная цель</p>
                 <h3 className="text-xl font-bold text-text flex items-center gap-2">
                   <Award size={20} className="text-accent-gold" />
-                  {longPathStore.userGoal[0]?.goal_type === 'strength' ? 'Сила' : 
-                   longPathStore.userGoal[0]?.goal_type === 'cardio' ? 'Выносливость' : 
-                   longPathStore.userGoal[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Масса'}
+                  {longPathStore.userGoals[0]?.goal_type === 'strength' ? 'Сила' : 
+                   longPathStore.userGoals[0]?.goal_type === 'cardio' ? 'Выносливость' : 
+                   longPathStore.userGoals[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Масса'}
                 </h3>
               </div>
               <button 
@@ -317,7 +317,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
               </div>
             </div>
             <p className="text-text-secondary text-xs">
-              До следующей ступени: {longPathStore.levels[longPathStore.currentLevelIndex + 1]?.targetValue || 'Финиш'} {longPathStore.userGoal[0]?.goal_unit}
+              До следующей ступени: {longPathStore.goalLevels[longPathStore.currentLevelIndex + 1]?.targetValue || 'Финиш'} {longPathStore.userGoals[0]?.goal_unit}
             </p>
           </div>
         )}
