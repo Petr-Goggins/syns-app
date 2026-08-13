@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import MuscleHeatmap from '@/components/MuscleHeatmap';
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -343,18 +342,20 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       )}
 
-      {/* Muscle Heatmap Widget */}
+      {/* Твой прогресс */}
       <div className="card-modern mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-text font-semibold flex items-center gap-2">
-            <Zap size={18} className="text-accent-green" />
-            Активные мышцы
+            <Award size={18} className="text-accent-purple" />
+            Твой прогресс
           </h3>
-          <button onClick={() => navigate('/progress')} className="text-accent-blue text-xs hover:underline">
-            Подробнее
-          </button>
         </div>
-        <MuscleHeatmap size="sm" showLabels={false} />
+        <div className="text-center py-4">
+          <p className="text-text font-bold text-lg">Уровень: {longPathStore.currentLevelIndex + 1}</p>
+          <p className="text-text-secondary text-sm mt-1">
+            {longPathStore.userGoals[0] ? longPathStore.userGoals[0].goal_type : 'Начни свой путь'}
+          </p>
+        </div>
       </div>
 
       {/* Календарь активности (GitHub-style) */}
