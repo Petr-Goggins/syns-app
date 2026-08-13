@@ -1,62 +1,71 @@
-```
-# Database migrations
-supabase/migrations/*.sql
-
 # Dependencies
 node_modules/
-.yarn/
-npm-debug.log*
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
-.venv/
-.env
-.env.local
-.env.*
-.env~*
-.env.local~
+
 # Build outputs
 dist/
 build/
 target/
-# Logs
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py.class
+.Python
+env/
+venv/
+.venv/
+.ENV
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-# IDE
+.git/modules/
+*.sublime-project
+*.sublime-workspace
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
-# Coverage
+*~
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Testing
 coverage/
 htmlcov/
-.coverage
-# Testing
 .pytest_cache/
 .mypy_cache/
-# Compressed
+
+# General
+*.tmp
+*.temp
+*.log
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tar*
 *.zip
 *.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
 *.7z
 *.rar
+*.bz2
+*.xz
 *.zst
 *.lz4
 *.lzh
@@ -71,4 +80,3 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
