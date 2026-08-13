@@ -5,9 +5,10 @@ import { useWaterStore } from '@/store/waterStore';
 import { useLongPathStore } from '@/store/longPathStore';
 import { useWorkoutLogStore } from '@/store/workoutLogStore';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight } from 'lucide-react';
+import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Modal from '@/components/Modal';
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -29,6 +30,13 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [cycleRecommendation, setCycleRecommendation] = useState<string | null>(null);
   const [waterAmount, setWaterAmount] = useState(200);
   const [forecastData, setForecastData] = useState<any[]>([]);
+  
+  // Модальное окно для добавления воды
+  const [showWaterModal, setShowWaterModal] = useState(false);
+  
+  // Модальное окно для сна
+  const [showSleepModal, setShowSleepModal] = useState(false);
+  const [sleepHours, setSleepHours] = useState('');
   
   useEffect(() => {
     if (!user) return;
@@ -210,7 +218,23 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     if (!user) return;
     await waterStore.addWater(user.id, amount);
     setStats(prev => ({ ...prev, water: Math.round((prev.water + amount / 1000) * 10) / 10 }));
+    setShowWaterModal(false);
   };
+
+  const handleSleepSave = async () => {
+    if (!user || !sleepHours) return;
+    const today = new Date().toISOString().split('T')[0];
+    await supabase.from('sleep_logs').insert({
+      user_id: user.id,
+      date: today,
+      hours: parseFloat(sleepHours),
+      quality: 80,
+    });
+    setStats(prev => ({ ...prev, sleep: parseFloat(sleepHours) }));
+    setShowSleepModal(false);
+    setSleepHours('');
+  };
+
   if (loading) return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>;
 
   const waterPercent = Math.min((waterAmount / 3000) * 100, 100);
@@ -364,46 +388,74 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         <p className="text-text-secondary text-sm">— Мотивация дня</p>
       </div>
 
-      {/* Отдельные карточки метрик */}
+      {/* Отдельные карточки метрик с кнопками "Начать" */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         {/* Калории */}
-        <div className="card-modern p-4 bg-gradient-to-br from-accent-orange/10 to-transparent border-accent-orange/20">
+        <div 
+          className="card-modern p-4 bg-gradient-to-br from-accent-orange/10 to-transparent border-accent-orange/20 cursor-pointer hover:border-accent-orange/50 transition-colors"
+          onClick={() => navigate('/nutrition')}
+        >
           <div className="flex items-center justify-between mb-2">
             <Utensils size={20} className="text-accent-orange" />
             <span className="text-xs text-text-secondary">ккал</span>
           </div>
           <p className="text-2xl font-bold text-text">{stats.calories > 0 ? stats.calories : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">{stats.calories === 0 ? 'Добавь приём пищи' : 'Сегодня'}</p>
+          <p className="text-xs text-text-secondary mt-1">
+            {stats.calories === 0 ? (
+              <span className="text-accent-orange font-medium">+ Добавь первый приём пищи</span>
+            ) : 'Сегодня'}
+          </p>
         </div>
 
         {/* Вода */}
-        <div className="card-modern p-4 bg-gradient-to-br from-accent-blue/10 to-transparent border-accent-blue/20">
+        <div 
+          className="card-modern p-4 bg-gradient-to-br from-accent-blue/10 to-transparent border-accent-blue/20 cursor-pointer hover:border-accent-blue/50 transition-colors"
+          onClick={() => setShowWaterModal(true)}
+        >
           <div className="flex items-center justify-between mb-2">
             <Droplet size={20} className="text-accent-blue" />
-            <span className="text-xs text-text-secondary">литры</span>
+            <Plus size={16} className="text-accent-blue" />
           </div>
           <p className="text-2xl font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">{stats.water === 0 ? 'Выпей воды' : 'Сегодня'}</p>
+          <p className="text-xs text-text-secondary mt-1">
+            {stats.water === 0 ? (
+              <span className="text-accent-blue font-medium">+ Выпей стакан воды</span>
+            ) : 'Сегодня'}
+          </p>
         </div>
 
         {/* Сон */}
-        <div className="card-modern p-4 bg-gradient-to-br from-accent-purple/10 to-transparent border-accent-purple/20">
+        <div 
+          className="card-modern p-4 bg-gradient-to-br from-accent-purple/10 to-transparent border-accent-purple/20 cursor-pointer hover:border-accent-purple/50 transition-colors"
+          onClick={() => setShowSleepModal(true)}
+        >
           <div className="flex items-center justify-between mb-2">
             <Moon size={20} className="text-accent-purple" />
             <span className="text-xs text-text-secondary">часы</span>
           </div>
           <p className="text-2xl font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}` : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">{stats.sleep === 0 ? 'Запиши сон' : 'Сегодня'}</p>
+          <p className="text-xs text-text-secondary mt-1">
+            {stats.sleep === 0 ? (
+              <span className="text-accent-purple font-medium">+ Запиши сон</span>
+            ) : 'Сегодня'}
+          </p>
         </div>
 
         {/* Тренировки */}
-        <div className="card-modern p-4 bg-gradient-to-br from-accent-green/10 to-transparent border-accent-green/20">
+        <div 
+          className="card-modern p-4 bg-gradient-to-br from-accent-green/10 to-transparent border-accent-green/20 cursor-pointer hover:border-accent-green/50 transition-colors"
+          onClick={() => navigate('/workouts')}
+        >
           <div className="flex items-center justify-between mb-2">
             <Dumbbell size={20} className="text-accent-green" />
             <span className="text-xs text-text-secondary">тренировки</span>
           </div>
           <p className="text-2xl font-bold text-text">{stats.workouts > 0 ? stats.workouts : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">{stats.workouts === 0 ? 'Начни тренировку' : 'Сегодня'}</p>
+          <p className="text-xs text-text-secondary mt-1">
+            {stats.workouts === 0 ? (
+              <span className="text-accent-green font-medium">+ Начни первую тренировку</span>
+            ) : 'Сегодня'}
+          </p>
         </div>
       </div>
 
@@ -464,11 +516,63 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           <button onClick={() => handleWaterAdd(waterAmount)} className="btn-primary flex-1 py-2">
             Добавить
           </button>
-          <button onClick={() => handleWaterAdd(200)} className="btn-secondary flex-1 py-2">+200</button>
-          <button onClick={() => handleWaterAdd(500)} className="btn-secondary flex-1 py-2">+500</button>
-          <button onClick={() => handleWaterAdd(1000)} className="btn-secondary flex-1 py-2">+1 л</button>
+          <button onClick={() => { setWaterAmount(200); setShowWaterModal(true); }} className="btn-secondary flex-1 py-2">+200</button>
+          <button onClick={() => { setWaterAmount(500); setShowWaterModal(true); }} className="btn-secondary flex-1 py-2">+500</button>
+          <button onClick={() => { setWaterAmount(1000); setShowWaterModal(true); }} className="btn-secondary flex-1 py-2">+1 л</button>
         </div>
       </div>
+
+      {/* Модальное окно для воды */}
+      {showWaterModal && (
+        <Modal onClose={() => setShowWaterModal(false)} title="Добавить воду">
+          <div className="space-y-4">
+            <p className="text-text-secondary text-sm">Выберите количество:</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => handleWaterAdd(200)} className="btn-secondary py-3">
+                🥛 200 мл
+              </button>
+              <button onClick={() => handleWaterAdd(500)} className="btn-secondary py-3">
+                🍶 500 мл
+              </button>
+              <button onClick={() => handleWaterAdd(1000)} className="btn-secondary py-3">
+                🪣 1 л
+              </button>
+              <button onClick={() => setShowWaterModal(false)} className="btn-secondary py-3">
+                ✕ Отмена
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Модальное окно для сна */}
+      {showSleepModal && (
+        <Modal onClose={() => setShowSleepModal(false)} title="Записать сон">
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-text-secondary">
+              Сколько часов вы спали?
+            </label>
+            <input
+              type="number"
+              value={sleepHours}
+              onChange={(e) => setSleepHours(e.target.value)}
+              placeholder="Например: 7.5"
+              step="0.5"
+              min="0"
+              max="24"
+              className="input-field w-full px-3 py-2.5"
+            />
+            <div className="flex gap-3 pt-2">
+              <button onClick={handleSleepSave} className="btn-primary flex-1 py-2.5">
+                Сохранить
+              </button>
+              <button onClick={() => setShowSleepModal(false)} className="btn-secondary flex-1 py-2.5">
+                Отмена
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

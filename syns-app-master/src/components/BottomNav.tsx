@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Dumbbell, Utensils, BarChart2, User } from 'lucide-react';
+import { MOBILE_NAV_ITEMS } from '@/config/navigation';
 
 export default function BottomNav() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb z-50 lg:hidden">
       <div className="flex justify-around items-center h-16">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
@@ -24,7 +25,7 @@ export default function BottomNav() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                isActive ? 'text-primary' : 'text-text-secondary'
+                isActive ? 'text-accent-blue' : 'text-text-secondary'
               }`}
             >
               <tab.icon size={24} strokeWidth={isActive ? 2.5 : 2} />

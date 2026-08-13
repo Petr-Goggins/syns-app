@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthInit } from '@/hooks/useAuthInit';
 import BottomNav from '@/components/BottomNav';
+import Sidebar from '@/components/Sidebar';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AuthPage from '@/pages/AuthPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -22,9 +23,19 @@ import CyclePage from '@/pages/CyclePage';
 import LongPathPage from '@/pages/LongPathPage';
 
 function MainLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Outlet />
+    <div className="min-h-screen bg-background">
+      {/* Sidebar для десктопа */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      {/* Основной контент со сдвигом для десктопа */}
+      <div className="lg:ml-60 pb-20 lg:pb-0">
+        <Outlet />
+      </div>
+      
+      {/* BottomNav только для мобилок */}
       <BottomNav />
     </div>
   );
