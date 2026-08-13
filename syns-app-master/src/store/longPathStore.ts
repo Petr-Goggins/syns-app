@@ -29,6 +29,8 @@ interface LongPathState {
   predictions: Prediction | null;
   activityCalendar: ActivityDay[];
   streak: number;
+  currentLevelIndex: number;
+  progressToNextLevel: number;
   loading: boolean;
   error: string | null;
   
@@ -47,6 +49,7 @@ interface LongPathState {
   calculatePrediction: (currentValue: number, trend: number[], weeks: number[]) => Prediction;
   fetchActivityCalendar: (userId: string, months?: number) => Promise<void>;
   calculateStreak: (userId: string) => Promise<void>;
+  updateCurrentLevel: (currentValue: number) => void;
   reset: () => void;
 }
 
@@ -56,6 +59,8 @@ export const useLongPathStore = create<LongPathState>((set, get) => ({
   predictions: null,
   activityCalendar: [],
   streak: 0,
+  currentLevelIndex: 0,
+  progressToNextLevel: 0,
   loading: false,
   error: null,
 
@@ -254,12 +259,39 @@ export const useLongPathStore = create<LongPathState>((set, get) => ({
     set({ streak });
   },
 
+  updateCurrentLevel: (currentValue) => {
+    const { goalLevels, userGoals } = get();
+    if (goalLevels.length === 0 || userGoals.length === 0) return;
+    
+    // Находим текущий уровень
+    let currentIndex = 0;
+    for (let i = 0; i < goalLevels.length; i++) {
+      if (currentValue >= goalLevels[i].targetValue) {
+        currentIndex = i + 1;
+      } else {
+        break;
+      }
+    }
+    
+    // Вычисляем прогресс до следующего уровня
+    const prevLevel = currentIndex > 0 ? goalLevels[currentIndex - 1]?.targetValue : userGoals[0]?.start_value || 0;
+    const nextLevel = goalLevels[currentIndex]?.targetValue || currentValue;
+    const progress = nextLevel > prevLevel ? ((currentValue - prevLevel) / (nextLevel - prevLevel)) * 100 : 100;
+    
+    set({ 
+      currentLevelIndex: Math.min(currentIndex, goalLevels.length - 1),
+      progressToNextLevel: Math.min(progress, 100)
+    });
+  },
+
   reset: () => set({ 
     userGoals: [], 
     goalLevels: [], 
     predictions: null, 
     activityCalendar: [],
     streak: 0,
+    currentLevelIndex: 0,
+    progressToNextLevel: 0,
     loading: false, 
     error: null 
   }),
