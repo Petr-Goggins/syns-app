@@ -319,6 +319,9 @@ export interface CoachData {
   goal_amount: number | null;
   goal_unit: string | null;
   goal_weeks: number | null;
+  personal_goal: string | null;
+  exercise_likes: string | null;
+  exercise_dislikes: string | null;
   created_at: string;
   updated_at: string;
 }
