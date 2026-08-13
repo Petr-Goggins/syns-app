@@ -5,13 +5,11 @@ import {
   ChevronRight,
   Check,
   Heart,
-  Clock,
   Dumbbell,
-  Moon,
   Target,
-  CalendarDays,
   Sparkles,
   Trophy,
+  User,
 } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
@@ -58,6 +56,15 @@ const LONG_PATH_GOALS = [
   { id: 'recovery', label: 'Реабилитация', type: 'recovery', targetValue: 0, unit: '' },
 ];
 
+const INVENTORY_OPTIONS = [
+  { id: 'bodyweight', label: 'Свой вес' },
+  { id: 'dumbbells', label: 'Гантели' },
+  { id: 'barbell', label: 'Штанга' },
+  { id: 'pullup_bar', label: 'Турник' },
+  { id: 'gym', label: 'Зал' },
+  { id: 'resistance_bands', label: 'Резинки' },
+];
+
 const toggleArr = (arr: string[], id: string): string[] =>
   arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
 
@@ -84,12 +91,13 @@ function OptionButton({ active, onClick, label }: OptionButtonProps) {
 }
 
 const STEPS = [
-  { icon: Target, title: 'Цель и опыт' },
-  { icon: Trophy, title: 'Глобальная цель и акценты' },
-  { icon: Clock, title: 'Режим тренировок' },
-  { icon: Heart, title: 'Здоровье и восстановление' },
-  { icon: Dumbbell, title: 'Личная цель' },
-  { icon: Sparkles, title: 'Предпочтения' },
+  { icon: Target, title: 'Глобальная цель' },
+  { icon: Trophy, title: 'Опыт и здоровье' },
+  { icon: Dumbbell, title: 'Инвентарь' },
+  { icon: User, title: 'Личные данные' },
+  { icon: Heart, title: 'Фокусные мышцы' },
+  { icon: Sparkles, title: 'Личная цель' },
+  { icon: Sparkles, title: 'Доп. параметры' },
 ];
 
 export default function CoachPage() {
@@ -106,32 +114,28 @@ export default function CoachPage() {
     training_level: '',
     injuries: [],
     health_restrictions: '',
-    days_per_week: 3,
-    free_days: [],
-    priority: '',
-    sleep_hours: '',
     stress_level: '',
     diet_preference: '',
-    focus_type: '',
     focus_muscle: '',
-    focus_event: '',
     goal_type: '',
     goal_amount: null,
     goal_unit: '',
-    goal_weeks: 12,
     personal_goal: '',
     exercise_likes: '',
     exercise_dislikes: '',
+    inventory: [],
+    gender: 'male',
+    age: null,
+    weight: null,
+    height: null,
   });
 
-  // Cycle data (saved directly to profile)
-  const [cycleLastPeriod, setCycleLastPeriod] = useState('');
-  const [cycleLength, setCycleLength] = useState(28);
-  
   // Глобальная цель и акцентные мышцы
   const [selectedLongPathGoal, setSelectedLongPathGoal] = useState<string>('');
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
+  const [selectedInventory, setSelectedInventory] = useState<string[]>([]);
+  const [silhouetteView, setSilhouetteView] = useState<'front' | 'back'>('front');
 
   if (!user) return null;
 
@@ -139,17 +143,18 @@ export default function CoachPage() {
     setForm({ ...form, [key]: value });
 
   const isFemale = profile?.gender === 'female';
-  const totalSteps = 6; // 6 шагов: цель+опыт, глобальная цель, режим, здоровье, личная цель, предпочтения
+  const totalSteps = 7; // 7 шагов: цель, опыт/здоровье, инвентарь, данные, фокус, личная цель, доп. параметры
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!form.main_goal && !!form.experience_duration;
-      case 1: return !!selectedLongPathGoal && (selectedLongPathGoal !== 'weight_loss' || targetWeight > 0);
-      case 2: return !!form.days_per_week;
-      case 3: return !!form.stress_level;
-      case 4: return true; // Личная цель необязательна
-      case 5: return true; // Предпочтения необязательны
+      case 0: return !!selectedLongPathGoal && (selectedLongPathGoal !== 'weight_loss' || targetWeight > 0);
+      case 1: return !!form.experience_duration && !!form.training_level;
+      case 2: return selectedInventory.length > 0;
+      case 3: return !!form.gender && !!form.age && !!form.weight && !!form.height;
+      case 4: return selectedMuscles.length > 0;
+      case 5: return true; // Личная цель необязательна
+      case 6: return !!form.stress_level && !!form.diet_preference;
       default: return true;
     }
   };
@@ -188,7 +193,7 @@ export default function CoachPage() {
           storeGoalType,
           targetValue,
           unit,
-          form.goal_weeks || 12,
+          12,
           profile?.weight || 0
         );
         
@@ -204,15 +209,12 @@ export default function CoachPage() {
       set('focus_muscle', selectedMuscles.join(','));
     }
     
-    const ok = await saveCoachData(user.id, form);
-    if (ok && isFemale && cycleLastPeriod) {
-      // Save cycle data to profile
-      await supabase
-        .from('profiles')
-        .update({ cycle_last_period: cycleLastPeriod, cycle_length: cycleLength })
-        .eq('id', user.id);
-      if (profile) fetchProfile(user.id);
+    // Сохраняем инвентарь
+    if (selectedInventory.length > 0) {
+      set('inventory', selectedInventory);
     }
+    
+    const ok = await saveCoachData(user.id, form);
     if (ok) navigate('/plan');
   };
 
@@ -484,15 +486,50 @@ export default function CoachPage() {
             </>
           )}
 
-          {/* Step 4: Personal Goal */}
+          {/* Step 4: Focus Muscles (Silhouette) */}
           {step === 4 && (
             <>
               <div className="flex items-center gap-2 mb-3">
-                <Target size={18} className="text-accent-blue" />
-                <p className="text-sm text-text-secondary">Ваша конкретная цель поможет нам создать более точный план</p>
+                <Heart size={18} className="text-accent-red" />
+                <p className="text-sm text-text-secondary">Кликните на зоны, которые хотите проработать</p>
+              </div>
+              <div className="flex justify-center gap-2 mb-4">
+                <button
+                  onClick={() => setSilhouetteView('front')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                    silhouetteView === 'front' ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue' : 'border-border text-text-secondary'
+                  }`}>Спереди</button>
+                <button
+                  onClick={() => setSilhouetteView('back')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                    silhouetteView === 'back' ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue' : 'border-border text-text-secondary'
+                  }`}>Сзади</button>
+              </div>
+              <MuscleSilhouette
+                selectedMuscles={selectedMuscles}
+                onMuscleClick={toggleMuscle}
+                mode="selection"
+                size="lg"
+                showLabels={true}
+                view={silhouetteView}
+              />
+              <div className="mt-4 p-3 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                <p className="text-sm text-text-secondary">
+                  Выбрано мышц: {selectedMuscles.length > 0 ? selectedMuscles.join(', ') : 'ничего'}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Step 5: Personal Goal */}
+          {step === 5 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={18} className="text-accent-gold" />
+                <p className="text-sm text-text-secondary">Опишите вашу конкретную цель</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Личная цель</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Какая у вас конкретная цель?</label>
                 <textarea
                   value={form.personal_goal ?? ''}
                   onChange={(e) => set('personal_goal', e.target.value)}
@@ -501,39 +538,64 @@ export default function CoachPage() {
                 />
                 <p className="text-xs text-text-secondary mt-2">Опишите вашу цель максимально конкретно</p>
               </div>
-              <div className="mt-6 p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
-                <p className="text-sm text-text-secondary">
-                  💡 Совет: Чем конкретнее цель, тем точнее будет программа тренировок
-                </p>
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-text-secondary mb-2">Какие упражнения вы любите или не любите?</label>
+                <textarea
+                  value={form.exercise_likes ?? ''}
+                  onChange={(e) => set('exercise_likes', e.target.value)}
+                  placeholder="Любимые: например, приседания, тяга гантели..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none mb-4"
+                />
+                <textarea
+                  value={form.exercise_dislikes ?? ''}
+                  onChange={(e) => set('exercise_dislikes', e.target.value)}
+                  placeholder="Нелюбимые: например, берпи, прыжки..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none"
+                />
+                <p className="text-xs text-text-secondary mt-2">Мы учтём ваши предпочтения при составлении программы</p>
               </div>
             </>
           )}
 
-          {/* Step 5: Exercise Preferences */}
-          {step === 5 && (
+          {/* Step 6: Additional Parameters */}
+          {step === 6 && (
             <>
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={18} className="text-accent-gold" />
-                <p className="text-sm text-text-secondary">Предпочтения по упражнениям помогут сделать тренировки комфортнее</p>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень стресса</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    ['low', 'Низкий'],
+                    ['medium', 'Средний'],
+                    ['high', 'Высокий'],
+                  ].map(([val, label]) => (
+                    <OptionButton key={val} active={form.stress_level === val} onClick={() => set('stress_level', val)} label={label} />
+                  ))}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Любимые упражнения (необязательно)</label>
-                <textarea
-                  value={form.exercise_likes ?? ''}
-                  onChange={(e) => set('exercise_likes', e.target.value)}
-                  placeholder="Например: люблю приседания, тягу гантели в наклоне..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none mb-4"
-                />
+                <label className="block text-sm font-medium text-text-secondary mb-2">Диетические предпочтения</label>
+                <div className="space-y-2">
+                  {[
+                    ['none', 'Нет'],
+                    ['vegetarian', 'Вегетарианство'],
+                    ['vegan', 'Веганство'],
+                    ['halal', 'Халяль'],
+                    ['kosher', 'Кошер'],
+                    ['other', 'Другое'],
+                  ].map(([val, label]) => (
+                    <OptionButton key={val} active={form.diet_preference === val} onClick={() => set('diet_preference', val)} label={label} />
+                  ))}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Нелюбимые упражнения (необязательно)</label>
-                <textarea
-                  value={form.exercise_dislikes ?? ''}
-                  onChange={(e) => set('exercise_dislikes', e.target.value)}
-                  placeholder="Например: не люблю берпи, прыжки..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none"
+                <label className="block text-sm font-medium text-text-secondary mb-2">Ограничения по здоровью</label>
+                <input
+                  type="text"
+                  value={form.health_restrictions ?? ''}
+                  onChange={(e) => set('health_restrictions', e.target.value)}
+                  placeholder="Например: гипертония, диабет..."
+                  className="input-field w-full px-3 py-2.5 text-sm"
                 />
-                <p className="text-xs text-text-secondary mt-2">Мы учтём ваши предпочтения при составлении программы</p>
               </div>
             </>
           )}

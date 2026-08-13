@@ -213,49 +213,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   };
   if (loading) return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>;
 
-  // Приглашающие сообщения вместо нулей
-  const widgets = [
-    { 
-      label: 'Калории', 
-      value: stats.calories > 0 ? `${stats.calories} ккал` : 'Добавь первый приём пищи',
-      subValue: stats.calories === 0 ? 'Начни свой день с завтрака' : '',
-      icon: Utensils, 
-      color: 'text-accent-orange', 
-      bg: 'bg-accent-orange/10', 
-      path: '/nutrition' 
-    },
-    { 
-      label: 'Вода', 
-      value: stats.water > 0 ? `${stats.water.toFixed(1)} л` : 'Выпей стакан воды',
-      subValue: stats.water === 0 ? 'Вода — источник энергии' : '',
-      icon: Droplet, 
-      color: 'text-accent-blue', 
-      bg: 'bg-accent-blue/10', 
-      path: '/nutrition' 
-    },
-    { 
-      label: 'Сон', 
-      value: stats.sleep > 0 ? `${stats.sleep} ч` : 'Запиши свой сон',
-      subValue: stats.sleep === 0 ? 'Отдых важен для восстановления' : '',
-      icon: Moon, 
-      color: 'text-accent-purple', 
-      bg: 'bg-accent-purple/10', 
-      path: '/sleep' 
-    },
-    { 
-      label: 'Тренировки', 
-      value: stats.workouts > 0 ? `${stats.workouts} сегодня` : 'Начни первую тренировку',
-      subValue: stats.workouts === 0 ? 'Движение — это жизнь' : '',
-      actionLabel: stats.workouts === 0 ? 'Начать' : '',
-      icon: Dumbbell, 
-      color: 'text-accent-green', 
-      bg: 'bg-accent-green/10', 
-      path: '/workouts' 
-    },
-    { label: 'Прогресс', value: `${stats.progress}%`, icon: TrendingUp, color: 'text-accent-blue', bg: 'bg-accent-blue/10', path: '/reports' },
-    { label: 'Серия', value: `${stats.streak} дней`, icon: Zap, color: 'text-accent-gold', bg: 'bg-accent-gold/10', path: '/achievements' },
-  ];
-
   const waterPercent = Math.min((waterAmount / 3000) * 100, 100);
   const rangeStyle = (percent: number) => ({
     background: `linear-gradient(to right, #58A6FF 0%, #58A6FF ${percent}%, #374151 ${percent}%, #374151 100%)`,
@@ -407,50 +364,82 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         <p className="text-text-secondary text-sm">— Мотивация дня</p>
       </div>
 
-      {/* Карточка приветствия и цели */}
-      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-transparent border-accent-blue/20">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <p className="text-text-secondary text-sm">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</p>
-            <p className="text-text font-semibold text-lg mt-1">Цель: {stats.goal}</p>
+      {/* Отдельные карточки метрик */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Калории */}
+        <div className="card-modern p-4 bg-gradient-to-br from-accent-orange/10 to-transparent border-accent-orange/20">
+          <div className="flex items-center justify-between mb-2">
+            <Utensils size={20} className="text-accent-orange" />
+            <span className="text-xs text-text-secondary">ккал</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Target size={20} className="text-accent-blue" />
-            <span className="text-sm text-text-secondary">Вес: {stats.weight} кг</span>
+          <p className="text-2xl font-bold text-text">{stats.calories > 0 ? stats.calories : '—'}</p>
+          <p className="text-xs text-text-secondary mt-1">{stats.calories === 0 ? 'Добавь приём пищи' : 'Сегодня'}</p>
+        </div>
+
+        {/* Вода */}
+        <div className="card-modern p-4 bg-gradient-to-br from-accent-blue/10 to-transparent border-accent-blue/20">
+          <div className="flex items-center justify-between mb-2">
+            <Droplet size={20} className="text-accent-blue" />
+            <span className="text-xs text-text-secondary">литры</span>
+          </div>
+          <p className="text-2xl font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : '—'}</p>
+          <p className="text-xs text-text-secondary mt-1">{stats.water === 0 ? 'Выпей воды' : 'Сегодня'}</p>
+        </div>
+
+        {/* Сон */}
+        <div className="card-modern p-4 bg-gradient-to-br from-accent-purple/10 to-transparent border-accent-purple/20">
+          <div className="flex items-center justify-between mb-2">
+            <Moon size={20} className="text-accent-purple" />
+            <span className="text-xs text-text-secondary">часы</span>
+          </div>
+          <p className="text-2xl font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}` : '—'}</p>
+          <p className="text-xs text-text-secondary mt-1">{stats.sleep === 0 ? 'Запиши сон' : 'Сегодня'}</p>
+        </div>
+
+        {/* Тренировки */}
+        <div className="card-modern p-4 bg-gradient-to-br from-accent-green/10 to-transparent border-accent-green/20">
+          <div className="flex items-center justify-between mb-2">
+            <Dumbbell size={20} className="text-accent-green" />
+            <span className="text-xs text-text-secondary">тренировки</span>
+          </div>
+          <p className="text-2xl font-bold text-text">{stats.workouts > 0 ? stats.workouts : '—'}</p>
+          <p className="text-xs text-text-secondary mt-1">{stats.workouts === 0 ? 'Начни тренировку' : 'Сегодня'}</p>
+        </div>
+      </div>
+
+      {/* Прогресс и Серия в одной строке */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="card-modern p-4 bg-gradient-to-br from-accent-blue/10 to-transparent border-accent-blue/20">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp size={18} className="text-accent-blue" />
+            <span className="text-sm text-text-secondary">Прогресс</span>
+          </div>
+          <p className="text-2xl font-bold text-text">{stats.progress}%</p>
+          <div className="w-full bg-bg-tertiary rounded-full h-1.5 mt-2">
+            <div className="bg-accent-blue h-1.5 rounded-full transition-all duration-700" style={{ width: `${stats.progress}%` }} />
           </div>
         </div>
-        
-        {/* Большая карточка с объединёнными метриками */}
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border">
-          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
-            <Utensils size={18} className="mx-auto mb-1 text-accent-orange" />
-            <p className="text-xs text-text-secondary">Калории</p>
-            <p className="text-sm font-bold text-text">{stats.calories > 0 ? `${stats.calories}` : '—'}</p>
+
+        <div className="card-modern p-4 bg-gradient-to-br from-accent-gold/10 to-transparent border-accent-gold/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={18} className="text-accent-gold" />
+            <span className="text-sm text-text-secondary">Серия</span>
           </div>
-          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
-            <Droplet size={18} className="mx-auto mb-1 text-accent-blue" />
-            <p className="text-xs text-text-secondary">Вода</p>
-            <p className="text-sm font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}л` : '—'}</p>
+          <p className="text-2xl font-bold text-text">{stats.streak}</p>
+          <p className="text-xs text-text-secondary mt-1">дней подряд</p>
+        </div>
+      </div>
+
+      {/* Приветствие и цель (упрощённый блок) */}
+      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-text font-semibold">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</p>
+            <p className="text-text-secondary text-sm mt-1">Цель: {stats.goal}</p>
           </div>
-          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
-            <Moon size={18} className="mx-auto mb-1 text-accent-purple" />
-            <p className="text-xs text-text-secondary">Сон</p>
-            <p className="text-sm font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}ч` : '—'}</p>
-          </div>
-          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
-            <Dumbbell size={18} className="mx-auto mb-1 text-accent-green" />
-            <p className="text-xs text-text-secondary">Тренировки</p>
-            <p className="text-sm font-bold text-text">{stats.workouts > 0 ? `${stats.workouts}` : '—'}</p>
-          </div>
-          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
-            <TrendingUp size={18} className="mx-auto mb-1 text-accent-blue" />
-            <p className="text-xs text-text-secondary">Прогресс</p>
-            <p className="text-sm font-bold text-text">{stats.progress}%</p>
-          </div>
-          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
-            <Zap size={18} className="mx-auto mb-1 text-accent-gold" />
-            <p className="text-xs text-text-secondary">Серия</p>
-            <p className="text-sm font-bold text-text">{stats.streak} дн.</p>
+          <div className="flex items-center gap-2">
+            <Target size={18} className="text-accent-blue" />
+            <span className="text-sm text-text-secondary">{stats.weight} кг</span>
           </div>
         </div>
       </div>
@@ -478,17 +467,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           <button onClick={() => handleWaterAdd(200)} className="btn-secondary flex-1 py-2">+200</button>
           <button onClick={() => handleWaterAdd(500)} className="btn-secondary flex-1 py-2">+500</button>
           <button onClick={() => handleWaterAdd(1000)} className="btn-secondary flex-1 py-2">+1 л</button>
-        </div>
-      </div>
-
-      {/* Прогресс-бар цели */}
-      <div className="card-modern mt-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-text-secondary text-sm">Прогресс к цели</span>
-          <span className="text-text font-bold">{stats.progress}%</span>
-        </div>
-        <div className="w-full bg-bg-tertiary rounded-full h-2.5">
-          <div className="bg-accent-blue h-2.5 rounded-full transition-all duration-700" style={{ width: `${stats.progress}%` }} />
         </div>
       </div>
     </div>
