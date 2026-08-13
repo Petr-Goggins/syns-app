@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useWaterStore } from '@/store/waterStore';
+import { useLongPathStore } from '@/store/longPathStore';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus } from 'lucide-react';
+import { getPhaseRecommendation } from '@/lib/cycle';
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const waterStore = useWaterStore();
+  const longPathStore = useLongPathStore();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     weight: 0,
@@ -20,8 +23,9 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     progress: 0,
     streak: 0,
   });
+  const [cycleRecommendation, setCycleRecommendation] = useState<string | null>(null);
   const [waterAmount, setWaterAmount] = useState(200);
-
+  
   useEffect(() => {
     if (!user) return;
     const loadDashboard = async () => {
@@ -29,9 +33,15 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('weight, goal')
+          .select('weight, goal, cycle_phase, cycle_last_period, cycle_length')
           .eq('id', user.id)
           .single();
+
+        // Рекомендация по биоритмам
+        if (profile?.cycle_phase && profile.cycle_phase !== 'not_specified') {
+          const rec = getPhaseRecommendation(profile.cycle_phase as any);
+          setCycleRecommendation(rec.recommendation);
+        }
 
         const today = new Date().toISOString().split('T')[0];
         const { data: meals } = await supabase
@@ -53,11 +63,15 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           .from('workout_logs')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .eq('date', today);
+          .eq('log_date', today);
 
         // Загружаем воду из store
         await waterStore.fetchToday(user.id);
         const totalWater = waterStore.todayAmount;
+
+        // Загружаем серию и календарь активности
+        await longPathStore.calculateStreak(user.id);
+        await longPathStore.fetchActivityCalendar(user.id, 1);
 
         setStats({
           weight: profile?.weight || 0,
@@ -67,7 +81,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           workouts: workoutsCount || 0,
           goal: profile?.goal || 'Поддержание',
           progress: 65,
-          streak: 7,
+          streak: longPathStore.streak,
         });
       } catch (error) {
         console.error(error);
@@ -138,6 +152,42 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-text">Главная</h1>
         <span className="text-sm text-text-secondary">{new Date().toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+      </div>
+
+      {/* Рекомендация по биоритмам */}
+      {cycleRecommendation && (
+        <div className="card-modern mb-6 bg-gradient-to-r from-accent-purple/5 to-transparent border-accent-purple/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar size={18} className="text-accent-purple" />
+            <p className="text-text font-semibold text-sm">Биоритмы сегодня</p>
+          </div>
+          <p className="text-text-secondary text-sm">{cycleRecommendation}</p>
+        </div>
+      )}
+
+      {/* Календарь активности (GitHub-style) */}
+      <div className="card-modern mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-text font-semibold">Активность</h3>
+          <span className="text-text-secondary text-xs">Серия: {longPathStore.streak} дн.</span>
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {longPathStore.activityCalendar.slice(-28).map((day, idx) => (
+            <div
+              key={day.date}
+              className={`aspect-square rounded-sm ${
+                day.hasWorkout 
+                  ? 'bg-accent-green/60 hover:bg-accent-green transition-colors' 
+                  : 'bg-bg-tertiary'
+              }`}
+              title={`${day.date}: ${day.hasWorkout ? (day.exercises?.join(', ') || 'Тренировка') : 'Отдых'}`}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-text-secondary">
+          <span>4 недели назад</span>
+          <span>Сегодня</span>
+        </div>
       </div>
 
       {/* Цитата дня */}
