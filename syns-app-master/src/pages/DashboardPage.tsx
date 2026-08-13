@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import MuscleHeatmap from '@/components/MuscleHeatmap';
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -343,18 +342,39 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       )}
 
-      {/* Muscle Heatmap Widget */}
-      <div className="card-modern mb-6">
+      {/* Виджет «Твой прогресс» */}
+      <div className="card-modern mb-6 bg-gradient-to-r from-accent-purple/10 to-accent-blue/10 border-accent-purple/30">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-text font-semibold flex items-center gap-2">
-            <Zap size={18} className="text-accent-green" />
-            Активные мышцы
+            <Award size={18} className="text-accent-gold" />
+            Твой прогресс
           </h3>
           <button onClick={() => navigate('/progress')} className="text-accent-blue text-xs hover:underline">
             Подробнее
           </button>
         </div>
-        <MuscleHeatmap size="sm" showLabels={false} />
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <p className="text-3xl font-bold text-accent-gold">{longPathStore.currentLevelIndex + 1}</p>
+            <p className="text-xs text-text-secondary">Уровень</p>
+          </div>
+          <div className="flex-1">
+            <div className="flex justify-between text-xs text-text-secondary mb-1">
+              <span>{longPathStore.goalLevels[longPathStore.currentLevelIndex]?.title || 'Новичок'}</span>
+              <span>{Math.round(longPathStore.progressToNextLevel)}%</span>
+            </div>
+            <div className="w-full bg-bg-tertiary rounded-full h-3">
+              <div 
+                className="bg-gradient-to-r from-accent-blue to-accent-purple h-3 rounded-full transition-all duration-500" 
+                style={{ width: `${longPathStore.progressToNextLevel}%` }} 
+              />
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-accent-green">{longPathStore.streak}</p>
+            <p className="text-xs text-text-secondary">Дней серии</p>
+          </div>
+        </div>
       </div>
 
       {/* Календарь активности (GitHub-style) */}
