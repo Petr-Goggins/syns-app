@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
-import { User, Dumbbell, Target, Save, Loader2, Check, Edit3 } from 'lucide-react';
+import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, Moon, Sun, LogOut, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { loadNotificationSettings, saveNotificationSettings, requestNotificationPermission } from '@/lib/notifications';
 
 const RELIGION_OPTIONS = [
   { id: 'none', label: 'Нет', icon: '⛔' },
   { id: 'orthodox', label: 'Православие', icon: '✝️' },
-  { id: 'islam', label: 'Ислам', icon: '☪️' },
+  { id: 'islam', label: 'Ислам', icon: '🕌' },
   { id: 'judaism', label: 'Иудаизм', icon: '✡️' },
   { id: 'buddhism', label: 'Буддизм', icon: '☸️' },
 ];
@@ -21,8 +22,16 @@ const DIET_OPTIONS = [
   { id: 'kosher', label: 'Кошер', icon: '✡️' },
 ];
 
+const THEME_OPTIONS = [
+  { id: 'dark-blue', label: 'Тёмно-синяя', icon: '🌙', class: 'theme-dark-blue' },
+  { id: 'light', label: 'Светлая', icon: '☀️', class: 'theme-light' },
+  { id: 'gray', label: 'Серая', icon: '🌫️', class: 'theme-gray' },
+  { id: 'black', label: 'Чёрная', icon: '⚫', class: 'theme-black' },
+];
+
 export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
   const { coachData, fetchCoachData } = useCoachStore();
   const [loading, setLoading] = useState(true);
@@ -39,11 +48,17 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     diet: 'none',
     equipment: [] as string[],
   });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [currentTheme, setCurrentTheme] = useState('dark-blue');
 
   useEffect(() => {
     if (!user) return;
     loadProfile();
     fetchCoachData(user.id);
+    const notifSettings = loadNotificationSettings();
+    setNotificationsEnabled(notifSettings.enabled);
+    const savedTheme = localStorage.getItem('sync_theme') || 'dark-blue';
+    setCurrentTheme(savedTheme);
   }, [user]);
 
   const loadProfile = async () => {
@@ -106,6 +121,34 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     }));
   };
 
+  const handleThemeChange = (themeId: string) => {
+    setCurrentTheme(themeId);
+    localStorage.setItem('sync_theme', themeId);
+    document.documentElement.setAttribute('data-theme', themeId);
+  };
+
+  const handleNotificationsToggle = async () => {
+    const newValue = !notificationsEnabled;
+    setNotificationsEnabled(newValue);
+    if (newValue) {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        saveNotificationSettings({ ...loadNotificationSettings(), enabled: true });
+      } else {
+        setNotificationsEnabled(false);
+      }
+    } else {
+      saveNotificationSettings({ ...loadNotificationSettings(), enabled: false });
+    }
+  };
+
+  const handleSignOut = async () => {
+    if (confirm('Вы уверены, что хотите выйти?')) {
+      await signOut();
+      navigate('/auth');
+    }
+  };
+
   const SelectCard = ({ options, value, onChange, label }: any) => (
     <div className="space-y-2">
       <p className="text-sm font-medium text-text-secondary">{label}</p>
@@ -147,7 +190,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         </button>
       </div>
 
-      {/* Блок с данными из анкеты тренера */}
       {coachData && (
         <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20">
           <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
@@ -185,7 +227,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <input
               type="text"
               value={formData.full_name}
-              onChange={(e) => setFormData({ ...form, full_name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
               placeholder="Ваше имя"
             />
@@ -197,7 +239,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
                 <button
                   key={g}
                   type="button"
-                  onClick={() => setFormData({ ...form, gender: g })}
+                  onClick={() => setFormData({ ...formData, gender: g })}
                   className={`flex-1 py-2 rounded-lg border transition-all ${
                     formData.gender === g ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue' : 'bg-bg-tertiary border-border text-text-secondary'
                   }`}
@@ -215,7 +257,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <input
               type="number"
               value={formData.weight}
-              onChange={(e) => setFormData({ ...form, weight: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
               placeholder="70"
             />
@@ -225,7 +267,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <input
               type="number"
               value={formData.height}
-              onChange={(e) => setFormData({ ...form, height: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, height: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
               placeholder="175"
             />
@@ -235,7 +277,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <input
               type="number"
               value={formData.age}
-              onChange={(e) => setFormData({ ...form, age: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
               placeholder="25"
             />
@@ -250,7 +292,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <label className="block text-sm text-text-secondary mb-1">Уровень активности</label>
             <select
               value={formData.activity_level}
-              onChange={(e) => setFormData({ ...form, activity_level: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, activity_level: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
             >
               <option value="sedentary">Сидячий</option>
@@ -262,7 +304,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <label className="block text-sm text-text-secondary mb-1">Цель</label>
             <select
               value={formData.goal}
-              onChange={(e) => setFormData({ ...form, goal: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
               className="input-field w-full px-4 py-2.5 rounded-lg"
             >
               <option value="lose">Похудеть</option>
@@ -276,14 +318,14 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
           label="Религия"
           options={RELIGION_OPTIONS}
           value={formData.religion}
-          onChange={(val: string) => setFormData({ ...form, religion: val })}
+          onChange={(val: string) => setFormData({ ...formData, religion: val })}
         />
 
         <SelectCard
           label="Диета"
           options={DIET_OPTIONS}
           value={formData.diet}
-          onChange={(val: string) => setFormData({ ...form, diet: val })}
+          onChange={(val: string) => setFormData({ ...formData, diet: val })}
         />
 
         <div>
@@ -304,6 +346,70 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Настройки */}
+        <div className="card-modern space-y-4 mt-6">
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
+            <Palette size={16} /> Настройки
+          </h2>
+          
+          {/* Тема оформления */}
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Тема оформления</label>
+            <div className="grid grid-cols-2 gap-2">
+              {THEME_OPTIONS.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => handleThemeChange(theme.id)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${
+                    currentTheme === theme.id
+                      ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                      : 'bg-bg-tertiary border-border text-text-secondary hover:border-text-tertiary'
+                  }`}
+                >
+                  <span className="text-xl">{theme.icon}</span>
+                  <span className="text-sm font-medium">{theme.label}</span>
+                  {currentTheme === theme.id && <Check size={16} />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Уведомления */}
+          <div className="flex items-center justify-between p-3 bg-bg-tertiary/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Bell size={20} className={notificationsEnabled ? 'text-accent-blue' : 'text-text-secondary'} />
+              <div>
+                <p className="text-sm font-medium text-text">Уведомления</p>
+                <p className="text-xs text-text-secondary">Напоминания и мотивация</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleNotificationsToggle}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                notificationsEnabled ? 'bg-accent-blue' : 'bg-bg-tertiary'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                  notificationsEnabled ? 'left-7' : 'left-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Кнопка выхода */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full py-3 flex items-center justify-center gap-2 text-base font-semibold text-red-500 hover:bg-red-500/10 rounded-xl border border-red-500/30 transition-all"
+          >
+            <LogOut size={20} />
+            Выйти из аккаунта
+          </button>
         </div>
 
         <button

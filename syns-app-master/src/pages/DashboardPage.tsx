@@ -255,6 +255,15 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     },
     { label: 'Прогресс', value: `${stats.progress}%`, icon: TrendingUp, color: 'text-accent-blue', bg: 'bg-accent-blue/10', path: '/reports' },
     { label: 'Серия', value: `${stats.streak} дней`, icon: Zap, color: 'text-accent-gold', bg: 'bg-accent-gold/10', path: '/achievements' },
+    { 
+      label: 'Твой прогресс', 
+      value: `Ур. ${longPathStore.currentLevelIndex + 1}`, 
+      subValue: longPathStore.userGoals[0] ? longPathStore.userGoals[0].goal_type : 'Начни путь',
+      icon: Award, 
+      color: 'text-accent-purple', 
+      bg: 'bg-accent-purple/10', 
+      path: '/progress' 
+    },
   ];
 
   const waterPercent = Math.min((waterAmount / 3000) * 100, 100);
