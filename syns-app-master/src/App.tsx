@@ -19,6 +19,7 @@ import ProgressPage from '@/pages/ProgressPage';
 import CoachPage from '@/pages/CoachPage';
 import ReportsPage from '@/pages/ReportsPage';
 import CyclePage from '@/pages/CyclePage';
+import LongPathPage from '@/pages/LongPathPage';
 
 function MainLayout() {
   return (
@@ -65,6 +66,7 @@ function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="long-path" element={<LongPathPage />} />
         <Route path="coach" element={<CoachPage />} />
         <Route path="plan" element={<PlanPage />} />
         <Route path="nutrition" element={<NutritionPage />} />
