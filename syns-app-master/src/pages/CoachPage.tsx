@@ -71,16 +71,12 @@ function OptionButton({ active, onClick, label }: OptionButtonProps) {
 }
 
 const STEPS = [
-  { icon: Target, title: 'Главная цель' },
-  { icon: Heart, title: 'Опыт и здоровье' },
-  { icon: Clock, title: 'Режим и доступность' },
-  { icon: Dumbbell, title: 'Предпочтения' },
-  { icon: Moon, title: 'Восстановление и питание' },
-  { icon: Target, title: 'Фокус тренировок' },
-  { icon: CalendarDays, title: 'Женский цикл' },
+  { icon: Target, title: 'Цель и опыт' },
+  { icon: Clock, title: 'Режим тренировок' },
+  { icon: Heart, title: 'Здоровье и восстановление' },
 ];
 
-export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+export default function CoachPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { saveCoachData, saving } = useCoachStore();
@@ -118,18 +114,14 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
     setForm({ ...form, [key]: value });
 
   const isFemale = profile?.gender === 'female';
-  const totalSteps = isFemale ? 7 : 6;
+  const totalSteps = 3; // Всегда 3 шага
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!form.main_goal;
-      case 1: return !!form.experience_duration && !!form.training_level;
-      case 2: return !!form.preferred_time && !!form.workout_duration;
-      case 3: return !!form.exercise_preference && !!form.priority && !!form.include_cardio;
-      case 4: return !!form.stress_level;
-      case 5: return !!form.focus_type;
-      case 6: return true; // cycle is optional
+      case 0: return !!form.main_goal && !!form.experience_duration;
+      case 1: return !!form.days_per_week && !!form.preferred_time && !!form.workout_duration;
+      case 2: return !!form.stress_level;
       default: return true;
     }
   };
@@ -160,7 +152,7 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
 
   return (
     <div>
-      <TopBar title="Анкета тренера" onOpenSidebar={onOpenSidebar} />
+      <TopBar title="Анкета тренера" />
       <main className="p-4 lg:p-8 max-w-2xl mx-auto animate-slide-up">
         {/* Progress bar */}
         <div className="flex gap-1.5 mb-6">
@@ -187,22 +179,51 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
 
         {/* Step content */}
         <div className="card p-6 space-y-5">
-        {/* Step 0: Main goal */}
+        {/* Step 0: Goal + Experience */}
           {step === 0 && (
             <>
               <div className="flex items-center gap-2 mb-3">
                 <Target size={18} className="text-accent-blue" />
                 <p className="text-sm text-text-secondary">От этого выбора зависит тип тренировок в плане</p>
               </div>
-              <div className="space-y-2">
-                {MAIN_GOAL_OPTIONS.map((opt) => (
-                  <OptionButton
-                    key={opt.id}
-                    active={form.main_goal === opt.id}
-                    onClick={() => set('main_goal', opt.id)}
-                    label={opt.label}
-                  />
-                ))}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Главная цель</label>
+                <div className="space-y-2">
+                  {MAIN_GOAL_OPTIONS.map((opt) => (
+                    <OptionButton
+                      key={opt.id}
+                      active={form.main_goal === opt.id}
+                      onClick={() => set('main_goal', opt.id)}
+                      label={opt.label}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Опыт тренировок</label>
+                <div className="space-y-2">
+                  {[
+                    ['never', 'Никогда'],
+                    ['up_3m', 'До 3 месяцев'],
+                    ['3_12m', '3-12 месяцев'],
+                    ['over_year', 'Более года'],
+                  ].map(([val, label]) => (
+                    <OptionButton key={val} active={form.experience_duration === val} onClick={() => set('experience_duration', val)} label={label} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень подготовки</label>
+                <div className="space-y-2">
+                  {[
+                    ['beginner', 'Начинающий'],
+                    ['intermediate', 'Средний'],
+                    ['advanced', 'Продвинутый'],
+                    ['professional', 'Профессиональный'],
+                  ].map(([val, label]) => (
+                    <OptionButton key={val} active={form.training_level === val} onClick={() => set('training_level', val)} label={label} />
+                  ))}
+                </div>
               </div>
               {form.main_goal && (
                 <div className="p-3 rounded-lg bg-accent-blue/10 border border-accent-blue/20 mt-3 animate-fade-in">
@@ -219,73 +240,11 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
             </>
           )}
 
-          {/* Step 1: Experience & health */}
+          {/* Step 1: Schedule + Preferences */}
           {step === 1 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Как долго занимаетесь?</label>
-                <div className="space-y-2">
-                  {[
-                    ['never', 'Никогда'],
-                    ['up_3m', 'До 3 месяцев'],
-                    ['3_12m', '3-12 месяцев'],
-                    ['over_year', 'Более года'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.experience_duration === val} onClick={() => set('experience_duration', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Ваш уровень</label>
-                <div className="space-y-2">
-                  {[
-                    ['beginner', 'Начинающий'],
-                    ['intermediate', 'Средний'],
-                    ['advanced', 'Продвинутый'],
-                    ['professional', 'Профессиональный'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.training_level === val} onClick={() => set('training_level', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Были ли травмы?</label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => set('injuries', [])}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                      form.injuries!.length === 0 ? 'bg-accent-green/15 border-accent-green/40 text-accent-green' : 'border-border text-text-secondary'
-                    }`}
-                  >Нет травм</button>
-                  {INJURY_OPTIONS.map((inj) => (
-                    <button
-                      key={inj.id}
-                      onClick={() => set('injuries', toggleArr(form.injuries!, inj.id))}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                        form.injuries!.includes(inj.id) ? 'bg-accent-red/15 border-accent-red/40 text-accent-red' : 'border-border text-text-secondary'
-                      }`}
-                    >{inj.label}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Ограничения по здоровью (необязательно)</label>
-                <input
-                  type="text"
-                  value={form.health_restrictions ?? ''}
-                  onChange={(e) => set('health_restrictions', e.target.value)}
-                  placeholder="Например: гипертония, диабет..."
-                  className="input-field w-full px-3 py-2.5 text-sm"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Step 2: Schedule */}
-          {step === 2 && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Сколько дней в неделю готовы тренироваться?</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Дней в неделю</label>
                 <div className="flex gap-2 flex-wrap">
                   {[1,2,3,4,5,6,7].map((d) => (
                     <button
@@ -307,7 +266,7 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Комфортная длительность тренировки</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Длительность тренировки</label>
                 <div className="space-y-2">
                   {[
                     ['20_30', '20-30 минут'],
@@ -320,27 +279,7 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Постоянные свободные дни (необязательно)</label>
-                <div className="flex flex-wrap gap-2">
-                  {FREE_DAYS.map((d) => (
-                    <button
-                      key={d.id}
-                      onClick={() => set('free_days', toggleArr(form.free_days!, d.id))}
-                      className={`w-11 h-11 rounded-lg text-sm font-medium border transition-all ${
-                        form.free_days!.includes(d.id) ? 'bg-accent-gold/15 border-accent-gold/40 text-accent-gold' : 'border-border text-text-secondary'
-                      }`}
-                    >{d.label}</button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Step 3: Preferences */}
-          {step === 3 && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Какие упражнения нравятся?</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Тип упражнений</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     ['strength', 'Силовые'],
@@ -349,18 +288,6 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
                     ['mixed', 'Смешанные'],
                   ].map(([val, label]) => (
                     <OptionButton key={val} active={form.exercise_preference === val} onClick={() => set('exercise_preference', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Что важнее?</label>
-                <div className="space-y-2">
-                  {[
-                    ['effectiveness', 'Эффективность'],
-                    ['enjoyment', 'Удовольствие'],
-                    ['safety', 'Безопасность'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.priority === val} onClick={() => set('priority', val)} label={label} />
                   ))}
                 </div>
               </div>
@@ -379,11 +306,11 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
             </>
           )}
 
-          {/* Step 4: Recovery & nutrition */}
-          {step === 4 && (
+          {/* Step 2: Health + Recovery + Nutrition */}
+          {step === 2 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень стресса?</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень стресса</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     ['low', 'Низкий'],
@@ -395,7 +322,7 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Диетические предпочтения?</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Диетические предпочтения</label>
                 <div className="space-y-2">
                   {[
                     ['none', 'Нет'],
@@ -409,86 +336,62 @@ export default function CoachPage({ onOpenSidebar }: { onOpenSidebar: () => void
                   ))}
                 </div>
               </div>
-            </>
-          )}
-
-          {/* Step 5: Focus */}
-          {step === 5 && (
-            <>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">На чём хотите сфокусироваться?</label>
-                <div className="space-y-2">
-                  {[
-                    ['strength', 'Увеличение силы (большие веса, низкие повторения)'],
-                    ['endurance', 'Увеличение выносливости (интервалы, круговые)'],
-                    ['technique', 'Улучшение техники (баланс, мобильность)'],
-                    ['muscle', 'Укрепление конкретной группы мышц'],
-                    ['rehab', 'Реабилитация после травмы (мягкие упражнения)'],
-                    ['event', 'Подготовка к событию'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.focus_type === val} onClick={() => set('focus_type', val)} label={label} />
+                <label className="block text-sm font-medium text-text-secondary mb-2">Травмы</label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => set('injuries', [])}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                      form.injuries!.length === 0 ? 'bg-accent-green/15 border-accent-green/40 text-accent-green' : 'border-border text-text-secondary'
+                    }`}
+                  >Нет травм</button>
+                  {INJURY_OPTIONS.map((inj) => (
+                    <button
+                      key={inj.id}
+                      onClick={() => set('injuries', toggleArr(form.injuries!, inj.id))}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                        form.injuries!.includes(inj.id) ? 'bg-accent-red/15 border-accent-red/40 text-accent-red' : 'border-border text-text-secondary'
+                      }`}
+                    >{inj.label}</button>
                   ))}
                 </div>
               </div>
-              {form.focus_type === 'muscle' && (
-                <div className="animate-fade-in">
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Выберите группу мышц</label>
-                  <div className="flex flex-wrap gap-2">
-                    {FOCUS_MUSCLES.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => set('focus_muscle', m.id)}
-                        className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-all ${
-                          form.focus_muscle === m.id ? 'bg-accent-orange/15 border-accent-orange/40 text-accent-orange' : 'border-border text-text-secondary'
-                        }`}
-                      >{m.label}</button>
-                    ))}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Ограничения по здоровью</label>
+                <input
+                  type="text"
+                  value={form.health_restrictions ?? ''}
+                  onChange={(e) => set('health_restrictions', e.target.value)}
+                  placeholder="Например: гипертония, диабет..."
+                  className="input-field w-full px-3 py-2.5 text-sm"
+                />
+              </div>
+              {isFemale && (
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDays size={18} className="text-accent-purple" />
+                    <p className="text-sm text-text-secondary">Женский цикл (необязательно)</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Дата начала последних месячных</label>
+                    <input
+                      type="date"
+                      value={cycleLastPeriod}
+                      onChange={(e) => setCycleLastPeriod(e.target.value)}
+                      className="input-field w-full px-3 py-2.5 text-sm"
+                    />
+                  </div>
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Длительность цикла (дней)</label>
+                    <input
+                      type="number"
+                      value={cycleLength}
+                      onChange={(e) => setCycleLength(Number(e.target.value))}
+                      className="input-field w-full px-3 py-2.5 text-sm"
+                    />
                   </div>
                 </div>
               )}
-              {form.focus_type === 'event' && (
-                <div className="animate-fade-in">
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Опишите событие</label>
-                  <input
-                    type="text"
-                    value={form.focus_event ?? ''}
-                    onChange={(e) => set('focus_event', e.target.value)}
-                    placeholder="Например: марафон через 3 месяца"
-                    className="input-field w-full px-3 py-2.5 text-sm"
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Step 6: Cycle (female only) */}
-          {step === 6 && isFemale && (
-            <>
-              <div className="flex items-center gap-2 mb-2">
-                <CalendarDays size={18} className="text-accent-purple" />
-                <p className="text-sm text-text-secondary">Автоматический расчёт фазы цикла</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Дата начала последних месячных</label>
-                <input
-                  type="date"
-                  value={cycleLastPeriod}
-                  onChange={(e) => setCycleLastPeriod(e.target.value)}
-                  className="input-field w-full px-3 py-2.5 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Средняя длительность цикла (дней)</label>
-                <input
-                  type="number"
-                  value={cycleLength}
-                  onChange={(e) => setCycleLength(Number(e.target.value))}
-                  className="input-field w-full px-3 py-2.5 text-sm"
-                />
-                <p className="text-xs text-text-tertiary mt-2">
-                  На основе этих данных приложение автоматически определит фазу цикла и подстроит тренировки, питание и советы.
-                </p>
-              </div>
             </>
           )}
         </div>
