@@ -27,12 +27,12 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex gap-1.5">
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="w-2.5 h-2.5 rounded-full bg-accent-blue animate-bounce-dot"
+              className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce-dot"
               style={{ animationDelay: `${i * 0.16}s` }}
             />
           ))}
@@ -45,7 +45,7 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/auth"
-        element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />}
+        element={user ? <Navigate to="/" replace /> : <AuthPage />}
       />
       <Route
         path="/*"
@@ -53,6 +53,7 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout sidebarOpen={sidebarOpen} onCloseSidebar={() => setSidebarOpen(false)}>
               <Routes>
+                <Route path="/" element={<DashboardPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/dashboard" element={<DashboardPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/coach" element={<CoachPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/plan" element={<PlanPage onOpenSidebar={() => setSidebarOpen(true)} />} />
@@ -63,11 +64,10 @@ function AppRoutes() {
                 <Route path="/profile" element={<ProfilePage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/workouts" element={<WorkoutLogPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/sleep" element={<SleepLogPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                {/* TrackingPage удалён */}
                 <Route path="/achievements" element={<AchievementsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/settings" element={<SettingsPage onOpenSidebar={() => setSidebarOpen(true)} />} />
                 <Route path="/progress" element={<ProgressPage onOpenSidebar={() => setSidebarOpen(true)} />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
           </ProtectedRoute>
@@ -85,9 +85,9 @@ export default function App() {
         position="top-right"
         toastOptions={{
           style: {
-            background: '#161B22',
-            color: '#E6EDF3',
-            border: '1px solid #30363D',
+            background: 'var(--card)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
             borderRadius: '12px',
             padding: '12px 16px',
           },

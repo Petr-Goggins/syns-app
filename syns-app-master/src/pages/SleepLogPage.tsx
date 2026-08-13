@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { Moon, Trash2, ChevronLeft, ChevronRight, Calendar, Plus, Smile, Meh, Frown, Sun, Cloud, CloudRain } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/store/authStore';
-import { Moon, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date());
-
+  
   // Форма сна
   const [hours, setHours] = useState(7);
   const [quality, setQuality] = useState(3); // 1–5
@@ -30,12 +27,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
 
   if (!user) {
     return <div className="p-4 text-text-secondary">Пожалуйста, войдите.</div>;
-  const [hours, setHours] = useState(7);
-  const [quality, setQuality] = useState<'Да' | 'Нет' | 'Не очень'>('Да');
-  const [date, setDate] = useState(new Date());
-
-  if (!user) {
-    return <div className="p-4">Пожалуйста, войдите в аккаунт.</div>;
   }
 
   const formatDate = (d: Date) => d.toISOString().split('T')[0];
@@ -75,15 +66,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
       date: formatDate(date),
     });
 
-    if (!error) {
-      loadLogs();
-      // alert убран
-    const { error } = await supabase.from('sleep_logs').insert({
-      user_id: user.id,
-      hours: hours,
-      quality: quality,
-      date: formatDate(date),
-    });
     if (!error) {
       loadLogs();
     } else {
@@ -168,19 +150,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
         </span>
         <button onClick={() => changeDate(1)} className="text-text-secondary hover:text-text p-1 transition">
           <ChevronRight size={22} />
-  return (
-    <div className="p-4 max-w-2xl">
-      <h1 className="text-2xl font-bold text-text">Сон</h1>
-      <div className="mt-4 flex items-center justify-between bg-bg-secondary p-3 rounded-lg border border-border">
-        <button onClick={() => changeDate(-1)} className="text-text-secondary hover:text-text">
-          <ChevronLeft size={20} />
-        </button>
-        <span className="text-text font-medium">{date.toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-        <button onClick={() => changeDate(1)} className="text-text-secondary hover:text-text">
-          <ChevronRight size={20} />
-        </button>
-        <button onClick={() => setDate(new Date())} className="text-xs text-accent-blue hover:underline">
-          Сегодня
         </button>
       </div>
 
@@ -307,30 +276,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
         >
           <Plus size={18} /> Записать сон
         </button>
-      <form onSubmit={handleAdd} className="mt-4 bg-bg-secondary p-4 rounded-lg border border-border space-y-3">
-        <div className="flex gap-3">
-          <input
-            type="number"
-            placeholder="Часы сна"
-            value={hours}
-            onChange={(e) => setHours(Number(e.target.value))}
-            className="input-field flex-1"
-            min="1"
-            max="24"
-            step="0.5"
-            required
-          />
-          <select
-            value={quality}
-            onChange={(e) => setQuality(e.target.value as any)}
-            className="input-field flex-1"
-          >
-            <option value="Да">Выспался</option>
-            <option value="Не очень">Не очень</option>
-            <option value="Нет">Не выспался</option>
-          </select>
-          <button type="submit" className="btn-primary px-4">Добавить</button>
-        </div>
       </form>
 
       <div className="mt-6 space-y-2">
@@ -363,17 +308,6 @@ export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => 
                 onClick={() => handleDelete(log.id)}
                 className="text-text-secondary hover:text-accent-red transition opacity-0 group-hover:opacity-100"
               >
-          <p className="text-text-secondary">Загрузка...</p>
-        ) : logs.length === 0 ? (
-          <p className="text-text-secondary text-center py-4">Нет записей за этот день</p>
-        ) : (
-          logs.map((log) => (
-            <div key={log.id} className="flex justify-between items-center bg-bg-secondary p-3 rounded-lg border border-border">
-              <div>
-                <p className="font-semibold text-text">{log.hours} ч</p>
-                <p className="text-text-secondary text-sm">Качество: {log.quality}</p>
-              </div>
-              <button onClick={() => handleDelete(log.id)} className="text-text-secondary hover:text-accent-red">
                 <Trash2 size={18} />
               </button>
             </div>
