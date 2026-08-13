@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
-import { Plus, Dumbbell, Trash2, ChevronLeft, ChevronRight, Search, Calendar, Zap } from 'lucide-react';
+import { useWorkoutLogStore } from '../store/workoutLogStore';
+import { useRestTimerStore, calculateRestTime } from '../store/restTimerStore';
+
+const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
+  'жим лёжа': ['chest', 'triceps'],
+  'bench press': ['chest', 'triceps'],
+  'присед': ['quads', 'glutes'],
+  'squat': ['quads', 'glutes'],
+  'становая тяга': ['back', 'hamstrings'],
+  'deadlift': ['back', 'hamstrings'],
+};
 
 const EXERCISES = [
   'Приседания со штангой', 'Приседания с гантелями', 'Выпады с гантелями',
@@ -13,9 +23,12 @@ const EXERCISES = [
   'Велосипед (пресс)', 'Бёрпи', 'Растяжка',
 ];
 
+import { Plus, Dumbbell, Trash2, ChevronLeft, ChevronRight, Search, Calendar, Zap, Timer } from 'lucide-react';
+
 export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
-  const [logs, setLogs] = useState<any[]>([]);
+  const workoutLogStore = useWorkoutLogStore();
+  const restTimerStore = useRestTimerStore();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     exercise_name: '',
@@ -43,47 +56,75 @@ export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () =
 
   const loadLogs = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('date', formatDate(date))
-      .order('created_at', { ascending: false });
-    if (!error) setLogs(data || []);
+    await workoutLogStore.fetchByDate(user.id, formatDate(date));
     setLoading(false);
   };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !form.exercise_name.trim()) return;
-    const { error } = await supabase.from('workout_logs').insert({
-      user_id: user.id,
+    
+    const success = await workoutLogStore.addLog(user.id, {
+      log_date: formatDate(date),
       exercise_name: form.exercise_name,
       sets: form.sets,
       reps: form.reps,
       weight: form.weight,
-      date: formatDate(date),
+      intensity: 50,
+      note: null,
     });
-    if (!error) {
+    
+    if (success) {
+      // Обновляем тепловую карту мышц
+      const muscles = EXERCISE_MUSCLE_MAP[form.exercise_name.toLowerCase()] || [];
+      muscles.forEach(muscle => {
+        muscleMapStore.updateMuscleIntensity(muscle, 70, formatDate(date));
+      });
+      
+      // Запускаем таймер отдыха
+      const restTime = calculateRestTime(form.exercise_name);
+      restTimerStore.startTimer(restTime, form.exercise_name);
+      
       setForm({ exercise_name: '', sets: 3, reps: 10, weight: 0 });
       setSearchTerm('');
       loadLogs();
     } else {
-      alert('Ошибка: ' + error.message);
+      alert('Ошибка: ' + workoutLogStore.error);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    await supabase.from('workout_logs').delete().eq('id', id);
-    loadLogs();
+  const loadExerciseHistory = async (exerciseName: string) => {
+    const { data } = await supabase
+      .from('workout_logs')
+      .select('log_date, weight, reps, sets')
+      .eq('user_id', user.id)
+      .eq('exercise_name', exerciseName)
+      .order('log_date', { ascending: true })
+      .limit(20);
+    
+    if (data) {
+      setExerciseHistory(data.map(d => ({
+        date: new Date(d.log_date).toLocaleDateString('ru', { day: 'numeric', month: 'short' }),
+        weight: d.weight,
+        volume: d.sets * d.reps * d.weight,
+      })));
+      setShowGraph(true);
+    }
   };
 
   const filteredExercises = EXERCISES.filter((ex) =>
     ex.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const logs = workoutLogStore.logs;
   const totalSets = logs.reduce((acc, log) => acc + (log.sets || 0), 0);
   const totalWeight = logs.reduce((acc, log) => acc + ((log.weight || 0) * (log.sets || 0)), 0);
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="p-4 max-w-2xl mx-auto animate-fade-in">
