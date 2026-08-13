@@ -2,31 +2,51 @@
 # Dependencies
 node_modules/
 
-# Environment
+# Build artifacts
+dist/
+build/
+target/
+
+# Environment variables
 .env
 .env.local
 .env.*
 
-# Logs and temp files
-*.log
-*.tmp
-
-# Editors
-.vscode/
-.idea/
-
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Build outputs
-dist/
-build/
-*.min.js
-*.bundle.js
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
 
-# Package lock files (since we're tracking package-lock.json in this case)
-# package-lock.json is tracked, so not ignoring it
+# Logs
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Distribution / packaging
+*.tar.gz
+*.whl
+*.egg-info/
 ```
