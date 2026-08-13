@@ -24,6 +24,8 @@ interface ThemeState {
 const STORAGE_KEY = 'sync-theme';
 
 function applyTheme(theme: ThemeName) {
+  // Используем класс вместо data-атрибута для совместимости с CSS
+  document.documentElement.className = theme;
   document.documentElement.setAttribute('data-theme', theme);
 }
 

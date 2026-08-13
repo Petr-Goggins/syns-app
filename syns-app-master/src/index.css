@@ -26,7 +26,7 @@
   }
 
   /* ── Тема: тёмно-синяя (по умолчанию) ────────────── */
-  .dark {
+  [data-theme="dark-blue"], .dark, .dark-blue {
     --bg: #0D1117;
     --bg-secondary: #161B22;
     --bg-tertiary: #21262D;
@@ -46,7 +46,7 @@
   }
 
   /* ── Тема: светлая ──────────────────────────────────── */
-  .light {
+  [data-theme="light"], .light {
     --bg: #FFFFFF;
     --bg-secondary: #F6F8FA;
     --bg-tertiary: #EAEEF2;
@@ -66,7 +66,7 @@
   }
 
   /* ── Тема: серая ────────────────────────────────────── */
-  .gray {
+  [data-theme="gray"], .gray {
     --bg: #1E1E1E;
     --bg-secondary: #252525;
     --bg-tertiary: #2C2C2C;
@@ -86,7 +86,7 @@
   }
 
   /* ── Тема: чёрная ───────────────────────────────────── */
-  .black {
+  [data-theme="black"], .black {
     --bg: #0A0A0A;
     --bg-secondary: #0F0F0F;
     --bg-tertiary: #1A1A1A;

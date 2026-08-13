@@ -30,6 +30,16 @@ dist/
 .coverage
 coverage/
 htmlcov/
+.coverage
+
+# MyPy
+.mypy_cache/
+
+# PyTest
+.pytest_cache/
+
+# Gradle
+.gradle/
 
 # OS
 .DS_Store
