@@ -1,38 +1,32 @@
 ```
+# Database migrations
+supabase/migrations/*.sql
+
 # Dependencies
 node_modules/
-
-# Build artifacts
+.yarn/
+npm-debug.log*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+.env
+.env.local
+.env.*
+.env~*
+.env.local~
+# Build outputs
 dist/
 build/
 target/
-
-# Environment
-.env
-.env.local
-*.env.*
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-selfcheck.json
-.tox/
-.coverage
-coverage/
-htmlcov/
-.pytest_cache/
-.mypy_cache/
-
 # Logs
 *.log
-
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -41,15 +35,20 @@ htmlcov/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Editor files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *.tmp
-
-# Compressed files
+# Coverage
+coverage/
+htmlcov/
+.coverage
+# Testing
+.pytest_cache/
+.mypy_cache/
+# Compressed
 *.zip
 *.gz
 *.tar
