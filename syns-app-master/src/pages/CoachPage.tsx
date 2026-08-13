@@ -107,12 +107,8 @@ export default function CoachPage() {
     injuries: [],
     health_restrictions: '',
     days_per_week: 3,
-    preferred_time: '',
-    workout_duration: '',
     free_days: [],
-    exercise_preference: '',
     priority: '',
-    include_cardio: '',
     sleep_hours: '',
     stress_level: '',
     diet_preference: '',
@@ -150,7 +146,7 @@ export default function CoachPage() {
     switch (step) {
       case 0: return !!form.main_goal && !!form.experience_duration;
       case 1: return !!selectedLongPathGoal && (selectedLongPathGoal !== 'weight_loss' || targetWeight > 0);
-      case 2: return !!form.days_per_week && !!form.preferred_time && !!form.workout_duration;
+      case 2: return !!form.days_per_week;
       case 3: return !!form.stress_level;
       case 4: return true; // Личная цель необязательна
       case 5: return true; // Предпочтения необязательны
@@ -374,7 +370,7 @@ export default function CoachPage() {
             </>
           )}
 
-          {/* Step 2: Schedule + Preferences */}
+          {/* Step 2: Schedule */}
           {step === 2 && (
             <>
               <div>
@@ -391,51 +387,10 @@ export default function CoachPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Удобное время</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Утро', 'День', 'Вечер'].map((t) => (
-                    <OptionButton key={t} active={form.preferred_time === t} onClick={() => set('preferred_time', t)} label={t} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Длительность тренировки</label>
-                <div className="space-y-2">
-                  {[
-                    ['20_30', '20-30 минут'],
-                    ['30_45', '30-45 минут'],
-                    ['45_60', '45-60 минут'],
-                    ['60+', 'Более 60 минут'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.workout_duration === val} onClick={() => set('workout_duration', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Тип упражнений</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    ['strength', 'Силовые'],
-                    ['cardio', 'Кардио'],
-                    ['yoga', 'Йога'],
-                    ['mixed', 'Смешанные'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.exercise_preference === val} onClick={() => set('exercise_preference', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Включать кардио?</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    ['yes', 'Да'],
-                    ['sometimes', 'Иногда'],
-                    ['no', 'Нет'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.include_cardio === val} onClick={() => set('include_cardio', val)} label={label} />
-                  ))}
-                </div>
+              <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                <p className="text-sm text-text-secondary">
+                  💡 Эти настройки можно будет изменить позже при создании плана тренировок
+                </p>
               </div>
             </>
           )}
