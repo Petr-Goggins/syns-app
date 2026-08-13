@@ -254,15 +254,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     },
     { label: 'Прогресс', value: `${stats.progress}%`, icon: TrendingUp, color: 'text-accent-blue', bg: 'bg-accent-blue/10', path: '/reports' },
     { label: 'Серия', value: `${stats.streak} дней`, icon: Zap, color: 'text-accent-gold', bg: 'bg-accent-gold/10', path: '/achievements' },
-    { 
-      label: 'Твой прогресс', 
-      value: `Ур. ${longPathStore.currentLevelIndex + 1}`, 
-      subValue: longPathStore.userGoals[0] ? longPathStore.userGoals[0].goal_type : 'Начни путь',
-      icon: Award, 
-      color: 'text-accent-purple', 
-      bg: 'bg-accent-purple/10', 
-      path: '/progress' 
-    },
   ];
 
   const waterPercent = Math.min((waterAmount / 3000) * 100, 100);
@@ -342,22 +333,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       )}
 
-      {/* Твой прогресс */}
-      <div className="card-modern mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-text font-semibold flex items-center gap-2">
-            <Award size={18} className="text-accent-purple" />
-            Твой прогресс
-          </h3>
-        </div>
-        <div className="text-center py-4">
-          <p className="text-text font-bold text-lg">Уровень: {longPathStore.currentLevelIndex + 1}</p>
-          <p className="text-text-secondary text-sm mt-1">
-            {longPathStore.userGoals[0] ? longPathStore.userGoals[0].goal_type : 'Начни свой путь'}
-          </p>
-        </div>
-      </div>
-
       {/* Календарь активности (GitHub-style) */}
       <div className="card-modern mb-6">
         <div className="flex justify-between items-center mb-4">
@@ -432,46 +407,52 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         <p className="text-text-secondary text-sm">— Мотивация дня</p>
       </div>
 
-      {/* Карточка приветствия */}
-      <div className="card-modern mb-6 flex flex-wrap items-center justify-between bg-gradient-to-r from-accent-blue/10 to-transparent border-accent-blue/20">
-        <div>
-          <p className="text-text-secondary text-sm">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</p>
-          <p className="text-text font-semibold text-lg">Цель: {stats.goal}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Target size={20} className="text-accent-blue" />
-          <span className="text-sm text-text-secondary">Вес: {stats.weight} кг</span>
-        </div>
-      </div>
-
-      {/* Виджеты */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {widgets.map((widget) => (
-          <div
-            key={widget.label}
-            onClick={() => widget.actionLabel ? navigate(widget.path) : navigate(widget.path)}
-            className="card-modern cursor-pointer hover:border-accent-blue transition-all min-h-[100px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${widget.bg}`}>
-                <widget.icon size={20} className={widget.color} />
-              </div>
-              <div className="flex-1">
-                <p className="text-text-secondary text-xs">{widget.label}</p>
-                <p className="text-text font-bold text-sm leading-tight">{widget.value}</p>
-                {widget.subValue && <p className="text-text-tertiary text-xs mt-1">{widget.subValue}</p>}
-              </div>
-            </div>
-            {widget.actionLabel && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); navigate(widget.path); }}
-                className="mt-2 w-full btn-primary py-1.5 text-sm"
-              >
-                {widget.actionLabel}
-              </button>
-            )}
+      {/* Карточка приветствия и цели */}
+      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-transparent border-accent-blue/20">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <p className="text-text-secondary text-sm">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</p>
+            <p className="text-text font-semibold text-lg mt-1">Цель: {stats.goal}</p>
           </div>
-        ))}
+          <div className="flex items-center gap-2">
+            <Target size={20} className="text-accent-blue" />
+            <span className="text-sm text-text-secondary">Вес: {stats.weight} кг</span>
+          </div>
+        </div>
+        
+        {/* Большая карточка с объединёнными метриками */}
+        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border">
+          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
+            <Utensils size={18} className="mx-auto mb-1 text-accent-orange" />
+            <p className="text-xs text-text-secondary">Калории</p>
+            <p className="text-sm font-bold text-text">{stats.calories > 0 ? `${stats.calories}` : '—'}</p>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
+            <Droplet size={18} className="mx-auto mb-1 text-accent-blue" />
+            <p className="text-xs text-text-secondary">Вода</p>
+            <p className="text-sm font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}л` : '—'}</p>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
+            <Moon size={18} className="mx-auto mb-1 text-accent-purple" />
+            <p className="text-xs text-text-secondary">Сон</p>
+            <p className="text-sm font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}ч` : '—'}</p>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
+            <Dumbbell size={18} className="mx-auto mb-1 text-accent-green" />
+            <p className="text-xs text-text-secondary">Тренировки</p>
+            <p className="text-sm font-bold text-text">{stats.workouts > 0 ? `${stats.workouts}` : '—'}</p>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
+            <TrendingUp size={18} className="mx-auto mb-1 text-accent-blue" />
+            <p className="text-xs text-text-secondary">Прогресс</p>
+            <p className="text-sm font-bold text-text">{stats.progress}%</p>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-bg-tertiary/50">
+            <Zap size={18} className="mx-auto mb-1 text-accent-gold" />
+            <p className="text-xs text-text-secondary">Серия</p>
+            <p className="text-sm font-bold text-text">{stats.streak} дн.</p>
+          </div>
+        </div>
       </div>
 
       {/* Добавление воды */}
