@@ -460,124 +460,64 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       </div>
 
-      {/* Прогноз на неделю */}
+      {/* КАРТОЧКА СЕРИИ */}
       <div className="card-modern mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-text font-semibold flex items-center gap-2">
-            <TrendingUp size={18} className="text-accent-blue" />
-            Прогноз активности
-          </h3>
-          <span className="text-text-secondary text-xs">7 дней</span>
-        </div>
-        <div className="h-40 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={forecastData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-              <XAxis 
-                dataKey="day" 
-                tick={{ fontSize: 11, fill: '#9ca3af' }} 
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis hide />
-              <Tooltip 
-                contentStyle={{ 
-                  background: '#1f2937', 
-                  border: '1px solid #374151', 
-                  borderRadius: '8px',
-                  fontSize: '12px'
-                }}
-                formatter={(value: number) => [`${value}%`, 'Активность']}
-                labelFormatter={(label) => `День: ${label}`}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="activity" 
-                stroke="#58A6FF" 
-                strokeWidth={2} 
-                dot={{ r: 3, fill: '#58A6FF' }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <p className="text-sm text-text-secondary mb-1">Серия тренировок</p>
+        <p className="text-xl font-bold text-text">{longPathStore.streak} дней</p>
       </div>
 
-      {/* Цитата дня */}
-      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20 text-center py-4">
-        <p className="text-text italic">"Маленькие шаги ведут к большим результатам!"</p>
-        <p className="text-text-secondary text-sm">— Мотивация дня</p>
-      </div>
-
-      {/* Отдельные карточки метрик с кнопками "Начать" */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {/* Калории */}
-        <div 
-          className="card-modern p-4 bg-gradient-to-br from-accent-orange/10 to-transparent border-accent-orange/20 cursor-pointer hover:border-accent-orange/50 transition-colors"
-          onClick={() => navigate('/nutrition')}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <Utensils size={20} className="text-accent-orange" />
-            <span className="text-xs text-text-secondary">ккал</span>
+      {/* Блок выбора глобальной цели */}
+      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
+        {!longPathStore.userGoals || longPathStore.userGoals.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-4">
+            <Target size={40} className="text-accent-blue mb-3" />
+            <p className="text-text font-semibold text-lg mb-2">Выбери свою цель</p>
+            <p className="text-text-secondary text-sm mb-4">Определи направление движения к лучшей версии себя</p>
+            <button 
+              onClick={() => navigate('/coach')}
+              className="btn-primary px-6 py-2.5 rounded-xl flex items-center gap-2"
+            >
+              Начать путь <ChevronRight size={18} />
+            </button>
           </div>
-          <p className="text-2xl font-bold text-text">{stats.calories > 0 ? stats.calories : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">
-            {stats.calories === 0 ? (
-              <span className="text-accent-orange font-medium">+ Добавь первый приём пищи</span>
-            ) : 'Сегодня'}
-          </p>
-        </div>
-
-        {/* Вода */}
-        <div 
-          className="card-modern p-4 bg-gradient-to-br from-accent-blue/10 to-transparent border-accent-blue/20 cursor-pointer hover:border-accent-blue/50 transition-colors"
-          onClick={() => setShowWaterModal(true)}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <Droplet size={20} className="text-accent-blue" />
-            <Plus size={16} className="text-accent-blue" />
+        ) : (
+          <div className="py-2">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <p className="text-text-secondary text-xs uppercase tracking-wide">Глобальная цель</p>
+                <h3 className="text-xl font-bold text-text flex items-center gap-2">
+                  <Award size={20} className="text-accent-gold" />
+                  {longPathStore.userGoals[0]?.goal_type === 'strength' ? 'Сила' : 
+                   longPathStore.userGoals[0]?.goal_type === 'cardio' ? 'Выносливость' : 
+                   longPathStore.userGoals[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Масса'}
+                </h3>
+              </div>
+              <button 
+                onClick={() => navigate('/coach')}
+                className="text-accent-blue text-sm hover:underline flex items-center gap-1"
+              >
+                Изменить <ChevronRight size={14} />
+              </button>
+            </div>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="flex-1">
+                <div className="flex justify-between text-xs text-text-secondary mb-1">
+                  <span>Уровень {longPathStore.currentLevelIndex + 1}</span>
+                  <span>{Math.round(longPathStore.progressToNextLevel)}%</span>
+                </div>
+                <div className="w-full bg-bg-tertiary rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-accent-blue to-accent-purple h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${longPathStore.progressToNextLevel}%` }} 
+                  />
+                </div>
+              </div>
+            </div>
+            <p className="text-text-secondary text-xs">
+              До следующей ступени: {longPathStore.goalLevels[longPathStore.currentLevelIndex + 1]?.targetValue || 'Финиш'} {longPathStore.userGoals[0]?.goal_unit}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">
-            {stats.water === 0 ? (
-              <span className="text-accent-blue font-medium">+ Выпей стакан воды</span>
-            ) : 'Сегодня'}
-          </p>
-        </div>
-
-        {/* Сон */}
-        <div 
-          className="card-modern p-4 bg-gradient-to-br from-accent-purple/10 to-transparent border-accent-purple/20 cursor-pointer hover:border-accent-purple/50 transition-colors"
-          onClick={() => setShowSleepModal(true)}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <Moon size={20} className="text-accent-purple" />
-            <span className="text-xs text-text-secondary">часы</span>
-          </div>
-          <p className="text-2xl font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}` : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">
-            {stats.sleep === 0 ? (
-              <span className="text-accent-purple font-medium">+ Запиши сон</span>
-            ) : 'Сегодня'}
-          </p>
-        </div>
-
-        {/* Тренировки */}
-        <div 
-          className="card-modern p-4 bg-gradient-to-br from-accent-green/10 to-transparent border-accent-green/20 cursor-pointer hover:border-accent-green/50 transition-colors"
-          onClick={() => navigate('/workouts')}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <Dumbbell size={20} className="text-accent-green" />
-            <span className="text-xs text-text-secondary">тренировки</span>
-          </div>
-          <p className="text-2xl font-bold text-text">{stats.workouts > 0 ? stats.workouts : '—'}</p>
-          <p className="text-xs text-text-secondary mt-1">
-            {stats.workouts === 0 ? (
-              <span className="text-accent-green font-medium">+ Начни первую тренировку</span>
-            ) : 'Сегодня'}
-          </p>
-        </div>
+        )}
       </div>
 
       {/* Прогресс и Серия в одной строке */}

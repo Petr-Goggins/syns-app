@@ -1,4 +1,3 @@
-```
 # Dependencies
 node_modules/
 
@@ -12,15 +11,25 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.py.class
 .Python
 env/
 venv/
 .venv/
-.ENV
-.python-version
-
-# Logs
+pip-log.txt
+pip-selfcheck.json
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
 
 # Environment variables
 .env
@@ -30,18 +39,116 @@ venv/
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.csproj
 
-# OS
+# Logs
+logs
+*.log
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+*.DS_Store
+.AppleDouble
+.LSOverride
 
-# Coverage
+# Testing
 coverage/
 htmlcov/
-.coverage
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Translations
+*.mo
+*.pot
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask
+instance/
+.webassets-cache
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
 
 # Compressed files
 *.zip
@@ -66,4 +173,622 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
+
+# TypeScript
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+*.js.map
+*.jsx.map
+*.ts.map
+*.tsx.map
+*.js.flow
+*.jsx.flow
+*.ts.flow
+*.tsx.flow
+
+# React
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next/
+out/
+
+# Gatsby
+.cache/
+public/
+
+# Vue
+dist/
+.node-version
+
+# Angular
+/dist/
+/tmp/
+/logs/
+
+# Webpack
+webpack-stats.json
+
+# Ember
+tmp/
+temp/
+
+# Grunt
+.grunt
+bower_components/
+
+# Bower
+bower_components/
+
+# Brunch
+public/
+.brunch/
+
+# Jammit
+public/
+
+# Stitches
+stitches.config.js
+
+# Browser-sync
+.browser-sync-client/
+
+# ESLint
+.eslintcache
+
+# Jest
+coverage/
+*.lcov
+*.clover
+*.istanbul.yml
+.jest/
+.jestrc
+jest.config.js
+jest.config.json
+
+# Mocha
+.mocharc.json
+
+# Ava
+.ava/
+
+# Wallaby
+.wallaby/
+
+# Istanbul
+coverage/
+*.lcov
+*.clover
+*.istanbul.yml
+
+# NYC
+.nyc_output/
+.nycrc
+.nycrc.json
+
+# Codecov
+codecov.yml
+
+# Protractor
+protractor_report.json
+
+# Karma
+karma.conf.js
+karma.conf.coffee
+
+# Jasmine
+jasmine.json
+
+# Nightwatch
+nightwatch.json
+
+# Selenium
+selenium-server-standalone-*.jar
+
+# Appium
+appium.log
+
+# TestCafe
+.testcaferc.json
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Playwright
+playwright-report/
+
+# Puppeteer
+.first-run
+.chrome-test/
+
+# Cucumber
+*.feature
+
+# Chai
+.chai/
+
+# Sinon
+.sinon/
+
+# Lodash
+.lodash/
+
+# Underscore
+.underscore/
+
+# Backbone
+.backbone/
+
+# Marionette
+.marionette/
+
+# Chaplin
+.chaplin/
+
+# CanJS
+.canjs/
+
+# DoneJS
+.donejs/
+
+# Feathers
+.feathers/
+
+# KeystoneJS
+.keystone/
+
+# LoopBack
+.loopback/
+
+# Meteor
+.meteor/local/
+
+# Sails
+.sails/
+
+# Strapi
+.strapi/
+
+# Keystone
+.keystone/
+
+# Payload
+.payload/
+
+# Prisma
+prisma/migrations/
+
+# TypeORM
+typeorm/
+
+# Sequelize
+sequelize-meta.json
+sequelize-data.json
+
+# Knex
+knexfile.js
+knexfile.ts
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.tmp.*
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Nano
+*.nanorc
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Atom
+.atom/
+
+# VS Code
+.vscode/
+.history/
+
+# WebStorm
+.idea/
+
+# IntelliJ
+.idea/
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# CodeLite
+.codelite/
+.cxx/
+.precomp
+*.psess
+*.user
+*.sdf
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+# Dev-C++
+.dev/
+.devcpp
+
+# Visual Studio
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.filters
+[ipb]
+*.rsp
+*.iobj
+*.ipch
+*.pch
+*.obj
+*.ilk
+*.lib
+*.exp
+*.metagen
+*.pyc
+*.pyo
+*.pyd
+*.njsproj.user
+*.sln.cache
+*.VC.db
+*.VC.VC.opendb
+.ipch
+*.iobj
+*.tlog
+*.tlg
+*.unsuccessfulbuild
+*.layoutErrors
+*.vc.db
+*.vc.opendb
+*.pidb
+*.svclog
+*.sbr
+*.res
+*.metalog
+*.wrn
+*.asminc
+*.stackdump
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.opendb-shm
+*.VC.opendb-wal
+*.VC.VC.db-shm
+*.VC.VC.db-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.db
+*.VC.db
+*.VC.opendb
+*.VC.VC.opendb
+*.VC.VC.db-shm
+*.VC.VC.db-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.opendb-shm
+*.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+*.VC.db-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.db-shm
+......
+*.VC.db
+*.VC.VC.opendb
+*.VC.VC.db
+*.VC.db
+*.VC.opendb
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+......
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+*.VC.VC.opendb
+*.VC.db
+......
