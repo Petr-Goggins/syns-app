@@ -88,9 +88,17 @@ function OptionButton({ active, onClick, label }: OptionButtonProps) {
   );
 }
 
+const ACTIVITY_LEVEL_OPTIONS = [
+  { id: 'sedentary', label: 'Сидячий' },
+  { id: 'light', label: 'Легкая активность (1-2 дня в неделю)' },
+  { id: 'moderate', label: 'Средняя (3-4 дня)' },
+  { id: 'high', label: 'Высокая (5-7 дней)' },
+  { id: 'very_high', label: 'Очень высокая (ежедневные интенсивные тренировки)' },
+];
+
 const STEPS = [
   { icon: Target, title: 'Цель + Опыт' },
-  { icon: Dumbbell, title: 'Данные + Инвентарь' },
+  { icon: Dumbbell, title: 'Данные + Активность' },
   { icon: Sparkles, title: 'Фокус + Личная цель' },
 ];
 
@@ -119,6 +127,10 @@ export default function CoachPage() {
     age: null,
     weight: null,
     height: null,
+    activity_level: 'moderate',
+    current_weight: null,
+    target_weight: null,
+    target_weeks: null,
   });
 
   const [currentWeight, setCurrentWeight] = useState<number>(0);
@@ -128,6 +140,8 @@ export default function CoachPage() {
   const [customGoalText, setCustomGoalText] = useState('');
   const [strengthExercise, setStrengthExercise] = useState('bench');
   const [strengthTarget, setStrengthTarget] = useState<number>(0);
+  const [unrealisticWarning, setUnrealisticWarning] = useState<string | null>(null);
+  const [timeWarning, setTimeWarning] = useState<string | null>(null);
 
   if (!user) return null;
 
@@ -138,23 +152,40 @@ export default function CoachPage() {
   const totalSteps = 3;
   const isLastStep = step === totalSteps - 1;
 
-  const canProceed = (): boolean => {
-    switch (step) {
-      case 0:
-        if (!form.main_goal) return false;
-        if (form.main_goal === 'increase_strength' && !strengthTarget) return false;
-        if (form.main_goal === 'custom' && !customGoalText) return false;
-        return !!form.experience_duration && !!form.training_level && form.injuries!.length > 0;
-      case 1:
-        return !!form.gender && !!form.age && !!form.weight && !!form.height && selectedInventory.length > 0;
-      case 2:
-        return selectedMuscles.length > 0 && (customGoalText || form.main_goal !== 'custom');
-      default: return true;
+  // Проверка реалистичности цели
+  useEffect(() => {
+    if (form.current_weight && form.target_weight) {
+      const diff = Math.abs(form.current_weight - form.target_weight);
+      const diffPercent = (diff / form.current_weight) * 100;
+      
+      if (diffPercent > 30) {
+        setUnrealisticWarning('Это очень амбициозная цель. Рекомендуем ставить реалистичные цели (не более 10-15% от текущего веса)');
+      } else {
+        setUnrealisticWarning(null);
+      }
+    } else {
+      setUnrealisticWarning(null);
     }
-  };
+
+    if (form.target_weeks) {
+      if (form.target_weeks < 4) {
+        setTimeWarning('Слишком короткий срок. Минимум 4 недели для безопасного достижения цели.');
+      } else if (form.target_weeks > 52) {
+        setTimeWarning('Слишком долгий срок. Максимум 52 недели для эффективной работы.');
+      } else {
+        setTimeWarning(null);
+      }
+    } else {
+      setTimeWarning(null);
+    }
+  }, [form.current_weight, form.target_weight, form.target_weeks]);
 
   const handleNext = () => {
-    if (step < totalSteps - 1) setStep(step + 1);
+    try {
+      if (step < totalSteps - 1) setStep(step + 1);
+    } catch (error) {
+      console.error('Error moving to next step:', error);
+    }
   };
 
   const handleBack = () => {
@@ -164,12 +195,20 @@ export default function CoachPage() {
   const handleFinish = async () => {
     if (!user) return;
 
+    // Рассчитываем авто-время если не указано
+    if (form.current_weight && form.target_weight && !form.target_weeks) {
+      const diff = Math.abs(form.current_weight - form.target_weight);
+      // Безопасный темп: 0.5 кг в неделю
+      const autoWeeks = Math.ceil(diff / 0.5);
+      set('target_weeks', Math.min(Math.max(autoWeeks, 4), 52)); // от 4 до 52 недель
+    }
+
     if (form.main_goal === 'custom') {
       set('personal_goal', customGoalText);
     } else if (form.main_goal === 'increase_strength') {
       set('personal_goal', `${strengthExercise === 'bench' ? 'Жим лёжа' : strengthExercise === 'squat' ? 'Присед' : 'Становая тяга'} ${strengthTarget} кг`);
     } else if (form.main_goal === 'lose_weight') {
-      set('personal_goal', `Похудение до ${targetWeight} кг`);
+      set('personal_goal', `Похудение до ${form.target_weight || targetWeight} кг`);
     } else if (form.main_goal === 'gain_muscle') {
       set('personal_goal', 'Набор мышечной массы');
     }
@@ -184,7 +223,7 @@ export default function CoachPage() {
 
     if (form.main_goal === 'lose_weight') {
       set('goal_type', 'weight_loss');
-      set('goal_amount', targetWeight);
+      set('goal_amount', form.target_weight || targetWeight);
       set('goal_unit', 'кг');
     } else if (form.main_goal === 'gain_muscle') {
       set('goal_type', 'muscle_gain');
@@ -394,12 +433,12 @@ export default function CoachPage() {
             </>
           )}
 
-          {/* Шаг 1: Данные + Инвентарь */}
+          {/* Шаг 1: Данные + Активность */}
           {step === 1 && (
             <>
               <div className="flex items-center gap-2 mb-3">
                 <Dumbbell size={18} className="text-accent-blue" />
-                <p className="text-sm text-text-secondary">Ваши данные и доступный инвентарь</p>
+                <p className="text-sm text-text-secondary">Ваши данные и уровень активности</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -443,11 +482,15 @@ export default function CoachPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Вес (кг)</label>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Текущий вес (кг)</label>
                   <input
                     type="number"
-                    value={form.weight || ''}
-                    onChange={(e) => set('weight', Number(e.target.value))}
+                    value={form.current_weight || form.weight || ''}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      set('current_weight', val);
+                      set('weight', val);
+                    }}
                     placeholder="кг"
                     className="input-field w-full px-3 py-2.5 text-sm"
                     min="30"
@@ -467,6 +510,20 @@ export default function CoachPage() {
                     min="100"
                     max="250"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень физической активности</label>
+                <div className="space-y-2">
+                  {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
+                    <OptionButton
+                      key={opt.id}
+                      active={form.activity_level === opt.id}
+                      onClick={() => set('activity_level', opt.id)}
+                      label={opt.label}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -520,6 +577,73 @@ export default function CoachPage() {
                 <p className="text-xs text-text-secondary mt-2">Выберите хотя бы одну группу мышц</p>
               </div>
 
+              {/* Целевой вес и время достижения для похудения */}
+              {(form.main_goal === 'lose_weight' || form.main_goal === 'gain_muscle') && (
+                <div className="pt-4 border-t border-border">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-2">
+                        Текущий вес (кг) *
+                      </label>
+                      <input
+                        type="number"
+                        value={form.current_weight || ''}
+                        onChange={(e) => set('current_weight', Number(e.target.value))}
+                        placeholder="кг"
+                        className="input-field w-full px-3 py-2.5 text-sm"
+                        min="30"
+                        max="200"
+                        step="0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-2">
+                        Целевой вес (кг) *
+                      </label>
+                      <input
+                        type="number"
+                        value={form.target_weight || ''}
+                        onChange={(e) => set('target_weight', Number(e.target.value))}
+                        placeholder="кг"
+                        className="input-field w-full px-3 py-2.5 text-sm"
+                        min="30"
+                        max="200"
+                        step="0.5"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      Желаемое время достижения (недель)
+                    </label>
+                    <input
+                      type="number"
+                      value={form.target_weeks || ''}
+                      onChange={(e) => set('target_weeks', Number(e.target.value))}
+                      placeholder="Оставьте пустым для авто-расчёта"
+                      className="input-field w-full px-3 py-2.5 text-sm"
+                      min="4"
+                      max="52"
+                      step="1"
+                    />
+                    <p className="text-xs text-text-secondary mt-1">
+                      Безопасный темп: 0.5-1 кг в неделю
+                    </p>
+                  </div>
+
+                  {unrealisticWarning && (
+                    <div className="mt-3 p-3 rounded-lg bg-accent-red/10 border border-accent-red/30">
+                      <p className="text-xs text-accent-red">{unrealisticWarning}</p>
+                    </div>
+                  )}
+                  {timeWarning && (
+                    <div className="mt-3 p-3 rounded-lg bg-accent-orange/10 border border-accent-orange/30">
+                      <p className="text-xs text-accent-orange">{timeWarning}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="pt-4 border-t border-border">
                 <label className="block text-sm font-medium text-text-secondary mb-2">
                   {form.main_goal === 'custom' ? 'Ваша цель' : 'Личная цель'}
@@ -571,8 +695,7 @@ export default function CoachPage() {
           {!isLastStep ? (
             <button
               onClick={handleNext}
-              disabled={!canProceed()}
-              className="btn-primary px-6 py-2.5 text-sm flex items-center gap-1.5 disabled:opacity-40"
+              className="btn-primary px-6 py-2.5 text-sm flex items-center gap-1.5"
             >
               Далее <ChevronRight size={18} />
             </button>

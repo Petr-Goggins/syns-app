@@ -322,6 +322,10 @@ export interface CoachData {
   personal_goal: string | null;
   exercise_likes: string | null;
   exercise_dislikes: string | null;
+  activity_level: string | null;
+  current_weight: number | null;
+  target_weight: number | null;
+  target_weeks: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -214,6 +214,73 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               <p className="text-text font-medium">{coachData.goal_type ? `${coachData.goal_type} (${coachData.goal_amount} ${coachData.goal_unit})` : 'Не выбрана'}</p>
             </div>
           </div>
+          
+          {/* Отображение цели по весу */}
+          {(coachData.current_weight || coachData.target_weight) && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <h3 className="text-sm font-semibold text-text-secondary mb-3">Цель по весу</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <p className="text-xs text-text-tertiary">Текущий вес</p>
+                  <p className="text-lg font-bold text-text">{coachData.current_weight || '-'} кг</p>
+                </div>
+                <div>
+                  <p className="text-xs text-text-tertiary">Целевой вес</p>
+                  <p className="text-lg font-bold text-text">{coachData.target_weight || '-'} кг</p>
+                </div>
+                <div>
+                  <p className="text-xs text-text-tertiary">Осталось</p>
+                  <p className={`text-lg font-bold ${
+                    coachData.current_weight && coachData.target_weight 
+                      ? coachData.current_weight > coachData.target_weight 
+                        ? 'text-accent-green' 
+                        : 'text-accent-orange'
+                      : 'text-text'
+                  }`}>
+                    {coachData.current_weight && coachData.target_weight
+                      ? `${coachData.current_weight > coachData.target_weight ? '-' : '+'}${Math.abs(coachData.current_weight - coachData.target_weight)} кг`
+                      : '-'}
+                  </p>
+                </div>
+              </div>
+              
+              {coachData.target_weeks && (
+                <div className="mt-3 p-3 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                  <p className="text-xs text-text-secondary">Прогноз достижения</p>
+                  <p className="text-sm font-medium text-accent-blue">
+                    Через {coachData.target_weeks} нед. ({Math.round(coachData.target_weeks / 4)} мес.)
+                  </p>
+                </div>
+              )}
+              
+              {coachData.activity_level && (
+                <div className="mt-3">
+                  <p className="text-xs text-text-tertiary">Уровень активности</p>
+                  <p className="text-sm font-medium text-text">
+                    {coachData.activity_level === 'sedentary' && 'Сидячий'}
+                    {coachData.activity_level === 'light' && 'Легкая активность (1-2 дня в неделю)'}
+                    {coachData.activity_level === 'moderate' && 'Средняя (3-4 дня)'}
+                    {coachData.activity_level === 'high' && 'Высокая (5-7 дней)'}
+                    {coachData.activity_level === 'very_high' && 'Очень высокая (ежедневные интенсивные тренировки)'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {!coachData && (
+        <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20">
+          <p className="text-text-secondary text-center py-4">
+            Цель не задана. Перейдите в анкету тренера.
+          </p>
+          <button
+            onClick={() => navigate('/coach')}
+            className="btn-primary w-full py-2.5"
+          >
+            Заполнить анкету
+          </button>
         </div>
       )}
 
