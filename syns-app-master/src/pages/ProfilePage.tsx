@@ -5,6 +5,7 @@ import { useCoachStore } from '@/store/coachStore';
 import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, Moon, Sun, LogOut, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loadNotificationSettings, saveNotificationSettings, requestNotificationPermission } from '@/lib/notifications';
+import MuscleHeatmap from '@/components/MuscleHeatmap';
 
 const RELIGION_OPTIONS = [
   { id: 'none', label: 'Нет', icon: '⛔' },
@@ -216,6 +217,26 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
           </div>
         </div>
       )}
+
+      {/* Тепловая карта мышц */}
+      <div className="card-modern mb-6">
+        <h3 className="font-bold text-text mb-4 flex items-center gap-2">
+          <Dumbbell size={18} className="text-accent-blue" />
+          Нагрузка за неделю
+        </h3>
+        <MuscleHeatmap
+          intensities={{
+            chest: { muscle: 'chest', intensity: 70, lastTrained: '2 дня назад' },
+            biceps: { muscle: 'biceps', intensity: 45, lastTrained: '3 дня назад' },
+            triceps: { muscle: 'triceps', intensity: 30, lastTrained: '4 дня назад' },
+            abs: { muscle: 'abs', intensity: 20 },
+            quads: { muscle: 'quads', intensity: 85, lastTrained: '1 день назад' },
+            shoulders: { muscle: 'shoulders', intensity: 50, lastTrained: '2 дня назад' },
+          }}
+          size="md"
+          showLabels={true}
+        />
+      </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         <div className="card-modern space-y-4">
