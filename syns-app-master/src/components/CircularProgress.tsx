@@ -23,36 +23,28 @@ export default function CircularProgress({
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = Math.min(1.5, current / goal); // Allow up to 150% for visual
+  const pct = Math.min(1.5, current / goal);
   const offset = circumference * (1 - Math.min(1, pct));
   
-  // Determine color based on percentage
   const getCircleColor = () => {
     if (color) return color;
     if (pct <= 1) return 'var(--accent-blue)';
-    if (pct <= 1.2) return '#FBBF24'; // Amber/golden
-    return 'var(--text-tertiary)'; // Neutral gray/blue
+    if (pct <= 1.2) return '#FBBF24';
+    return 'var(--text-tertiary)';
   };
   
   const circleColor = getCircleColor();
-  
-  // Calculate remaining or exceeded
   const remaining = goal - current;
   const isOver = remaining < 0;
   
-  // Haptic feedback when reaching 100%
   const prevPctRef = React.useRef(0);
   React.useEffect(() => {
     if (prevPctRef.current < 1 && pct >= 1 && navigator.vibrate) {
-      navigator.vibrate(50); // Short vibration
+      navigator.vibrate(50);
     }
     prevPctRef.current = pct;
   }, [pct]);
   
-  const centerValue = showRemaining 
-    ? (isOver ? Math.abs(remaining) : remaining)
-    : current;
-    
   const centerLabel = label || (showRemaining 
     ? (isOver ? `+${Math.round(Math.abs(remaining))}` : `${Math.round(remaining)}`)
     : `${Math.round(current)}`);
@@ -82,8 +74,8 @@ export default function CircularProgress({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {centerLabel && <span className="text-2xl font-bold text-text">{centerLabel}</span>}
-        {sublabel && <span className="text-xs text-text-secondary mt-0.5">{sublabel}</span>}
+        {centerLabel && <span className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{centerLabel}</span>}
+        {sublabel && <span className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{sublabel}</span>}
       </div>
     </div>
   );
