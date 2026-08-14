@@ -7,8 +7,6 @@ interface CircularProgressProps {
   strokeWidth?: number;
   color?: string;
   label?: string;
-  showRemaining?: boolean;
-  sublabel?: string;
 }
 
 export default function CircularProgress({
@@ -18,36 +16,21 @@ export default function CircularProgress({
   strokeWidth = 12,
   color,
   label,
-  showRemaining = true,
-  sublabel,
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = Math.min(1.5, current / goal);
+  const pct = current / goal;
   const offset = circumference * (1 - Math.min(1, pct));
   
+  // Цвета: зелёный (до 100%), янтарный (100-120%), серый (>120%)
   const getCircleColor = () => {
     if (color) return color;
-    if (pct <= 1) return 'var(--accent-blue)';
-    if (pct <= 1.2) return '#FBBF24';
-    return 'var(--text-tertiary)';
+    if (pct <= 1) return '#22c55e'; // зелёный
+    if (pct <= 1.2) return '#FBBF24'; // янтарный
+    return '#6B7280'; // серый
   };
   
   const circleColor = getCircleColor();
-  const remaining = goal - current;
-  const isOver = remaining < 0;
-  
-  const prevPctRef = React.useRef(0);
-  React.useEffect(() => {
-    if (prevPctRef.current < 1 && pct >= 1 && navigator.vibrate) {
-      navigator.vibrate(50);
-    }
-    prevPctRef.current = pct;
-  }, [pct]);
-  
-  const centerLabel = label || (showRemaining 
-    ? (isOver ? `+${Math.round(Math.abs(remaining))}` : `${Math.round(remaining)}`)
-    : `${Math.round(current)}`);
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
@@ -57,7 +40,7 @@ export default function CircularProgress({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--bg-tertiary)"
+          stroke="#374151"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -70,12 +53,11 @@ export default function CircularProgress({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
+          style={{ transition: 'stroke-dashoffset 0.8s ease' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {centerLabel && <span className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{centerLabel}</span>}
-        {sublabel && <span className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{sublabel}</span>}
+        <span className="text-2xl font-bold text-white">{label || `${Math.round(current)}/${goal}`}</span>
       </div>
     </div>
   );

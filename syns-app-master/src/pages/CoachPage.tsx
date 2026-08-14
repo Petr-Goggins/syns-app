@@ -154,7 +154,7 @@ export default function CoachPage() {
   };
 
   const handleNext = () => {
-    if (step < totalSteps - 1) setStep(step + 1);
+    setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -571,8 +571,7 @@ export default function CoachPage() {
           {!isLastStep ? (
             <button
               onClick={handleNext}
-              disabled={!canProceed()}
-              className="btn-primary px-6 py-2.5 text-sm flex items-center gap-1.5 disabled:opacity-40"
+              className="btn-primary px-6 py-2.5 text-sm flex items-center gap-1.5"
             >
               Далее <ChevronRight size={18} />
             </button>
