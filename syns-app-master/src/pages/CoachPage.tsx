@@ -128,6 +128,26 @@ export default function CoachPage() {
   const [customGoalText, setCustomGoalText] = useState('');
   const [strengthExercise, setStrengthExercise] = useState('bench');
   const [strengthTarget, setStrengthTarget] = useState<number>(0);
+  const [goalTimeEstimate, setGoalTimeEstimate] = useState<{ weeks: number; date: string } | null>(null);
+
+  useEffect(() => {
+    // Вычисляем прогноз времени достижения цели при изменении весов
+    if (form.main_goal === 'gain_muscle' && currentWeight > 0 && targetWeight > 0) {
+      const diff = targetWeight - currentWeight;
+      const weeks = Math.ceil(diff / 0.5); // 0.5 кг в неделю для набора массы
+      const estimatedDate = new Date();
+      estimatedDate.setDate(estimatedDate.getDate() + weeks * 7);
+      setGoalTimeEstimate({ weeks, date: estimatedDate.toLocaleDateString('ru', { day: '2-digit', month: '2-digit', year: '2-digit' }) });
+    } else if (form.main_goal === 'lose_weight' && currentWeight > 0 && targetWeight > 0) {
+      const diff = currentWeight - targetWeight;
+      const weeks = Math.ceil(diff / 0.5); // 0.5 кг в неделю для похудения
+      const estimatedDate = new Date();
+      estimatedDate.setDate(estimatedDate.getDate() + weeks * 7);
+      setGoalTimeEstimate({ weeks, date: estimatedDate.toLocaleDateString('ru', { day: '2-digit', month: '2-digit', year: '2-digit' }) });
+    } else {
+      setGoalTimeEstimate(null);
+    }
+  }, [currentWeight, targetWeight, form.main_goal]);
 
   if (!user) return null;
 

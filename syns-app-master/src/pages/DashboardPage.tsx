@@ -7,7 +7,6 @@ import { useWorkoutLogStore } from '@/store/workoutLogStore';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '@/components/Modal';
 
 type DateFilter = 'today' | 'yesterday' | 'week';
@@ -51,7 +50,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [cycleRecommendation, setCycleRecommendation] = useState<string | null>(null);
   const [waterAmount, setWaterAmount] = useState(200);
   const [quote, setQuote] = useState({ text: '', author: '' });
-  const [forecastData, setForecastData] = useState<any[]>([]);
+  const [streak, setStreak] = useState(0);
   
   // Модальное окно для добавления воды
   const [showWaterModal, setShowWaterModal] = useState(false);
@@ -131,16 +130,14 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         await waterStore.fetchToday(user.id);
         const totalWater = waterStore.todayAmount;
 
-        // Загружаем серию и календарь активности
+        // Загружаем серию
         await longPathStore.calculateStreak(user.id);
-        await longPathStore.fetchActivityCalendar(user.id, 1);
+        setStreak(longPathStore.streak);
 
-        // Загружаем историю тренировок для прогноза
-        await workoutLogStore.fetchLogs(user.id);
-
-        // Генерируем прогноз на неделю на основе истории
-        const forecast = generateWeekForecast(workoutLogStore.logs);
-        setForecastData(forecast);
+        // Устанавливаем цель калорий из профиля или по умолчанию
+        const goalCalories = profile?.goal ? 
+          (profile.goal === 'lose' ? 2000 : profile.goal === 'gain' ? 3000 : 2500) : 2500;
+        setCalorieGoal(goalCalories);
 
         setStats({
           calories: totalCalories,
@@ -162,109 +159,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     };
     loadDashboard();
   }, [user, dateFilter]);
-
-  // Генерация прогноза на неделю (на основе истории тренировок)
-  const generateWeekForecast = (logs: any[]) => {
-    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-    const today = new Date();
-    
-    // Если нет логов, возвращаем пустой прогноз
-    if (!logs || logs.length === 0) {
-      return Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() + i);
-        const dayName = days[date.getDay() === 0 ? 6 : date.getDay() - 1];
-        return {
-          day: dayName,
-          date: date.toLocaleDateString('ru', { day: 'numeric', month: 'short' }),
-          activity: 0,
-          isToday: i === 0,
-          volume: 0,
-        };
-      });
-    }
-
-    // 1. Анализируем последние тренировки (берем до 10 последних)
-    const recentLogs = [...logs]
-      .sort((a, b) => new Date(b.log_date).getTime() - new Date(a.log_date).getTime())
-      .slice(0, 10);
-
-    // 2. Считаем объем каждой тренировки (Weight * Reps * Sets)
-    const volumes = recentLogs.map((log) => {
-      const totalVolume = log.exercises.reduce((acc: number, ex: any) => {
-        return acc + (ex.weight || 0) * (ex.reps || 0) * (ex.sets || 0);
-      }, 0);
-      return {
-        date: new Date(log.log_date).getTime(),
-        volume: totalVolume,
-        dayOfWeek: new Date(log.log_date).getDay(),
-      };
-    });
-
-    // 3. Вычисляем средний объем и тренд
-    const avgVolume = volumes.reduce((acc, curr) => acc + curr.volume, 0) / volumes.length;
-    
-    // Простая линейная регрессия для наклона тренда
-    let slope = 0;
-    if (volumes.length > 1) {
-      const n = volumes.length;
-      const sumX = volumes.reduce((acc, _, i) => acc + i, 0);
-      const sumY = volumes.reduce((acc, v) => acc + v.volume, 0);
-      const sumXY = volumes.reduce((acc, v, i) => acc + i * v.volume, 0);
-      const sumXX = volumes.reduce((acc, _, i) => acc + i * i, 0);
-      
-      slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    }
-
-    // 4. Определяем частоту тренировок (какие дни недели активны)
-    const activeDaysOfWeek = new Set<number>();
-    recentLogs.forEach(log => {
-      activeDaysOfWeek.add(new Date(log.log_date).getDay()); // 0 = Sun, 1 = Mon...
-    });
-    
-    // Если мало данных, предполагаем стандартный график (Пн, Ср, Пт) или просто каждые 2 дня
-    const likelyFrequency = activeDaysOfWeek.size >= 2 
-      ? Array.from(activeDaysOfWeek) 
-      : [1, 3, 5]; // По умолчанию Пн, Ср, Пт
-
-    // 5. Генерируем прогноз на 7 дней вперед
-    const forecast = [];
-    
-    for (let i = 0; i < 7; i++) {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + i);
-      
-      const dayOfWeek = nextDate.getDay();
-      const dayName = days[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
-      const isTrainingDay = likelyFrequency.includes(dayOfWeek);
-      
-      // Базовый объем + тренд + небольшой рандом для реалистичности
-      let predictedVolume = 0;
-      if (isTrainingDay) {
-        // Применяем тренд: slope * (количество шагов вперед)
-        const trendAdjustment = slope * (i * 0.3); 
-        predictedVolume = Math.max(0, avgVolume + trendAdjustment);
-        
-        // Добавляем вариативность (±10%)
-        const variance = predictedVolume * 0.1;
-        predictedVolume = predictedVolume + (Math.random() * variance * 2 - variance);
-      }
-
-      // Нормализуем объем в проценты активности (для графика)
-      const maxVol = Math.max(...volumes.map(v => v.volume), avgVolume * 1.5);
-      const activityPercent = maxVol > 0 ? Math.min(Math.round((predictedVolume / maxVol) * 100), 100) : 0;
-
-      forecast.push({
-        day: dayName,
-        date: nextDate.toLocaleDateString('ru', { day: 'numeric', month: 'short' }),
-        activity: activityPercent,
-        volume: Math.round(predictedVolume),
-        isToday: i === 0,
-      });
-    }
-
-    return forecast;
-  };
 
   const handleWaterAdd = async (amount: number) => {
     if (!user) return;
@@ -289,11 +183,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
   if (loading) return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>;
 
-  const waterPercent = Math.min((waterAmount / 3000) * 100, 100);
-  const rangeStyle = (percent: number) => ({
-    background: `linear-gradient(to right, #58A6FF 0%, #58A6FF ${percent}%, #374151 ${percent}%, #374151 100%)`,
-  });
-
   // Вычисляем процент выполнения калорий и определяем цвет круга
   const caloriePct = stats.calories / calorieGoal;
   const getCircleColor = () => {
@@ -303,6 +192,11 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   };
   const circleColor = getCircleColor();
   const remainingCalories = calorieGoal - stats.calories;
+
+  // Функция для получения цвета макроса
+  const getMacroColor = (current: number, goal: number, baseColor: string, overColor: string) => {
+    return current > goal ? overColor : baseColor;
+  };
 
   return (
     <div className="p-4 max-w-4xl mx-auto animate-fade-in">
@@ -396,7 +290,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((stats.macros.protein.current / stats.macros.protein.goal) * 100, 100)}%`, backgroundColor: '#22c55e' }}
+              style={{ width: `${Math.min((stats.macros.protein.current / stats.macros.protein.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.protein.current, stats.macros.protein.goal, '#22c55e', '#ef4444') }}
             />
           </div>
         </div>
@@ -410,7 +304,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((stats.macros.fats.current / stats.macros.fats.goal) * 100, 100)}%`, backgroundColor: '#ef4444' }}
+              style={{ width: `${Math.min((stats.macros.fats.current / stats.macros.fats.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.fats.current, stats.macros.fats.goal, '#ef4444', '#f97316') }}
             />
           </div>
         </div>
@@ -424,7 +318,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((stats.macros.carbs.current / stats.macros.carbs.goal) * 100, 100)}%`, backgroundColor: '#eab308' }}
+              style={{ width: `${Math.min((stats.macros.carbs.current / stats.macros.carbs.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.carbs.current, stats.macros.carbs.goal, '#eab308', '#f59e0b') }}
             />
           </div>
         </div>
