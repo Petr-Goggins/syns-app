@@ -13,6 +13,7 @@ interface ChatState {
   sendMessage: (userId: string, profile: Profile | null, content: string) => Promise<void>;
   clearMessages: (userId: string) => Promise<void>;
   reset: () => void;
+  setMessages: (messages: ChatMessage[]) => void;
 }
 
 const SUGGESTED_REPLIES: Record<string, string[]> = {
@@ -185,4 +186,5 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ messages: [] });
   },
   reset: () => set({ messages: [], loading: false, error: null }),
+  setMessages: (messages) => set({ messages }),
 }));
