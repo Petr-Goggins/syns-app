@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Droplet, Moon, Dumbbell, Target, Flame } from 'lucide-react';
 import CircularProgress from '../components/CircularProgress';
 
@@ -25,9 +25,9 @@ interface DashboardPageProps {
   };
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ 
-  user = { email: 'guest@example.com', name: 'Гость', goal: 'не выбрана' },
-  stats = {
+// Данные для разных периодов
+const periodData = {
+  today: {
     caloriesConsumed: 1800,
     caloriesGoal: 2500,
     proteinCurrent: 120,
@@ -41,8 +41,47 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     workouts: 0,
     progress: 65,
     streak: 5
+  },
+  yesterday: {
+    caloriesConsumed: 2200,
+    caloriesGoal: 2500,
+    proteinCurrent: 140,
+    proteinGoal: 150,
+    fatCurrent: 65,
+    fatGoal: 70,
+    carbsCurrent: 280,
+    carbsGoal: 300,
+    water: 1.8,
+    sleep: 8,
+    workouts: 1,
+    progress: 72,
+    streak: 4
+  },
+  week: {
+    caloriesConsumed: 15400,
+    caloriesGoal: 17500,
+    proteinCurrent: 980,
+    proteinGoal: 1050,
+    fatCurrent: 420,
+    fatGoal: 490,
+    carbsCurrent: 1890,
+    carbsGoal: 2100,
+    water: 10.5,
+    sleep: 52,
+    workouts: 4,
+    progress: 68,
+    streak: 5
   }
+};
+
+const DashboardPage: React.FC<DashboardPageProps> = ({ 
+  user = { email: 'guest@example.com', name: 'Гость', goal: 'не выбрана' },
+  stats: initialStats
 }) => {
+  const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'yesterday' | 'week'>('today');
+  
+  const stats = periodData[selectedPeriod];
+
   const getUserName = () => {
     if (user?.name) return user.name;
     if (user?.email) {
@@ -54,6 +93,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 
   const remainingCalories = stats.caloriesGoal - stats.caloriesConsumed;
   const isOver = remainingCalories < 0;
+
+  // Периоды для переключателя
+  const periods = [
+    { key: 'today' as const, label: 'Сегодня' },
+    { key: 'yesterday' as const, label: 'Вчера' },
+    { key: 'week' as const, label: 'Неделя' }
+  ];
 
   return (
     <div className="dashboard-page" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -85,7 +131,35 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         </p>
       </header>
 
-      {/* 1.2 КРУГЛЫЙ СЧЁТЧИК КАЛОРИЙ */}
+      {/* 1.2 ПЕРЕКЛЮЧАТЕЛЬ ДАТЫ */}
+      <section className="date-switcher" style={{ 
+        display: 'flex', 
+        justifyContent: 'center',
+        gap: '12px',
+        marginBottom: '24px'
+      }}>
+        {periods.map((period) => (
+          <button
+            key={period.key}
+            onClick={() => setSelectedPeriod(period.key)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: selectedPeriod === period.key ? 'var(--accent-blue)' : 'var(--bg-card)',
+              color: selectedPeriod === period.key ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {period.label}
+          </button>
+        ))}
+      </section>
+
+      {/* 1.3 КРУГЛЫЙ СЧЁТЧИК КАЛОРИЙ */}
       <section className="calories-section" style={{ 
         display: 'flex', 
         flexDirection: 'column', 
@@ -118,11 +192,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         </p>
       </section>
 
-      {/* 1.3 ТРИ ПРОГРЕСС-БАРА */}
+      {/* 1.4 ТРИ ПРОГРЕСС-БАРА (ПОД КРУГОМ) — С ЦВЕТАМИ ИЗ ЗАДАНИЯ */}
       <section className="macros-section" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          {/* Белки */}
-          <div style={{ flex: 1, minWidth: '200px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Белки - зелёные #22c55e */}
+          <div>
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -131,27 +205,27 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               color: 'var(--text-secondary)'
             }}>
               <span>Белки</span>
-              <span>{stats.proteinCurrent}/{stats.proteinGoal} г</span>
+              <span>{stats.proteinCurrent} / {stats.proteinGoal} г</span>
             </div>
             <div style={{ 
               width: '100%', 
               height: '8px', 
-              backgroundColor: 'var(--bg-card)',
+              backgroundColor: 'var(--border-color)',
               borderRadius: '4px',
               overflow: 'hidden'
             }}>
               <div style={{ 
                 width: `${Math.min((stats.proteinCurrent / stats.proteinGoal) * 100, 100)}%`,
                 height: '100%',
-                backgroundColor: '#A78BFA',
+                backgroundColor: '#22c55e',
                 borderRadius: '4px',
                 transition: 'width 0.5s ease'
               }} />
             </div>
           </div>
 
-          {/* Жиры */}
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          {/* Жиры - красные #ef4444 */}
+          <div>
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -160,27 +234,27 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               color: 'var(--text-secondary)'
             }}>
               <span>Жиры</span>
-              <span>{stats.fatCurrent}/{stats.fatGoal} г</span>
+              <span>{stats.fatCurrent} / {stats.fatGoal} г</span>
             </div>
             <div style={{ 
               width: '100%', 
               height: '8px', 
-              backgroundColor: 'var(--bg-card)',
+              backgroundColor: 'var(--border-color)',
               borderRadius: '4px',
               overflow: 'hidden'
             }}>
               <div style={{ 
                 width: `${Math.min((stats.fatCurrent / stats.fatGoal) * 100, 100)}%`,
                 height: '100%',
-                backgroundColor: '#FCD34D',
+                backgroundColor: '#ef4444',
                 borderRadius: '4px',
                 transition: 'width 0.5s ease'
               }} />
             </div>
           </div>
 
-          {/* Углеводы */}
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          {/* Углеводы - жёлтые #eab308 */}
+          <div>
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -189,19 +263,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               color: 'var(--text-secondary)'
             }}>
               <span>Углеводы</span>
-              <span>{stats.carbsCurrent}/{stats.carbsGoal} г</span>
+              <span>{stats.carbsCurrent} / {stats.carbsGoal} г</span>
             </div>
             <div style={{ 
               width: '100%', 
               height: '8px', 
-              backgroundColor: 'var(--bg-card)',
+              backgroundColor: 'var(--border-color)',
               borderRadius: '4px',
               overflow: 'hidden'
             }}>
               <div style={{ 
                 width: `${Math.min((stats.carbsCurrent / stats.carbsGoal) * 100, 100)}%`,
                 height: '100%',
-                backgroundColor: '#60A5FA',
+                backgroundColor: '#eab308',
                 borderRadius: '4px',
                 transition: 'width 0.5s ease'
               }} />
