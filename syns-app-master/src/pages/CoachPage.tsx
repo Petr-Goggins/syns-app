@@ -148,7 +148,7 @@ export default function CoachPage() {
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!selectedLongPathGoal && (selectedLongPathGoal !== 'weight_loss' || targetWeight > 0);
+      case 0: return !!form.main_goal;
       case 1: return !!form.experience_duration && !!form.training_level;
       case 2: return selectedInventory.length > 0;
       case 3: return !!form.gender && !!form.age && !!form.weight && !!form.height;
