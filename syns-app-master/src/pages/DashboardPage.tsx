@@ -9,7 +9,23 @@ import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp,
 import { getPhaseRecommendation } from '@/lib/cycle';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '@/components/Modal';
-import CircularProgress from '@/components/CircularProgress';
+
+type DateFilter = 'today' | 'yesterday' | 'week';
+
+interface MacroData {
+  protein: { current: number; goal: number };
+  fats: { current: number; goal: number };
+  carbs: { current: number; goal: number };
+}
+
+interface DailyStats {
+  calories: number;
+  macros: MacroData;
+  water: number;
+  sleep: number;
+  workouts: number;
+  progress: number;
+}
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -18,18 +34,23 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const longPathStore = useLongPathStore();
   const workoutLogStore = useWorkoutLogStore();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    weight: 0,
+  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
+  const [stats, setStats] = useState<DailyStats>({
     calories: 0,
+    macros: {
+      protein: { current: 0, goal: 150 },
+      fats: { current: 0, goal: 70 },
+      carbs: { current: 0, goal: 300 },
+    },
     water: 0,
     sleep: 0,
     workouts: 0,
-    goal: 'Поддержание',
-    progress: 0,
-    streak: 0,
+    progress: 65,
   });
+  const [calorieGoal, setCalorieGoal] = useState(2500);
   const [cycleRecommendation, setCycleRecommendation] = useState<string | null>(null);
   const [waterAmount, setWaterAmount] = useState(200);
+  const [quote, setQuote] = useState({ text: '', author: '' });
   const [forecastData, setForecastData] = useState<any[]>([]);
   
   // Модальное окно для добавления воды
@@ -38,6 +59,21 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   // Модальное окно для сна
   const [showSleepModal, setShowSleepModal] = useState(false);
   const [sleepHours, setSleepHours] = useState('');
+
+  // Цитаты дня
+  const quotes = [
+    { text: 'Маленькие шаги ведут к большим результатам!', author: 'Мотивация дня' },
+    { text: 'Твоё тело может всё. Твой мозг должен в это поверить.', author: 'Вдохновение' },
+    { text: 'Не останавливайся, когда устал. Останавливайся, когда закончил.', author: 'Дисциплина' },
+    { text: 'Единственная плохая тренировка — та, которая не состоялась.', author: 'Фитнес' },
+    { text: 'Здоровье — это богатство, которое нужно беречь.', author: 'Мудрость' },
+  ];
+
+  useEffect(() => {
+    // Выбираем случайную цитату при загрузке
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    setQuote(randomQuote);
+  }, []);
   
   useEffect(() => {
     if (!user) return;
@@ -56,27 +92,40 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           setCycleRecommendation(rec.recommendation);
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        // Определяем дату для загрузки данных
+        let targetDate = new Date();
+        if (dateFilter === 'yesterday') {
+          targetDate.setDate(targetDate.getDate() - 1);
+        } else if (dateFilter === 'week') {
+          targetDate.setDate(targetDate.getDate() - 7);
+        }
+        const dateStr = targetDate.toISOString().split('T')[0];
+
+        // Загружаем калории и макросы из meals
         const { data: meals } = await supabase
           .from('meals')
-          .select('calories')
+          .select('calories, protein, fat, carbs')
           .eq('user_id', user.id)
-          .eq('date', today);
+          .eq('date', dateStr);
+        
         const totalCalories = meals?.reduce((sum, m) => sum + (m.calories || 0), 0) || 0;
+        const totalProtein = meals?.reduce((sum, m) => sum + (m.protein || 0), 0) || 0;
+        const totalFats = meals?.reduce((sum, m) => sum + (m.fat || 0), 0) || 0;
+        const totalCarbs = meals?.reduce((sum, m) => sum + (m.carbs || 0), 0) || 0;
 
         const { data: sleep } = await supabase
           .from('sleep_logs')
           .select('hours')
           .eq('user_id', user.id)
-          .eq('date', today)
+          .eq('date', dateStr)
           .single();
-        const sleepHours = sleep?.hours || 0;
+        const sleepHoursVal = sleep?.hours || 0;
 
         const { count: workoutsCount } = await supabase
           .from('workout_logs')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .eq('log_date', today);
+          .eq('log_date', dateStr);
 
         // Загружаем воду из store
         await waterStore.fetchToday(user.id);
@@ -94,14 +143,16 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         setForecastData(forecast);
 
         setStats({
-          weight: profile?.weight || 0,
           calories: totalCalories,
+          macros: {
+            protein: { current: totalProtein, goal: 150 },
+            fats: { current: totalFats, goal: 70 },
+            carbs: { current: totalCarbs, goal: 300 },
+          },
           water: totalWater / 1000,
-          sleep: sleepHours,
+          sleep: sleepHoursVal,
           workouts: workoutsCount || 0,
-          goal: profile?.goal || 'Поддержание',
           progress: 65,
-          streak: longPathStore.streak,
         });
       } catch (error) {
         console.error(error);
@@ -110,7 +161,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       }
     };
     loadDashboard();
-  }, [user]);
+  }, [user, dateFilter]);
 
   // Генерация прогноза на неделю (на основе истории тренировок)
   const generateWeekForecast = (logs: any[]) => {
@@ -243,66 +294,186 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     background: `linear-gradient(to right, #58A6FF 0%, #58A6FF ${percent}%, #374151 ${percent}%, #374151 100%)`,
   });
 
+  // Вычисляем процент выполнения калорий и определяем цвет круга
+  const caloriePct = stats.calories / calorieGoal;
+  const getCircleColor = () => {
+    if (caloriePct <= 1) return '#22c55e';
+    if (caloriePct <= 1.2) return '#eab308';
+    return '#9ca3af';
+  };
+  const circleColor = getCircleColor();
+  const remainingCalories = calorieGoal - stats.calories;
+
   return (
     <div className="p-4 max-w-4xl mx-auto animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-text">Главная</h1>
-        <span className="text-sm text-text-secondary">{new Date().toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+      {/* ШАПКА: Цитата дня, Приветствие, Цель */}
+      <div className="mb-6">
+        <p className="text-sm italic text-text-secondary mb-2">"{quote.text}"</p>
+        <h1 className="text-2xl font-bold text-text mb-1">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</h1>
+        <p className="text-sm text-text-secondary">Цель: {longPathStore.userGoals?.[0]?.goal_type === 'strength' ? 'Сила' : longPathStore.userGoals?.[0]?.goal_type === 'cardio' ? 'Выносливость' : longPathStore.userGoals?.[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Поддержание'}</p>
       </div>
 
-      {/* Круговой индикатор калорий */}
-      <div className="card-modern mb-6 flex justify-center py-6">
-        <CircularProgress current={1850} goal={2500} size={180} strokeWidth={14} label="1850/2500" />
+      {/* ПЕРЕКЛЮЧАТЕЛЬ ДАТЫ */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setDateFilter('today')}
+          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+            dateFilter === 'today'
+              ? 'bg-accent-blue text-white'
+              : 'bg-bg-card text-text-secondary hover:bg-bg-card-hover'
+          }`}
+        >
+          Сегодня
+        </button>
+        <button
+          onClick={() => setDateFilter('yesterday')}
+          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+            dateFilter === 'yesterday'
+              ? 'bg-accent-blue text-white'
+              : 'bg-bg-card text-text-secondary hover:bg-bg-card-hover'
+          }`}
+        >
+          Вчера
+        </button>
+        <button
+          onClick={() => setDateFilter('week')}
+          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+            dateFilter === 'week'
+              ? 'bg-accent-blue text-white'
+              : 'bg-bg-card text-text-secondary hover:bg-bg-card-hover'
+          }`}
+        >
+          Неделя
+        </button>
       </div>
 
-      {/* Макросы: белки, жиры, углеводы */}
+      {/* КРУГОВОЙ ИНДИКАТОР КАЛОРИЙ */}
+      <div className="card-modern mb-6 flex flex-col items-center py-6">
+        <span className="text-sm text-text-secondary mb-2">Калории</span>
+        <div className="relative inline-flex items-center justify-center" style={{ width: 140, height: 140 }}>
+          <svg width={140} height={140} className="-rotate-90">
+            <circle
+              cx={70}
+              cy={70}
+              r={58}
+              fill="none"
+              stroke="#374151"
+              strokeWidth={12}
+            />
+            <circle
+              cx={70}
+              cy={70}
+              r={58}
+              fill="none"
+              stroke={circleColor}
+              strokeWidth={12}
+              strokeDasharray={2 * Math.PI * 58}
+              strokeDashoffset={2 * Math.PI * 58 * (1 - Math.min(1, caloriePct))}
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-white">{stats.calories}</span>
+            <span className="text-xs text-text-secondary">ккал</span>
+          </div>
+        </div>
+        <span className="text-sm text-text-secondary mt-3">
+          {remainingCalories >= 0 
+            ? `Осталось ${remainingCalories} ккал` 
+            : `Перевыполнено на ${Math.abs(remainingCalories)} ккал`}
+        </span>
+      </div>
+
+      {/* ТРИ ПРОГРЕСС-БАРА МАКРОСОВ */}
       <div className="card-modern mb-6 space-y-4">
-        <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">Макронутриенты</h3>
-        
-        {/* Белки */}
+        {/* Белки - зелёный */}
         <div>
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-[#A78BFA] font-medium">Белки</span>
-            <span className="text-text-secondary">120 / 150 г</span>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-text font-medium">Белки</span>
+            <span className="text-text-secondary">{Math.round(stats.macros.protein.current)} / {stats.macros.protein.goal} г</span>
           </div>
-          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: '80%', backgroundColor: '#A78BFA' }}
+              style={{ width: `${Math.min((stats.macros.protein.current / stats.macros.protein.goal) * 100, 100)}%`, backgroundColor: '#22c55e' }}
             />
           </div>
         </div>
 
-        {/* Жиры */}
+        {/* Жиры - красный */}
         <div>
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-[#FCD34D] font-medium">Жиры</span>
-            <span className="text-text-secondary">50 / 70 г</span>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-text font-medium">Жиры</span>
+            <span className="text-text-secondary">{Math.round(stats.macros.fats.current)} / {stats.macros.fats.goal} г</span>
           </div>
-          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: '71%', backgroundColor: '#FCD34D' }}
+              style={{ width: `${Math.min((stats.macros.fats.current / stats.macros.fats.goal) * 100, 100)}%`, backgroundColor: '#ef4444' }}
             />
           </div>
         </div>
 
-        {/* Углеводы */}
+        {/* Углеводы - жёлтый */}
         <div>
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-[#60A5FA] font-medium">Углеводы</span>
-            <span className="text-text-secondary">200 / 300 г</span>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-text font-medium">Углеводы</span>
+            <span className="text-text-secondary">{Math.round(stats.macros.carbs.current)} / {stats.macros.carbs.goal} г</span>
           </div>
-          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: '67%', backgroundColor: '#60A5FA' }}
+              style={{ width: `${Math.min((stats.macros.carbs.current / stats.macros.carbs.goal) * 100, 100)}%`, backgroundColor: '#eab308' }}
             />
           </div>
         </div>
       </div>
-      <div className="text-center mb-6">
-        <p className="text-text-secondary text-sm">Осталось калорий: <span className="text-accent-blue font-semibold">650</span></p>
+
+      {/* ЧЕТЫРЕ КАРТОЧКИ: Вода, Сон, Тренировки, Прогресс */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {/* Вода */}
+        <div 
+          className="card-modern p-4 bg-bg-card rounded-2xl shadow cursor-pointer hover:border-accent-blue/50 transition-colors"
+          onClick={() => setShowWaterModal(true)}
+        >
+          <Droplet size={20} className="text-accent-blue mb-2" />
+          <p className="text-lg font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : '—'}</p>
+          <p className="text-xs text-text-secondary">литров</p>
+        </div>
+
+        {/* Сон */}
+        <div 
+          className="card-modern p-4 bg-bg-card rounded-2xl shadow cursor-pointer hover:border-accent-purple/50 transition-colors"
+          onClick={() => setShowSleepModal(true)}
+        >
+          <Moon size={20} className="text-indigo-500 mb-2" />
+          <p className="text-lg font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}` : '—'}</p>
+          <p className="text-xs text-text-secondary">часов</p>
+        </div>
+
+        {/* Тренировки */}
+        <div 
+          className="card-modern p-4 bg-bg-card rounded-2xl shadow cursor-pointer hover:border-accent-green/50 transition-colors"
+          onClick={() => navigate('/workouts')}
+        >
+          <Dumbbell size={20} className="text-accent-green mb-2" />
+          <p className="text-lg font-bold text-text">{stats.workouts > 0 ? stats.workouts : '—'}</p>
+          <p className="text-xs text-text-secondary">тренировки</p>
+        </div>
+
+        {/* Прогресс */}
+        <div className="card-modern p-4 bg-bg-card rounded-2xl shadow">
+          <Target size={20} className="text-purple-500 mb-2" />
+          <p className="text-lg font-bold text-text">{stats.progress}%</p>
+          <p className="text-xs text-text-secondary">прогресс</p>
+        </div>
+      </div>
+
+      {/* КАРТОЧКА СЕРИИ */}
+      <div className="card-modern mb-6">
+        <p className="text-sm text-text-secondary mb-1">Серия тренировок</p>
+        <p className="text-xl font-bold text-text">{longPathStore.streak} дней</p>
       </div>
 
       {/* Блок выбора глобальной цели */}
