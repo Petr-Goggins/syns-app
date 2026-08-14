@@ -25,12 +25,12 @@ export default function ProgressBar({
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-1">
-        <span className="text-sm text-text-secondary">{label}</span>
-        <span className={`text-sm font-medium ${isOver ? 'text-accent-gold' : 'text-text'}`}>
+        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+        <span className={`text-sm font-medium ${isOver ? 'text-accent-gold' : ''}`} style={{ color: isOver ? undefined : 'var(--text)' }}>
           {Math.round(current)}{unit} / {goal}{unit}
         </span>
       </div>
-      <div className={`w-full bg-bg-tertiary rounded-full ${heightClass}`} style={{ overflow: 'hidden' }}>
+      <div className={`w-full rounded-full ${heightClass}`} style={{ backgroundColor: 'var(--bg-tertiary)', overflow: 'hidden' }}>
         <div
           className={`${heightClass} rounded-full transition-all duration-700 ease-out`}
           style={{ 

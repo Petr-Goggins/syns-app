@@ -1,15 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Heart,
-  Dumbbell,
   Target,
+  Dumbbell,
   Sparkles,
   Trophy,
-  User,
 } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
@@ -18,42 +16,35 @@ import { useProfileStore } from '@/store/profileStore';
 import { useLongPathStore } from '@/store/longPathStore';
 import { supabase } from '@/lib/supabase';
 import type { CoachData } from '@/types';
-import MuscleSilhouette from '@/components/MuscleSilhouette';
 
+// Конкретные цели вместо абстрактных
 const MAIN_GOAL_OPTIONS = [
-  { id: 'gain_muscle', label: 'Набор мышечной массы' },
   { id: 'lose_weight', label: 'Похудение' },
-  { id: 'maintain_tone', label: 'Поддержание тонуса' },
-  { id: 'recovery', label: 'Восстановление после травмы' },
-  { id: 'flexibility', label: 'Улучшение гибкости и подвижности' },
-  { id: 'general_health', label: 'Общее укрепление здоровья' },
+  { id: 'gain_muscle', label: 'Набор мышечной массы' },
+  { id: 'increase_strength', label: 'Увеличение силы' },
+  { id: 'custom', label: 'Своя цель' },
+];
+
+const EXPERIENCE_OPTIONS = [
+  ['never', 'Никогда'],
+  ['up_3m', 'До 3 месяцев'],
+  ['3_12m', '3-12 месяцев'],
+  ['over_year', 'Более года'],
+];
+
+const LEVEL_OPTIONS = [
+  ['beginner', 'Начинающий'],
+  ['intermediate', 'Средний'],
+  ['advanced', 'Продвинутый'],
+  ['professional', 'Профессиональный'],
 ];
 
 const INJURY_OPTIONS = [
-  { id: 'колено', label: 'Колено' },
-  { id: 'спина', label: 'Спина' },
-  { id: 'плечо', label: 'Плечо' },
-];
-
-const FREE_DAYS = [
-  { id: '1', label: 'Пн' }, { id: '2', label: 'Вт' }, { id: '3', label: 'Ср' },
-  { id: '4', label: 'Чт' }, { id: '5', label: 'Пт' }, { id: '6', label: 'Сб' }, { id: '7', label: 'Вс' },
-];
-
-const FOCUS_MUSCLES = [
-  { id: 'грудь', label: 'Грудь' }, { id: 'спина', label: 'Спина' }, { id: 'ноги', label: 'Ноги' },
-  { id: 'плечи', label: 'Плечи' }, { id: 'руки', label: 'Руки' }, { id: 'пресс', label: 'Пресс' },
-  { id: 'ягодицы', label: 'Ягодицы' },
-];
-
-// Глобальные цели для "Длинного пути"
-const LONG_PATH_GOALS = [
-  { id: 'strength_squat', label: 'Набор силы (Присед 150 кг)', type: 'strength', targetValue: 150, unit: 'кг' },
-  { id: 'strength_bench', label: 'Набор силы (Жим 100 кг)', type: 'strength', targetValue: 100, unit: 'кг' },
-  { id: 'strength_deadlift', label: 'Набор силы (Становая 200 кг)', type: 'strength', targetValue: 200, unit: 'кг' },
-  { id: 'weight_loss', label: 'Похудение', type: 'weight_loss', targetValue: 0, unit: 'кг' },
-  { id: 'maintain', label: 'Поддержание формы', type: 'maintain', targetValue: 0, unit: '' },
-  { id: 'recovery', label: 'Реабилитация', type: 'recovery', targetValue: 0, unit: '' },
+  { id: 'none', label: 'Нет' },
+  { id: 'back', label: 'Спина' },
+  { id: 'knees', label: 'Колени' },
+  { id: 'shoulders', label: 'Плечи' },
+  { id: 'other', label: 'Другое' },
 ];
 
 const INVENTORY_OPTIONS = [
@@ -61,8 +52,18 @@ const INVENTORY_OPTIONS = [
   { id: 'dumbbells', label: 'Гантели' },
   { id: 'barbell', label: 'Штанга' },
   { id: 'pullup_bar', label: 'Турник' },
-  { id: 'gym', label: 'Зал' },
+  { id: 'gym', label: 'Тренажерный зал' },
   { id: 'resistance_bands', label: 'Резинки' },
+];
+
+const FOCUS_MUSCLES = [
+  { id: 'chest', label: 'ГРУДНЫЕ' },
+  { id: 'biceps', label: 'БИЦЕПС' },
+  { id: 'triceps', label: 'ТРИЦЕПС' },
+  { id: 'abs', label: 'ПРЕСС' },
+  { id: 'legs', label: 'НОГИ' },
+  { id: 'back', label: 'СПИНА' },
+  { id: 'shoulders', label: 'ПЛЕЧИ' },
 ];
 
 const toggleArr = (arr: string[], id: string): string[] =>
@@ -91,13 +92,9 @@ function OptionButton({ active, onClick, label }: OptionButtonProps) {
 }
 
 const STEPS = [
-  { icon: Target, title: 'Глобальная цель' },
-  { icon: Trophy, title: 'Опыт и здоровье' },
-  { icon: Dumbbell, title: 'Инвентарь' },
-  { icon: User, title: 'Личные данные' },
-  { icon: Heart, title: 'Фокусные мышцы' },
-  { icon: Sparkles, title: 'Личная цель' },
-  { icon: Sparkles, title: 'Доп. параметры' },
+  { icon: Target, title: 'Цель + Опыт' },
+  { icon: Dumbbell, title: 'Данные + Инвентарь' },
+  { icon: Sparkles, title: 'Фокус + Личная цель' },
 ];
 
 export default function CoachPage() {
@@ -130,31 +127,35 @@ export default function CoachPage() {
     height: null,
   });
 
-  // Глобальная цель и акцентные мышцы
-  const [selectedLongPathGoal, setSelectedLongPathGoal] = useState<string>('');
+  // Для шага 3 - целевой вес и текущий вес
+  const [currentWeight, setCurrentWeight] = useState<number>(0);
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [selectedInventory, setSelectedInventory] = useState<string[]>([]);
-  const [silhouetteView, setSilhouetteView] = useState<'front' | 'back'>('front');
+  const [customGoalText, setCustomGoalText] = useState('');
+  const [strengthExercise, setStrengthExercise] = useState('bench');
+  const [strengthTarget, setStrengthTarget] = useState<number>(0);
 
   if (!user) return null;
 
   const set = <K extends keyof CoachData>(key: K, value: CoachData[K]) =>
     setForm({ ...form, [key]: value });
 
-  const isFemale = profile?.gender === 'female';
-  const totalSteps = 7; // 7 шагов: цель, опыт/здоровье, инвентарь, данные, фокус, личная цель, доп. параметры
+  const isFemale = form.gender === 'female';
+  const totalSteps = 3; // 3 шага: Цель+Опыт, Данные+Инвентарь, Фокус+Личная цель
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!form.main_goal;
-      case 1: return !!form.experience_duration && !!form.training_level;
-      case 2: return selectedInventory.length > 0;
-      case 3: return !!form.gender && !!form.age && !!form.weight && !!form.height;
-      case 4: return selectedMuscles.length > 0;
-      case 5: return true; // Личная цель необязательна
-      case 6: return !!form.stress_level && !!form.diet_preference;
+      case 0: 
+        if (!form.main_goal) return false;
+        if (form.main_goal === 'increase_strength' && !strengthTarget) return false;
+        if (form.main_goal === 'custom' && !customGoalText) return false;
+        return !!form.experience_duration && !!form.training_level && form.injuries!.length > 0;
+      case 1: 
+        return !!form.gender && !!form.age && !!form.weight && !!form.height && selectedInventory.length > 0;
+      case 2: 
+        return selectedMuscles.length > 0 && (customGoalText || form.main_goal !== 'custom');
       default: return true;
     }
   };
@@ -170,38 +171,15 @@ export default function CoachPage() {
   const handleFinish = async () => {
     if (!user) return;
     
-    // Сохраняем глобальную цель в longPathStore и Supabase
-    if (selectedLongPathGoal && user) {
-      const goal = LONG_PATH_GOALS.find(g => g.id === selectedLongPathGoal);
-      if (goal) {
-        let targetType = goal.type;
-        let targetValue = goal.targetValue;
-        let unit = goal.unit;
-        
-        // Для похудения используем целевой вес из профиля или введённый
-        if (goal.type === 'weight_loss') {
-          targetValue = targetWeight > 0 ? targetWeight : (profile?.weight || 0) - 10;
-          unit = 'кг';
-        }
-        
-        // Определяем тип цели для store
-        const storeGoalType = goal.type === 'strength' ? 'strength' : 
-                              goal.type === 'weight_loss' ? 'weight_loss' : 'maintain';
-        
-        await createUserGoal(
-          user.id,
-          storeGoalType,
-          targetValue,
-          unit,
-          12,
-          profile?.weight || 0
-        );
-        
-        // Сохраняем также в coach data
-        set('goal_type', goal.type);
-        set('goal_amount', targetValue);
-        set('goal_unit', unit);
-      }
+    // Сохраняем личную цель
+    if (form.main_goal === 'custom') {
+      set('personal_goal', customGoalText);
+    } else if (form.main_goal === 'increase_strength') {
+      set('personal_goal', `${strengthExercise === 'bench' ? 'Жим лёжа' : strengthExercise === 'squat' ? 'Присед' : 'Становая тяга'} ${strengthTarget} кг`);
+    } else if (form.main_goal === 'lose_weight') {
+      set('personal_goal', `Похудение до ${targetWeight} кг`);
+    } else if (form.main_goal === 'gain_muscle') {
+      set('personal_goal', 'Набор мышечной массы');
     }
     
     // Сохраняем акцентные мышцы
@@ -214,8 +192,23 @@ export default function CoachPage() {
       set('inventory', selectedInventory);
     }
     
+    // Сохраняем тип цели
+    if (form.main_goal === 'lose_weight') {
+      set('goal_type', 'weight_loss');
+      set('goal_amount', targetWeight);
+      set('goal_unit', 'кг');
+    } else if (form.main_goal === 'gain_muscle') {
+      set('goal_type', 'muscle_gain');
+      set('goal_amount', 0);
+      set('goal_unit', '');
+    } else if (form.main_goal === 'increase_strength') {
+      set('goal_type', 'strength');
+      set('goal_amount', strengthTarget);
+      set('goal_unit', 'кг');
+    }
+    
     const ok = await saveCoachData(user.id, form);
-    if (ok) navigate('/plan');
+    if (ok) navigate('/dashboard');
   };
 
   const toggleMuscle = (muscleId: string) => {
@@ -224,7 +217,29 @@ export default function CoachPage() {
     );
   };
 
+  const toggleInventory = (invId: string) => {
+    setSelectedInventory(prev => 
+      prev.includes(invId) ? prev.filter(i => i !== invId) : [...prev, invId]
+    );
+  };
+
+  const toggleInjury = (injId: string) => {
+    if (injId === 'none') {
+      set('injuries', []);
+    } else {
+      set('injuries', toggleArr(form.injuries!, injId));
+    }
+  };
+
   const StepIcon = STEPS[step].icon;
+
+  // Загрузка данных профиля при монтировании
+  useEffect(() => {
+    if (user) {
+      fetchProfile(user.id);
+      if (profile?.weight) setCurrentWeight(profile.weight);
+    }
+  }, [user]);
 
   return (
     <div>
