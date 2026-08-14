@@ -1,189 +1,245 @@
 import React, { useState } from 'react';
 
-interface MuscleHeatmapProps {
-  data?: {
-    chest?: number;
-    biceps?: number;
-    triceps?: number;
-    abs?: number;
-    legs?: number;
-    shoulders?: number;
-    back?: number;
-    traps?: number;
-    calves?: number;
-  };
-  view?: 'front' | 'back';
+interface MuscleZone {
+  id: string;
+  name: string;
+  path: string;
+  type: 'path' | 'circle' | 'ellipse' | 'rect';
+  cx?: number;
+  cy?: number;
+  r?: number;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  rx?: number;
+  rx_ellipse?: number;
+  ry_ellipse?: number;
 }
 
-// Интерполяция цвета по FLIR-шкале (0-100%)
-const interpolateColor = (intensity: number): string => {
-  const stops = [
-    { percent: 0, r: 0, g: 0, b: 0 },       // чёрный
-    { percent: 25, r: 0, g: 0, b: 128 },    // тёмно-синий
-    { percent: 50, r: 0, g: 0, b: 255 },    // синий
-    { percent: 75, r: 255, g: 0, b: 0 },    // красный
-    { percent: 90, r: 255, g: 165, b: 0 },  // оранжевый
-    { percent: 100, r: 255, g: 255, b: 255 } // белый
+interface MuscleHeatmapProps {
+  muscleData?: Record<string, number>;
+}
+
+const MuscleHeatmap: React.FC<MuscleHeatmapProps> = ({ muscleData = {} }) => {
+  const [view, setView] = useState<'front' | 'back'>('front');
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string; load: number } | null>(null);
+
+  // Функция получения цвета по шкале тепловизора (FLIR)
+  const getColor = (load: number): string => {
+    if (load === 0) return 'var(--bg-card)';
+    
+    if (load <= 25) {
+      const ratio = load / 25;
+      return interpolateColor('#000000', '#000080', ratio);
+    } else if (load <= 50) {
+      const ratio = (load - 25) / 25;
+      return interpolateColor('#000080', '#0000FF', ratio);
+    } else if (load <= 75) {
+      const ratio = (load - 50) / 25;
+      return interpolateColor('#0000FF', '#FF0000', ratio);
+    } else if (load <= 90) {
+      const ratio = (load - 75) / 15;
+      return interpolateColor('#FF0000', '#FFA500', ratio);
+    } else {
+      const ratio = (load - 90) / 10;
+      return interpolateColor('#FFA500', '#FFFFFF', ratio);
+    }
+  };
+
+  // Интерполяция между двумя цветами
+  const interpolateColor = (color1: string, color2: string, ratio: number): string => {
+    const hex2rgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 0, g: 0, b: 0 };
+    };
+
+    const rgb1 = hex2rgb(color1);
+    const rgb2 = hex2rgb(color2);
+
+    const r = Math.round(rgb1.r + (rgb2.r - rgb1.r) * ratio);
+    const g = Math.round(rgb1.g + (rgb2.g - rgb1.g) * ratio);
+    const b = Math.round(rgb1.b + (rgb2.b - rgb1.b) * ratio);
+
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  // Зоны мышц для вида спереди
+  const frontZones: MuscleZone[] = [
+    { id: 'chest', name: 'Грудные', type: 'path', path: 'M85 60 Q100 90 95 110 L105 110 Q100 90 105 60 Z' },
+    { id: 'biceps_left', name: 'Бицепс левый', type: 'path', path: 'M65 70 L60 90 L70 95 L75 80 Z' },
+    { id: 'biceps_right', name: 'Бицепс правый', type: 'path', path: 'M135 70 L140 90 L130 95 L125 80 Z' },
+    { id: 'triceps_left', name: 'Трицепс левый', type: 'path', path: 'M72 95 L68 115 L78 120 L80 105 Z' },
+    { id: 'triceps_right', name: 'Трицепс правый', type: 'path', path: 'M128 95 L132 115 L122 120 L120 105 Z' },
+    { id: 'abs', name: 'Пресс', type: 'rect', x: 88, y: 115, width: 24, height: 30, rx: 2 },
+    { id: 'legs', name: 'Ноги', type: 'path', path: 'M80 150 L76 210 L70 250 L80 255 L90 210 L100 255 L110 250 L105 210 L100 150 Z' },
+    { id: 'shoulders_left', name: 'Дельты левые', type: 'circle', cx: 78, cy: 62, r: 8 },
+    { id: 'shoulders_right', name: 'Дельты правые', type: 'circle', cx: 122, cy: 62, r: 8 },
+    { id: 'neck', name: 'Шея', type: 'ellipse', cx: 100, cy: 45, rx_ellipse: 12, ry_ellipse: 8 },
   ];
 
-  if (intensity <= 0) return '#000000';
-  if (intensity >= 100) return '#ffffff';
+  // Зоны мышц для вида сзади (зеркально)
+  const backZones: MuscleZone[] = [
+    { id: 'back', name: 'Спина', type: 'path', path: 'M85 70 Q100 100 95 120 L105 120 Q100 100 105 70 Z' },
+    { id: 'biceps_left', name: 'Бицепс левый', type: 'path', path: 'M135 70 L140 90 L130 95 L125 80 Z' },
+    { id: 'biceps_right', name: 'Бицепс правый', type: 'path', path: 'M65 70 L60 90 L70 95 L75 80 Z' },
+    { id: 'triceps_left', name: 'Трицепс левый', type: 'path', path: 'M128 95 L132 115 L122 120 L120 105 Z' },
+    { id: 'triceps_right', name: 'Трицепс правый', type: 'path', path: 'M72 95 L68 115 L78 120 L80 105 Z' },
+    { id: 'glutes', name: 'Ягодицы', type: 'path', path: 'M85 150 L80 180 L90 190 L100 190 L110 180 L105 150 Z' },
+    { id: 'legs', name: 'Ноги', type: 'path', path: 'M80 190 L76 250 L70 290 L80 295 L90 250 L100 295 L110 290 L105 250 L100 190 Z' },
+    { id: 'shoulders_left', name: 'Дельты левые', type: 'circle', cx: 122, cy: 62, r: 8 },
+    { id: 'shoulders_right', name: 'Дельты правые', type: 'circle', cx: 78, cy: 62, r: 8 },
+    { id: 'neck', name: 'Шея', type: 'ellipse', cx: 100, cy: 45, rx_ellipse: 12, ry_ellipse: 8 },
+  ];
 
-  for (let i = 0; i < stops.length - 1; i++) {
-    const stop1 = stops[i];
-    const stop2 = stops[i + 1];
-    
-    if (intensity >= stop1.percent && intensity <= stop2.percent) {
-      const ratio = (intensity - stop1.percent) / (stop2.percent - stop1.percent);
-      const r = Math.round(stop1.r + (stop2.r - stop1.r) * ratio);
-      const g = Math.round(stop1.g + (stop2.g - stop1.g) * ratio);
-      const b = Math.round(stop1.b + (stop2.b - stop1.b) * ratio);
-      return `rgb(${r}, ${g}, ${b})`;
-    }
-  }
+  const zones = view === 'front' ? frontZones : backZones;
 
-  return '#ffffff';
-};
+  const handleMouseEnter = (e: React.MouseEvent, zone: MuscleZone) => {
+    const load = muscleData[zone.id] || 0;
+    const rect = (e.target as SVGElement).getBoundingClientRect();
+    setTooltip({
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      name: zone.name,
+      load
+    });
+  };
 
-// Зоны мышц для вида спереди
-const frontMuscles = [
-  { id: 'deltoid_left', name: 'Дельта левая', path: 'M90 65 L85 50 L100 50 L105 65 Z', labelX: 80, labelY: 55, key: 'shoulders' },
-  { id: 'deltoid_right', name: 'Дельта правая', path: 'M170 65 L175 50 L160 50 L155 65 Z', labelX: 180, labelY: 55, key: 'shoulders' },
-  { id: 'traps', name: 'Трапеции', path: 'M120 45 L150 45 L160 60 L140 65 L120 60 Z', labelX: 140, labelY: 55, key: 'traps' },
-  { id: 'chest', name: 'Грудные', path: 'M100 70 Q125 110 115 150 L145 150 Q135 110 160 70 Z', labelX: 130, labelY: 120, key: 'chest' },
-  { id: 'biceps_left', name: 'Бицепс левый', path: 'M75 80 L65 115 L85 130 L95 105 Z', labelX: 60, labelY: 110, key: 'biceps' },
-  { id: 'biceps_right', name: 'Бицепс правый', path: 'M185 80 L195 115 L175 130 L165 105 Z', labelX: 200, labelY: 110, key: 'biceps' },
-  { id: 'triceps_left', name: 'Трицепс левый', path: 'M85 130 L75 165 L95 180 L100 150 Z', labelX: 70, labelY: 155, key: 'triceps' },
-  { id: 'triceps_right', name: 'Трицепс правый', path: 'M175 130 L185 165 L165 180 L160 150 Z', labelX: 190, labelY: 155, key: 'triceps' },
-  { id: 'abs_upper', name: 'Пресс верх', path: 'M120 155 L120 200 L150 200 L150 155 Z', labelX: 135, labelY: 180, key: 'abs' },
-  { id: 'abs_lower', name: 'Пресс низ', path: 'M120 200 L120 240 L150 240 L150 200 Z', labelX: 135, labelY: 220, key: 'abs' },
-  { id: 'quads_left', name: 'Квадрицепс левый', path: 'M105 250 L95 330 L85 390 L105 395 L115 330 L125 395 L140 390 L135 330 L125 250 Z', labelX: 115, labelY: 320, key: 'legs' },
-  { id: 'quads_right', name: 'Квадрицепс правый', path: 'M145 250 L155 330 L165 390 L180 395 L170 330 L160 250 Z', labelX: 160, labelY: 320, key: 'legs' },
-  { id: 'calves_left', name: 'Икра левая', path: 'M95 390 L85 440 L95 450 L110 445 L105 395 Z', labelX: 95, labelY: 420, key: 'calves' },
-  { id: 'calves_right', name: 'Икра правая', path: 'M160 390 L170 440 L160 450 L145 445 L150 395 Z', labelX: 160, labelY: 420, key: 'calves' },
-];
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
 
-// Зоны мышц для вида сзади (зеркальное отображение + спина)
-const backMuscles = [
-  { id: 'deltoid_left', name: 'Дельта левая', path: 'M210 65 L215 50 L200 50 L195 65 Z', labelX: 220, labelY: 55, key: 'shoulders' },
-  { id: 'deltoid_right', name: 'Дельта правая', path: 'M130 65 L125 50 L140 50 L145 65 Z', labelX: 120, labelY: 55, key: 'shoulders' },
-  { id: 'traps', name: 'Трапеции', path: 'M180 45 L150 45 L140 60 L160 65 L180 60 Z', labelX: 160, labelY: 55, key: 'traps' },
-  { id: 'lats', name: 'Широчайшие', path: 'M110 80 L95 130 L105 180 L125 190 L145 180 L155 130 L140 80 Z', labelX: 130, labelY: 135, key: 'back' },
-  { id: 'triceps_left', name: 'Трицепс левый', path: 'M215 80 L225 115 L205 130 L195 105 Z', labelX: 230, labelY: 110, key: 'triceps' },
-  { id: 'triceps_right', name: 'Трицепс правый', path: 'M115 80 L105 115 L125 130 L135 105 Z', labelX: 100, labelY: 110, key: 'triceps' },
-  { id: 'hamstrings_left', name: 'Бицепс бедра левый', path: 'M195 250 L205 330 L215 390 L195 395 L185 330 L175 395 L160 390 L165 330 L175 250 Z', labelX: 185, labelY: 320, key: 'legs' },
-  { id: 'hamstrings_right', name: 'Бицепс бедра правый', path: 'M155 250 L145 330 L135 390 L120 395 L130 330 L140 250 Z', labelX: 140, labelY: 320, key: 'legs' },
-  { id: 'calves_left', name: 'Икра левая', path: 'M205 390 L215 440 L205 450 L190 445 L195 395 Z', labelX: 205, labelY: 420, key: 'calves' },
-  { id: 'calves_right', name: 'Икра правая', path: 'M140 390 L130 440 L140 450 L155 445 L150 395 Z', labelX: 140, labelY: 420, key: 'calves' },
-];
+  const handleClick = (zone: MuscleZone) => {
+    console.log(`Мышца: ${zone.name}, Нагрузка: ${muscleData[zone.id] || 0}%`);
+  };
 
-export default function MuscleHeatmap({ data = {}, view = 'front' }: MuscleHeatmapProps) {
-  const [hoveredMuscle, setHoveredMuscle] = useState<{ name: string; intensity: number } | null>(null);
-  
-  const muscles = view === 'front' ? frontMuscles : backMuscles;
+  const renderZone = (zone: MuscleZone) => {
+    const load = muscleData[zone.id] || 0;
+    const fill = getColor(load);
 
-  const getIntensity = (key: string): number => {
-    const map: Record<string, number | undefined> = {
-      chest: data.chest,
-      biceps: data.biceps,
-      triceps: data.triceps,
-      abs: data.abs,
-      legs: data.legs,
-      shoulders: data.shoulders,
-      back: data.back,
-      traps: data.traps,
-      calves: data.calves,
+    const commonProps = {
+      key: zone.id,
+      onMouseEnter: (e: React.MouseEvent) => handleMouseEnter(e, zone),
+      onMouseLeave: handleMouseLeave,
+      onClick: () => handleClick(zone),
+      style: { cursor: 'pointer', transition: 'opacity 0.2s' }
     };
-    return map[key] || 0;
+
+    if (zone.type === 'path') {
+      return <path d={zone.path} fill={fill} {...commonProps} />;
+    } else if (zone.type === 'circle') {
+      return <circle cx={zone.cx} cy={zone.cy} r={zone.r} fill={fill} {...commonProps} />;
+    } else if (zone.type === 'ellipse') {
+      return <ellipse cx={zone.cx} cy={zone.cy} rx={zone.rx_ellipse} ry={zone.ry_ellipse} fill={fill} {...commonProps} />;
+    } else if (zone.type === 'rect') {
+      return <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx={zone.rx} fill={fill} {...commonProps} />;
+    }
+    return null;
   };
 
   return (
-    <div className="flex flex-col items-center" style={{ maxWidth: '180px' }}>
-      <svg viewBox="0 0 300 500" className="w-full h-auto">
-        {/* Определение фильтров для теней */}
-        <defs>
-          <filter id="muscleShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="2" dy="2" stdDeviation="3" floodOpacity="0.3" />
-          </filter>
-          {/* Градиент для легенды */}
-          <linearGradient id="heatGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#000000" />
-            <stop offset="25%" stopColor="#000080" />
-            <stop offset="50%" stopColor="#0000FF" />
-            <stop offset="75%" stopColor="#FF0000" />
-            <stop offset="90%" stopColor="#FFA500" />
-            <stop offset="100%" stopColor="#FFFFFF" />
-          </linearGradient>
-        </defs>
-
-        {/* Голова (силуэт) */}
-        <ellipse cx="150" cy="35" rx="20" ry="25" fill="#1f2937" filter="url(#muscleShadow)" />
-
-        {/* Зоны мышц */}
-        {muscles.map((muscle) => {
-          const intensity = getIntensity(muscle.key);
-          const color = interpolateColor(intensity);
-          
-          return (
-            <g key={muscle.id}>
-              <path
-                d={muscle.path}
-                fill={color}
-                stroke="var(--border-color, #4b5563)"
-                strokeWidth="1.5"
-                filter="url(#muscleShadow)"
-                className="transition-all duration-1000 ease-out"
-                style={{
-                  opacity: hoveredMuscle === null || hoveredMuscle.name === muscle.name ? 1 : 0.5,
-                }}
-                onMouseEnter={() => setHoveredMuscle({ name: muscle.name, intensity })}
-                onMouseLeave={() => setHoveredMuscle(null)}
-              />
-              {/* Подпись мышцы */}
-              <text
-                x={muscle.labelX}
-                y={muscle.labelY}
-                fontSize="8"
-                fill="var(--text-secondary, #9ca3af)"
-                textAnchor="middle"
-                pointerEvents="none"
-                className="select-none"
-              >
-                {muscle.name.split(' ')[0]}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Всплывающая подсказка */}
-      {hoveredMuscle && (
-        <div 
-          className="absolute bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none z-10"
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Переключатель вида */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <button
+          onClick={() => setView('front')}
           style={{
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: view === 'front' ? 'var(--accent-blue)' : 'var(--bg-card)',
+            color: view === 'front' ? '#ffffff' : 'var(--text-primary)',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
           }}
         >
-          <div className="font-semibold">{hoveredMuscle.name}</div>
-          <div className="text-gray-300">Нагрузка: {hoveredMuscle.intensity}%</div>
-        </div>
-      )}
+          Спереди
+        </button>
+        <button
+          onClick={() => setView('back')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: view === 'back' ? 'var(--accent-blue)' : 'var(--bg-card)',
+            color: view === 'back' ? '#ffffff' : 'var(--text-primary)',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          Сзади
+        </button>
+      </div>
 
-      {/* Легенда тепловизора */}
-      <div className="mt-3 w-full">
-        <div className="h-3 rounded" style={{
-          background: 'linear-gradient(to right, #000000, #000080, #0000FF, #FF0000, #FFA500, #FFFFFF)'
+      {/* Тепловая карта */}
+      <div style={{ position: 'relative', width: '160px', height: '280px' }}>
+        <svg viewBox="0 0 200 350" style={{ width: '100%', height: '100%' }}>
+          {/* Контур тела (упрощённый) */}
+          <path
+            d="M100 30 C115 30 125 40 125 55 L125 60 L145 70 L150 95 L145 120 L140 150 L145 200 L140 280 L130 320 L115 350 L85 350 L70 320 L60 280 L55 200 L60 150 L55 120 L50 95 L55 70 L75 60 L75 55 C75 40 85 30 100 30 Z"
+            fill="var(--bg-card)"
+            stroke="var(--border-color)"
+            strokeWidth="2"
+          />
+          {/* Зоны мышц */}
+          {zones.map(renderZone)}
+        </svg>
+
+        {/* Всплывающая подсказка */}
+        {tooltip && (
+          <div style={{
+            position: 'fixed',
+            left: tooltip.x,
+            top: tooltip.y - 40,
+            transform: 'translateX(-50%)',
+            backgroundColor: 'var(--bg-card)',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            boxShadow: 'var(--shadow)',
+            zIndex: 1000,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap'
+          }}>
+            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+              {tooltip.name}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              Нагрузка: {tooltip.load}%
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Легенда */}
+      <div style={{ marginTop: '16px', width: '100%', maxWidth: '200px' }}>
+        <div style={{
+          height: '12px',
+          background: 'linear-gradient(to right, #000000 0%, #000080 25%, #0000FF 50%, #FF0000 75%, #FFA500 90%, #FFFFFF 100%)',
+          borderRadius: '6px',
+          marginBottom: '4px'
         }} />
-        <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary, #9ca3af)' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '10px',
+          color: 'var(--text-secondary)'
+        }}>
           <span>0%</span>
           <span>25%</span>
           <span>50%</span>
           <span>75%</span>
+          <span>90%</span>
           <span>100%</span>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default MuscleHeatmap;

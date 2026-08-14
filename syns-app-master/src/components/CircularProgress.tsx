@@ -5,60 +5,93 @@ interface CircularProgressProps {
   goal: number;
   size?: number;
   strokeWidth?: number;
-  color?: string;
   label?: string;
 }
 
-export default function CircularProgress({
+const CircularProgress: React.FC<CircularProgressProps> = ({
   current,
   goal,
-  size = 160,
+  size = 140,
   strokeWidth = 12,
-  color,
-  label,
-}: CircularProgressProps) {
+  label = 'ккал'
+}) => {
+  const center = size / 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = current / goal;
-  const offset = circumference * (1 - Math.min(1, pct));
   
-  // Цвета: зелёный (до 100%), янтарный (100-120%), серый (>120%)
-  const getCircleColor = () => {
-    if (color) return color;
-    if (pct <= 1) return '#22c55e'; // зелёный
-    if (pct <= 1.2) return '#FBBF24'; // янтарный
-    return '#6B7280'; // серый
+  // Прогресс с ограничением 120% для визуализации
+  const progress = Math.min(current / goal, 1.2);
+  const dashOffset = circumference - (progress / 1.2) * circumference;
+  
+  // Определение цвета на основе прогресса
+  const getColor = () => {
+    if (progress <= 1) return '#22c55e'; // зелёный
+    if (progress <= 1.2) return '#eab308'; // жёлтый
+    return '#9ca3af'; // серый
   };
   
-  const circleColor = getCircleColor();
+  const color = getColor();
+  const isOver = current > goal;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        style={{ transform: 'rotate(-90deg)' }}
+      >
+        {/* Фоновый круг */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={center}
+          cy={center}
           r={radius}
           fill="none"
-          stroke="#374151"
+          stroke="var(--bg-card)"
           strokeWidth={strokeWidth}
         />
+        {/* Прогресс-круг */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={center}
+          cy={center}
           r={radius}
           fill="none"
-          stroke={circleColor}
+          stroke={color}
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          style={{
+            transition: 'stroke-dashoffset 0.8s ease',
+          }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-white">{label || `${Math.round(current)}/${goal}`}</span>
+      
+      {/* Центральный текст */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        textAlign: 'center'
+      }}>
+        <span style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
+          color: 'var(--text-primary)',
+          display: 'block'
+        }}>
+          {Math.round(current)}
+        </span>
+        <span style={{
+          fontSize: '12px',
+          color: 'var(--text-secondary)',
+          display: 'block'
+        }}>
+          {label}
+        </span>
       </div>
     </div>
   );
-}
+};
+
+export default CircularProgress;

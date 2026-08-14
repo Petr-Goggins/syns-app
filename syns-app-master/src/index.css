@@ -24,6 +24,12 @@
     --accent-red: #F85149;
     --accent-purple: #BB86FC;
     
+    /* Переменные для совместимости с новыми компонентами */
+    --bg-card: var(--card);
+    --text-primary: var(--text);
+    --border-color: var(--border);
+    --shadow: var(--shadow-light);
+    
     /* Единые размеры и отступы */
     --font-base: 16px;
     --font-sm: 14px;
@@ -55,6 +61,10 @@
     --accent-orange: #F0883E;
     --accent-red: #F85149;
     --accent-purple: #BB86FC;
+    --bg-card: var(--card);
+    --text-primary: var(--text);
+    --border-color: var(--border);
+    --shadow: var(--shadow-light);
   }
 
   /* ── Тема: светлая ──────────────────────────────────── */
@@ -75,6 +85,10 @@
     --accent-orange: #BC4C00;
     --accent-red: #CF222E;
     --accent-purple: #7C3AED;
+    --bg-card: var(--card);
+    --text-primary: var(--text);
+    --border-color: var(--border);
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
 
   /* ── Тема: серая ────────────────────────────────────── */
@@ -95,6 +109,10 @@
     --accent-orange: #F0883E;
     --accent-red: #F85149;
     --accent-purple: #BB86FC;
+    --bg-card: var(--card);
+    --text-primary: var(--text);
+    --border-color: var(--border);
+    --shadow: var(--shadow-light);
   }
 
   /* ── Тема: чёрная ───────────────────────────────────── */
@@ -115,6 +133,10 @@
     --accent-orange: #FF7043;
     --accent-red: #CF6679;
     --accent-purple: #BB86FC;
+    --bg-card: var(--card);
+    --text-primary: var(--text);
+    --border-color: var(--border);
+    --shadow: var(--shadow-light);
   }
   
   * {
