@@ -276,10 +276,10 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
                 </h3>
               </div>
               <button 
-                onClick={() => navigate('/long-path')}
+                onClick={() => navigate('/coach')}
                 className="text-accent-blue text-sm hover:underline flex items-center gap-1"
               >
-                Подробнее <ChevronRight size={14} />
+                Изменить <ChevronRight size={14} />
               </button>
             </div>
             <div className="flex items-center gap-4 mb-2">
