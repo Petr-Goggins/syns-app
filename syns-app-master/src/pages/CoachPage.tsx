@@ -7,17 +7,14 @@ import {
   Target,
   Dumbbell,
   Sparkles,
-  Trophy,
 } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
 import { useProfileStore } from '@/store/profileStore';
-import { useLongPathStore } from '@/store/longPathStore';
 import { supabase } from '@/lib/supabase';
 import type { CoachData } from '@/types';
 
-// Конкретные цели вместо абстрактных
 const MAIN_GOAL_OPTIONS = [
   { id: 'lose_weight', label: 'Похудение' },
   { id: 'gain_muscle', label: 'Набор мышечной массы' },
@@ -102,7 +99,6 @@ export default function CoachPage() {
   const user = useAuthStore((s) => s.user);
   const { saveCoachData, saving } = useCoachStore();
   const { profile, fetchProfile } = useProfileStore();
-  const { createUserGoal } = useLongPathStore();
   const [step, setStep] = useState(0);
 
   const [form, setForm] = useState<Partial<CoachData>>({
@@ -111,8 +107,6 @@ export default function CoachPage() {
     training_level: '',
     injuries: [],
     health_restrictions: '',
-    stress_level: '',
-    diet_preference: '',
     focus_muscle: '',
     goal_type: '',
     goal_amount: null,
@@ -127,7 +121,6 @@ export default function CoachPage() {
     height: null,
   });
 
-  // Для шага 3 - целевой вес и текущий вес
   const [currentWeight, setCurrentWeight] = useState<number>(0);
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
@@ -142,19 +135,19 @@ export default function CoachPage() {
     setForm({ ...form, [key]: value });
 
   const isFemale = form.gender === 'female';
-  const totalSteps = 3; // 3 шага: Цель+Опыт, Данные+Инвентарь, Фокус+Личная цель
+  const totalSteps = 3;
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: 
+      case 0:
         if (!form.main_goal) return false;
         if (form.main_goal === 'increase_strength' && !strengthTarget) return false;
         if (form.main_goal === 'custom' && !customGoalText) return false;
         return !!form.experience_duration && !!form.training_level && form.injuries!.length > 0;
-      case 1: 
+      case 1:
         return !!form.gender && !!form.age && !!form.weight && !!form.height && selectedInventory.length > 0;
-      case 2: 
+      case 2:
         return selectedMuscles.length > 0 && (customGoalText || form.main_goal !== 'custom');
       default: return true;
     }
@@ -170,8 +163,7 @@ export default function CoachPage() {
 
   const handleFinish = async () => {
     if (!user) return;
-    
-    // Сохраняем личную цель
+
     if (form.main_goal === 'custom') {
       set('personal_goal', customGoalText);
     } else if (form.main_goal === 'increase_strength') {
@@ -181,18 +173,15 @@ export default function CoachPage() {
     } else if (form.main_goal === 'gain_muscle') {
       set('personal_goal', 'Набор мышечной массы');
     }
-    
-    // Сохраняем акцентные мышцы
+
     if (selectedMuscles.length > 0) {
       set('focus_muscle', selectedMuscles.join(','));
     }
-    
-    // Сохраняем инвентарь
+
     if (selectedInventory.length > 0) {
       set('inventory', selectedInventory);
     }
-    
-    // Сохраняем тип цели
+
     if (form.main_goal === 'lose_weight') {
       set('goal_type', 'weight_loss');
       set('goal_amount', targetWeight);
@@ -206,19 +195,19 @@ export default function CoachPage() {
       set('goal_amount', strengthTarget);
       set('goal_unit', 'кг');
     }
-    
+
     const ok = await saveCoachData(user.id, form);
     if (ok) navigate('/dashboard');
   };
 
   const toggleMuscle = (muscleId: string) => {
-    setSelectedMuscles(prev => 
+    setSelectedMuscles(prev =>
       prev.includes(muscleId) ? prev.filter(m => m !== muscleId) : [...prev, muscleId]
     );
   };
 
   const toggleInventory = (invId: string) => {
-    setSelectedInventory(prev => 
+    setSelectedInventory(prev =>
       prev.includes(invId) ? prev.filter(i => i !== invId) : [...prev, invId]
     );
   };
@@ -233,7 +222,6 @@ export default function CoachPage() {
 
   const StepIcon = STEPS[step].icon;
 
-  // Загрузка данных профиля при монтировании
   useEffect(() => {
     if (user) {
       fetchProfile(user.id);
@@ -245,7 +233,6 @@ export default function CoachPage() {
     <div>
       <TopBar title="Анкета тренера" />
       <main className="p-4 lg:p-8 max-w-2xl mx-auto animate-slide-up">
-        {/* Progress bar */}
         <div className="flex gap-1.5 mb-6">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
@@ -257,7 +244,6 @@ export default function CoachPage() {
           ))}
         </div>
 
-        {/* Step header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-accent-blue/15 flex items-center justify-center">
             <StepIcon size={20} className="text-accent-blue" />
@@ -268,15 +254,15 @@ export default function CoachPage() {
           </div>
         </div>
 
-        {/* Step content */}
         <div className="card p-6 space-y-5">
-        {/* Step 0: Goal + Experience */}
+          {/* Шаг 0: Цель + Опыт */}
           {step === 0 && (
             <>
               <div className="flex items-center gap-2 mb-3">
                 <Target size={18} className="text-accent-blue" />
                 <p className="text-sm text-text-secondary">От этого выбора зависит тип тренировок в плане</p>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">Главная цель</label>
                 <div className="space-y-2">
@@ -290,333 +276,290 @@ export default function CoachPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Опыт тренировок</label>
-                <div className="space-y-2">
-                  {[
-                    ['never', 'Никогда'],
-                    ['up_3m', 'До 3 месяцев'],
-                    ['3_12m', '3-12 месяцев'],
-                    ['over_year', 'Более года'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.experience_duration === val} onClick={() => set('experience_duration', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень подготовки</label>
-                <div className="space-y-2">
-                  {[
-                    ['beginner', 'Начинающий'],
-                    ['intermediate', 'Средний'],
-                    ['advanced', 'Продвинутый'],
-                    ['professional', 'Профессиональный'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.training_level === val} onClick={() => set('training_level', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              {form.main_goal && (
-                <div className="p-3 rounded-lg bg-accent-blue/10 border border-accent-blue/20 mt-3 animate-fade-in">
-                  <p className="text-xs text-text-secondary">
-                    {form.main_goal === 'gain_muscle' && 'План будет состоять из силовых упражнений с прогрессией весов'}
-                    {form.main_goal === 'lose_weight' && 'План: силовые + кардио для максимального жиросжигания'}
-                    {form.main_goal === 'maintain_tone' && 'План: функциональные упражнения + стретчинг'}
-                    {form.main_goal === 'recovery' && 'План: йога, стретчинг и лёгкие упражнения для восстановления'}
-                    {form.main_goal === 'flexibility' && 'План: стретчинг и йога для гибкости и подвижности'}
-                    {form.main_goal === 'general_health' && 'План: смешанные тренировки с умеренной интенсивностью'}
-                  </p>
+
+              {form.main_goal === 'increase_strength' && (
+                <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Выберите упражнение</label>
+                  <div className="space-y-2 mb-3">
+                    <OptionButton
+                      active={strengthExercise === 'bench'}
+                      onClick={() => setStrengthExercise('bench')}
+                      label="Жим лёжа"
+                    />
+                    <OptionButton
+                      active={strengthExercise === 'squat'}
+                      onClick={() => setStrengthExercise('squat')}
+                      label="Приседания"
+                    />
+                    <OptionButton
+                      active={strengthExercise === 'deadlift'}
+                      onClick={() => setStrengthExercise('deadlift')}
+                      label="Становая тяга"
+                    />
+                  </div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Целевой вес (кг)</label>
+                  <input
+                    type="number"
+                    value={strengthTarget || ''}
+                    onChange={(e) => setStrengthTarget(Number(e.target.value))}
+                    placeholder="Например: 100"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="1"
+                    step="5"
+                  />
+                  {isFemale && strengthTarget > 100 && (
+                    <p className="text-xs text-accent-red mt-2">⚠️ Для женщин такой вес может быть нереалистичен.</p>
+                  )}
                 </div>
               )}
-            </>
-          )}
 
-          {/* Step 1: Global Goal + Muscle Silhouette */}
-          {step === 1 && (
-            <>
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy size={18} className="text-accent-gold" />
-                <p className="text-sm text-text-secondary">Выберите вашу большую цель на ближайшие месяцы</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Глобальная цель</label>
-                <div className="space-y-2">
-                  {LONG_PATH_GOALS.map((goal) => (
-                    <OptionButton
-                      key={goal.id}
-                      active={selectedLongPathGoal === goal.id}
-                      onClick={() => setSelectedLongPathGoal(goal.id)}
-                      label={goal.label}
-                    />
-                  ))}
+              {form.main_goal === 'custom' && (
+                <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Опишите вашу цель</label>
+                  <textarea
+                    value={customGoalText}
+                    onChange={(e) => setCustomGoalText(e.target.value)}
+                    placeholder="Например: пробежать полумарафон за 2 часа..."
+                    className="input-field w-full px-3 py-2.5 text-sm min-h-[100px] resize-none"
+                  />
                 </div>
-              </div>
-              
-              {/* Поле для ввода целевого веса при похудении */}
-              {selectedLongPathGoal === 'weight_loss' && (
-                <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20 animate-fade-in">
+              )}
+
+              {form.main_goal === 'lose_weight' && (
+                <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
                   <label className="block text-sm font-medium text-text-secondary mb-2">Целевой вес (кг)</label>
                   <input
                     type="number"
                     value={targetWeight || ''}
                     onChange={(e) => setTargetWeight(Number(e.target.value))}
-                    placeholder={`Текущий: ${profile?.weight || '--'} кг`}
+                    placeholder={`Текущий: ${currentWeight || '--'} кг`}
                     className="input-field w-full px-3 py-2.5 text-sm"
                     min="1"
                     step="0.5"
                   />
-                  <p className="text-xs text-text-secondary mt-2">
-                    Рекомендуемая потеря: 0.5-1 кг в неделю
-                  </p>
+                  <p className="text-xs text-text-secondary mt-2">Рекомендуемая потеря: 0.5-1 кг в неделю</p>
                 </div>
               )}
-              
-              <div className="pt-4 border-t border-border">
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Акцентные мышцы (кликните на силуэте)
-                </label>
-                <MuscleSilhouette
-                  selectedMuscles={selectedMuscles}
-                  onMuscleClick={toggleMuscle}
-                  mode="selection"
-                  size="md"
-                  showLabels={true}
-                />
-              </div>
-            </>
-          )}
 
-          {/* Step 2: Schedule */}
-          {step === 2 && (
-            <>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Дней в неделю</label>
-                <div className="flex gap-2 flex-wrap">
-                  {[1,2,3,4,5,6,7].map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => set('days_per_week', d)}
-                      className={`w-12 h-12 rounded-lg text-sm font-bold border transition-all ${
-                        form.days_per_week === d ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue' : 'border-border text-text-secondary'
-                      }`}
-                    >{d}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
-                <p className="text-sm text-text-secondary">
-                  💡 Эти настройки можно будет изменить позже при создании плана тренировок
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* Step 3: Health + Recovery + Nutrition */}
-          {step === 3 && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень стресса</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    ['low', 'Низкий'],
-                    ['medium', 'Средний'],
-                    ['high', 'Высокий'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.stress_level === val} onClick={() => set('stress_level', val)} label={label} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Диетические предпочтения</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Опыт тренировок</label>
                 <div className="space-y-2">
-                  {[
-                    ['none', 'Нет'],
-                    ['vegetarian', 'Вегетарианство'],
-                    ['vegan', 'Веганство'],
-                    ['halal', 'Халяль'],
-                    ['kosher', 'Кошер'],
-                    ['other', 'Другое'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.diet_preference === val} onClick={() => set('diet_preference', val)} label={label} />
+                  {EXPERIENCE_OPTIONS.map(([val, label]) => (
+                    <OptionButton
+                      key={val}
+                      active={form.experience_duration === val}
+                      onClick={() => set('experience_duration', val)}
+                      label={label}
+                    />
                   ))}
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень подготовки</label>
+                <div className="space-y-2">
+                  {LEVEL_OPTIONS.map(([val, label]) => (
+                    <OptionButton
+                      key={val}
+                      active={form.training_level === val}
+                      onClick={() => set('training_level', val)}
+                      label={label}
+                    />
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">Травмы</label>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => set('injuries', [])}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                      form.injuries!.length === 0 ? 'bg-accent-green/15 border-accent-green/40 text-accent-green' : 'border-border text-text-secondary'
-                    }`}
-                  >Нет травм</button>
                   {INJURY_OPTIONS.map((inj) => (
                     <button
                       key={inj.id}
-                      onClick={() => set('injuries', toggleArr(form.injuries!, inj.id))}
+                      onClick={() => toggleInjury(inj.id)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                        form.injuries!.includes(inj.id) ? 'bg-accent-red/15 border-accent-red/40 text-accent-red' : 'border-border text-text-secondary'
+                        inj.id === 'none'
+                          ? form.injuries!.length === 0
+                            ? 'bg-accent-green/15 border-accent-green/40 text-accent-green'
+                            : 'border-border text-text-secondary'
+                          : form.injuries!.includes(inj.id)
+                            ? 'bg-accent-red/15 border-accent-red/40 text-accent-red'
+                            : 'border-border text-text-secondary'
                       }`}
-                    >{inj.label}</button>
+                    >
+                      {inj.label}
+                    </button>
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Ограничения по здоровью</label>
-                <input
-                  type="text"
-                  value={form.health_restrictions ?? ''}
-                  onChange={(e) => set('health_restrictions', e.target.value)}
-                  placeholder="Например: гипертония, диабет..."
-                  className="input-field w-full px-3 py-2.5 text-sm"
-                />
-              </div>
-              {isFemale && (
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CalendarDays size={18} className="text-accent-purple" />
-                    <p className="text-sm text-text-secondary">Женский цикл (необязательно)</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Дата начала последних месячных</label>
-                    <input
-                      type="date"
-                      value={cycleLastPeriod}
-                      onChange={(e) => setCycleLastPeriod(e.target.value)}
-                      className="input-field w-full px-3 py-2.5 text-sm"
-                    />
-                  </div>
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Длительность цикла (дней)</label>
-                    <input
-                      type="number"
-                      value={cycleLength}
-                      onChange={(e) => setCycleLength(Number(e.target.value))}
-                      className="input-field w-full px-3 py-2.5 text-sm"
-                    />
-                  </div>
-                </div>
-              )}
             </>
           )}
 
-          {/* Step 4: Focus Muscles (Silhouette) */}
-          {step === 4 && (
+          {/* Шаг 1: Данные + Инвентарь */}
+          {step === 1 && (
             <>
               <div className="flex items-center gap-2 mb-3">
-                <Heart size={18} className="text-accent-red" />
-                <p className="text-sm text-text-secondary">Кликните на зоны, которые хотите проработать</p>
+                <Dumbbell size={18} className="text-accent-blue" />
+                <p className="text-sm text-text-secondary">Ваши данные и доступный инвентарь</p>
               </div>
-              <div className="flex justify-center gap-2 mb-4">
-                <button
-                  onClick={() => setSilhouetteView('front')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                    silhouetteView === 'front' ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue' : 'border-border text-text-secondary'
-                  }`}>Спереди</button>
-                <button
-                  onClick={() => setSilhouetteView('back')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                    silhouetteView === 'back' ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue' : 'border-border text-text-secondary'
-                  }`}>Сзади</button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Пол</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => set('gender', 'male')}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                        form.gender === 'male'
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      Мужской
+                    </button>
+                    <button
+                      onClick={() => set('gender', 'female')}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                        form.gender === 'female'
+                          ? 'bg-accent-purple/15 border-accent-purple/40 text-accent-purple'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      Женский
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Возраст</label>
+                  <input
+                    type="number"
+                    value={form.age || ''}
+                    onChange={(e) => set('age', Number(e.target.value))}
+                    placeholder="лет"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="14"
+                    max="100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Вес (кг)</label>
+                  <input
+                    type="number"
+                    value={form.weight || ''}
+                    onChange={(e) => set('weight', Number(e.target.value))}
+                    placeholder="кг"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="30"
+                    max="200"
+                    step="0.5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Рост (см)</label>
+                  <input
+                    type="number"
+                    value={form.height || ''}
+                    onChange={(e) => set('height', Number(e.target.value))}
+                    placeholder="см"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="100"
+                    max="250"
+                  />
+                </div>
               </div>
-              <MuscleSilhouette
-                selectedMuscles={selectedMuscles}
-                onMuscleClick={toggleMuscle}
-                mode="selection"
-                size="lg"
-                showLabels={true}
-                view={silhouetteView}
-              />
-              <div className="mt-4 p-3 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
-                <p className="text-sm text-text-secondary">
-                  Выбрано мышц: {selectedMuscles.length > 0 ? selectedMuscles.join(', ') : 'ничего'}
-                </p>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Инвентарь</label>
+                <div className="flex flex-wrap gap-2">
+                  {INVENTORY_OPTIONS.map((inv) => (
+                    <button
+                      key={inv.id}
+                      onClick={() => toggleInventory(inv.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                        selectedInventory.includes(inv.id)
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      {inv.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-text-secondary mt-2">Выберите хотя бы один вариант</p>
               </div>
             </>
           )}
 
-          {/* Step 5: Personal Goal */}
-          {step === 5 && (
+          {/* Шаг 2: Фокус + Личная цель */}
+          {step === 2 && (
             <>
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles size={18} className="text-accent-gold" />
-                <p className="text-sm text-text-secondary">Опишите вашу конкретную цель</p>
+                <p className="text-sm text-text-secondary">Выберите мышцы и уточните цель</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Какая у вас конкретная цель?</label>
-                <textarea
-                  value={form.personal_goal ?? ''}
-                  onChange={(e) => set('personal_goal', e.target.value)}
-                  placeholder="Например: присесть 150 кг, пробежать марафон, сбросить 10 кг..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[120px] resize-none"
-                />
-                <p className="text-xs text-text-secondary mt-2">Опишите вашу цель максимально конкретно</p>
-              </div>
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-text-secondary mb-2">Какие упражнения вы любите или не любите?</label>
-                <textarea
-                  value={form.exercise_likes ?? ''}
-                  onChange={(e) => set('exercise_likes', e.target.value)}
-                  placeholder="Любимые: например, приседания, тяга гантели..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none mb-4"
-                />
-                <textarea
-                  value={form.exercise_dislikes ?? ''}
-                  onChange={(e) => set('exercise_dislikes', e.target.value)}
-                  placeholder="Нелюбимые: например, берпи, прыжки..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none"
-                />
-                <p className="text-xs text-text-secondary mt-2">Мы учтём ваши предпочтения при составлении программы</p>
-              </div>
-            </>
-          )}
 
-          {/* Step 6: Additional Parameters */}
-          {step === 6 && (
-            <>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Уровень стресса</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    ['low', 'Низкий'],
-                    ['medium', 'Средний'],
-                    ['high', 'Высокий'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.stress_level === val} onClick={() => set('stress_level', val)} label={label} />
+                <label className="block text-sm font-medium text-text-secondary mb-2">Акцентные мышцы</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {FOCUS_MUSCLES.map((muscle) => (
+                    <button
+                      key={muscle.id}
+                      onClick={() => toggleMuscle(muscle.id)}
+                      className={`px-4 py-3 rounded-lg text-sm font-medium border transition-all ${
+                        selectedMuscles.includes(muscle.id)
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      {muscle.label}
+                    </button>
                   ))}
                 </div>
+                <p className="text-xs text-text-secondary mt-2">Выберите хотя бы одну группу мышц</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Диетические предпочтения</label>
-                <div className="space-y-2">
-                  {[
-                    ['none', 'Нет'],
-                    ['vegetarian', 'Вегетарианство'],
-                    ['vegan', 'Веганство'],
-                    ['halal', 'Халяль'],
-                    ['kosher', 'Кошер'],
-                    ['other', 'Другое'],
-                  ].map(([val, label]) => (
-                    <OptionButton key={val} active={form.diet_preference === val} onClick={() => set('diet_preference', val)} label={label} />
-                  ))}
-                </div>
+
+              <div className="pt-4 border-t border-border">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  {form.main_goal === 'custom' ? 'Ваша цель' : 'Личная цель'}
+                </label>
+                {form.main_goal === 'custom' ? (
+                  <textarea
+                    value={customGoalText}
+                    onChange={(e) => setCustomGoalText(e.target.value)}
+                    placeholder="Опишите вашу конкретную цель..."
+                    className="input-field w-full px-3 py-2.5 text-sm min-h-[100px] resize-none"
+                  />
+                ) : (
+                  <textarea
+                    value={form.personal_goal || ''}
+                    onChange={(e) => set('personal_goal', e.target.value)}
+                    placeholder="Например: хочу подтягиваться 20 раз, сбросить 5 кг..."
+                    className="input-field w-full px-3 py-2.5 text-sm min-h-[100px] resize-none"
+                  />
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Ограничения по здоровью</label>
-                <input
-                  type="text"
-                  value={form.health_restrictions ?? ''}
-                  onChange={(e) => set('health_restrictions', e.target.value)}
-                  placeholder="Например: гипертония, диабет..."
-                  className="input-field w-full px-3 py-2.5 text-sm"
+
+              <div className="pt-4 border-t border-border">
+                <label className="block text-sm font-medium text-text-secondary mb-2">Предпочтения по упражнениям</label>
+                <textarea
+                  value={form.exercise_likes || ''}
+                  onChange={(e) => set('exercise_likes', e.target.value)}
+                  placeholder="Любимые упражнения..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none mb-3"
+                />
+                <textarea
+                  value={form.exercise_dislikes || ''}
+                  onChange={(e) => set('exercise_dislikes', e.target.value)}
+                  placeholder="Нелюбимые упражнения..."
+                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none"
                 />
               </div>
             </>
           )}
         </div>
 
-        {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <button
             onClick={handleBack}
@@ -639,7 +582,7 @@ export default function CoachPage() {
               disabled={saving}
               className="btn-primary px-6 py-2.5 text-sm flex items-center gap-1.5 disabled:opacity-40"
             >
-              <Sparkles size={18} /> Создать план
+              <Sparkles size={18} /> Сохранить
             </button>
           )}
         </div>
