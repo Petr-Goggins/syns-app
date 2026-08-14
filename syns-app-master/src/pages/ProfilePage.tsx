@@ -221,7 +221,73 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
       {/* Тепловая карта мышц */}
       <div className="card-modern mb-6">
         <h2 className="text-lg font-semibold text-text mb-4">Тепловая карта мышц</h2>
-        <MuscleHeatmap data={{ chest: 70, biceps: 45, triceps: 30, abs: 20, legs: 85, shoulders: 50, back: 60 }} />
+        <MuscleHeatmap data={{ 
+          chest_upper: 70, 
+          chest_lower: 65,
+          biceps_left: 45, 
+          biceps_right: 48, 
+          triceps_left: 30, 
+          triceps_right: 32,
+          front_delts_left: 50,
+          front_delts_right: 52,
+          abs_upper: 20,
+          abs_lower: 15,
+          quads_left: 85,
+          quads_right: 82,
+          calves_left: 40,
+          calves_right: 42,
+          lats: 60,
+          traps_upper: 55,
+          traps_lower: 50,
+          rear_delts_left: 45,
+          rear_delts_right: 47,
+          hamstrings_left: 70,
+          hamstrings_right: 68,
+          glutes_left: 60,
+          glutes_right: 62,
+          lower_back: 35
+        }} />
+      </div>
+
+      {/* Календари питания и тренировок */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        {/* Календарь питания */}
+        <div className="card-modern">
+          <h3 className="text-sm font-semibold text-text-secondary mb-3">Питание</h3>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 49 }).map((_, i) => {
+              const status = i % 7 === 0 ? 'good' : i % 5 === 0 ? 'bad' : 'medium';
+              const color = status === 'good' ? '#22c55e' : status === 'bad' ? '#ef4444' : '#eab308';
+              return (
+                <div
+                  key={`nutrition-${i}`}
+                  className="rounded-sm"
+                  style={{ width: '12px', height: '12px', backgroundColor: color }}
+                  title={`День ${i + 1}: ${status === 'good' ? 'Идеально' : status === 'bad' ? 'Плохо' : 'Средне'}`}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Календарь тренировок */}
+        <div className="card-modern">
+          <h3 className="text-sm font-semibold text-text-secondary mb-3">Тренировки</h3>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 49 }).map((_, i) => {
+              const hasWorkout = i % 3 === 0 || i % 5 === 0;
+              const color = hasWorkout ? '#22c55e' : '#d1d5db';
+              return (
+                <div
+                  key={`workout-${i}`}
+                  className="rounded-sm"
+                  style={{ width: '12px', height: '12px', backgroundColor: color }}
+                  title={`День ${i + 1}: ${hasWorkout ? 'Тренировка' : 'Отдых'}`}
+                />
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">

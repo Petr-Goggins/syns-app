@@ -254,6 +254,53 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       <div className="card-modern mb-6 flex justify-center py-6">
         <CircularProgress current={1850} goal={2500} size={180} strokeWidth={14} label="1850/2500" />
       </div>
+
+      {/* Макросы: белки, жиры, углеводы */}
+      <div className="card-modern mb-6 space-y-4">
+        <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">Макронутриенты</h3>
+        
+        {/* Белки */}
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-[#A78BFA] font-medium">Белки</span>
+            <span className="text-text-secondary">120 / 150 г</span>
+          </div>
+          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
+            <div 
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: '80%', backgroundColor: '#A78BFA' }}
+            />
+          </div>
+        </div>
+
+        {/* Жиры */}
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-[#FCD34D] font-medium">Жиры</span>
+            <span className="text-text-secondary">50 / 70 г</span>
+          </div>
+          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
+            <div 
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: '71%', backgroundColor: '#FCD34D' }}
+            />
+          </div>
+        </div>
+
+        {/* Углеводы */}
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-[#60A5FA] font-medium">Углеводы</span>
+            <span className="text-text-secondary">200 / 300 г</span>
+          </div>
+          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
+            <div 
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: '67%', backgroundColor: '#60A5FA' }}
+            />
+          </div>
+        </div>
+      </div>
       <div className="text-center mb-6">
         <p className="text-text-secondary text-sm">Осталось калорий: <span className="text-accent-blue font-semibold">650</span></p>
       </div>
