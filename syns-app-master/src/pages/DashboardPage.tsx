@@ -9,6 +9,7 @@ import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp,
 import { getPhaseRecommendation } from '@/lib/cycle';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '@/components/Modal';
+import CircularProgress from '@/components/CircularProgress';
 
 export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -247,6 +248,14 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-text">Главная</h1>
         <span className="text-sm text-text-secondary">{new Date().toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+      </div>
+
+      {/* Круговой индикатор калорий */}
+      <div className="card-modern mb-6 flex justify-center py-6">
+        <CircularProgress current={1850} goal={2500} size={180} strokeWidth={14} label="1850/2500" />
+      </div>
+      <div className="text-center mb-6">
+        <p className="text-text-secondary text-sm">Осталось калорий: <span className="text-accent-blue font-semibold">650</span></p>
       </div>
 
       {/* Блок выбора глобальной цели */}
