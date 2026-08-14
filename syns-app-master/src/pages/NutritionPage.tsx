@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { Plus, Sparkles, Search, Clock, Utensils, Filter, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { searchVkusvillProducts } from '@/services/vkusvillService';
+import { searchPyaterochkaProducts } from '@/services/pyaterochkaService';
 
 interface MealPlan {
   id: string;
@@ -63,33 +65,57 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       plan.time === selectedTime
   );
 
-  // Поиск продуктов через Open Food Facts API на бэкенде
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
+  // Поиск продуктов через ВкусВилл, Пятёрочку и Open Food Facts API
+  const searchFood = async (query: string) => {
+    if (!query.trim()) return;
     setIsSearching(true);
+    setSearchResults([]);
+
     try {
-      // Используем правильный путь к API с префиксом /api
-      const response = await fetch(`http://localhost:8000/api/products/search?query=${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error('Ошибка запроса');
+      // 1. Поиск во ВкусВилл
+      const vkusvillResults = await searchVkusvillProducts(query);
+      if (vkusvillResults.length > 0) {
+        setSearchResults(vkusvillResults.map(p => ({ ...p, source: 'ВкусВилл' })));
+        setIsSearching(false);
+        return;
       }
-      const data = await response.json();
-      setSearchResults(data);
-    } catch (e) {
-      console.error(e);
-      // Фоллбэк на заглушку, если бэкенд недоступен
-      const mockProducts = [
-        { name: 'Гречка отварная', brand: 'Макфа', calories: 130, proteins: 5, fats: 1, carbs: 30 },
-        { name: 'Куриная грудка вареная', brand: 'Петелинка', calories: 130, proteins: 25, fats: 2, carbs: 0 },
-        { name: 'Рис отварной', brand: 'Мистраль', calories: 120, proteins: 2.5, fats: 0.5, carbs: 28 },
-        { name: 'Пельмени Домашние', brand: 'Разные', calories: 250, proteins: 12, fats: 14, carbs: 28 },
-        { name: 'Пельмени Сибирские', brand: 'Разные', calories: 280, proteins: 15, fats: 18, carbs: 25 },
-      ].filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brand?.toLowerCase().includes(query.toLowerCase()));
-      setSearchResults(mockProducts);
+
+      // 2. Поиск в Пятёрочке
+      const pyaterochkaResults = await searchPyaterochkaProducts(query);
+      if (pyaterochkaResults.length > 0) {
+        setSearchResults(pyaterochkaResults.map(p => ({ ...p, source: 'Пятёрочка' })));
+        setIsSearching(false);
+        return;
+      }
+
+      // 3. Поиск в Open Food Facts
+      const openFoodResponse = await fetch(
+        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=true`
+      );
+      const openFoodData = await openFoodResponse.json();
+      const openFoodResults = (openFoodData.products || []).map((p: any) => ({
+        id: p.id || p.code,
+        name: p.product_name || p.name,
+        image: p.image_url,
+        source: 'Open Food Facts',
+        nutritional_info: {
+          calories: p.nutriments?.['energy-kcal_100g'] || p.nutriments?.energy,
+          protein: p.nutriments?.proteins_100g || p.nutriments?.proteins,
+          fat: p.nutriments?.fat_100g || p.nutriments?.fat,
+          carbs: p.nutriments?.carbohydrates_100g || p.nutriments?.carbohydrates,
+        },
+      }));
+
+      if (openFoodResults.length > 0) {
+        setSearchResults(openFoodResults);
+        setIsSearching(false);
+        return;
+      }
+
+      // 4. Ничего не найдено
+      setSearchResults([]);
+    } catch (err) {
+      console.error('Ошибка соединения:', err);
     } finally {
       setIsSearching(false);
     }
@@ -125,10 +151,10 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
   const handleSelectProduct = (product: any) => {
     setProductName(product.name);
-    setProtein(String(product.proteins || product.protein || 0));
-    setFat(String(product.fats || product.fat || 0));
-    setCarbs(String(product.carbs || product.carbohydrates || 0));
-    setCalories(String(product.calories || product.energy_kcal || 0));
+    setProtein(String(product.proteins || product.protein || product.nutritional_info?.protein || 0));
+    setFat(String(product.fats || product.fat || product.nutritional_info?.fat || 0));
+    setCarbs(String(product.carbs || product.carbohydrates || product.nutritional_info?.carbs || 0));
+    setCalories(String(product.calories || product.energy_kcal || product.nutritional_info?.calories || 0));
     setSearchQuery('');
     setSearchResults([]);
   };
@@ -226,29 +252,39 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
             <input
               type="text"
-              placeholder="Найти продукт (например, пельмени)"
+              placeholder="Найти продукт (например, молоко)"
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => searchFood(e.target.value)}
               className="input-field w-full pl-10 pr-3 py-2.5 rounded-lg"
             />
           </div>
           
           {searchResults.length > 0 && (
             <div className="max-h-60 overflow-y-auto space-y-2">
-              {searchResults.map((product, idx) => (
+              {searchResults.map((product) => (
                 <div
-                  key={idx}
-                  onClick={() => handleSelectProduct(product)}
-                  className="flex justify-between items-center p-3 bg-bg-tertiary rounded-lg cursor-pointer hover:bg-bg-secondary transition"
+                  key={product.id}
+                  className="flex items-center justify-between p-3 border-b border-border"
                 >
                   <div>
-                    <p className="text-text font-medium">{product.name}</p>
-                    {product.brand && <p className="text-text-secondary text-xs">{product.brand}</p>}
+                    <p className="font-medium">{product.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent-blue/20 text-accent-blue">
+                        {product.source}
+                      </span>
+                      {product.nutritional_info?.calories && (
+                        <span className="text-xs text-text-secondary">
+                          {product.nutritional_info.calories} ккал
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right text-text-secondary text-sm">
-                    <p>{product.calories || product.energy_kcal} ккал</p>
-                    <p className="text-xs">Б:{product.proteins || product.protein} Ж:{product.fats || product.fat} У:{product.carbs || product.carbohydrates}</p>
-                  </div>
+                  <button
+                    className="px-3 py-1 text-sm bg-accent-blue text-white rounded-lg"
+                    onClick={() => handleSelectProduct(product)}
+                  >
+                    Добавить
+                  </button>
                 </div>
               ))}
             </div>
