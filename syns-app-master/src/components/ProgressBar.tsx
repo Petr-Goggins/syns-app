@@ -1,36 +1,42 @@
+import React from 'react';
+
 interface ProgressBarProps {
-  value: number;
-  max?: number;
-  color?: string;
-  height?: number;
-  showLabel?: boolean;
-  label?: string;
+  current: number;
+  goal: number;
+  label: string;
+  color: string;
+  unit?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export default function ProgressBar({
-  value,
-  max = 100,
-  color = 'var(--accent-blue)',
-  height = 8,
-  showLabel = false,
+  current,
+  goal,
   label,
+  color,
+  unit = 'г',
+  size = 'md',
 }: ProgressBarProps) {
-  const pct = Math.min(100, Math.round((value / max) * 100));
+  const pct = Math.min(100, (current / goal) * 100);
+  const isOver = current > goal;
+  
+  const heightClass = size === 'sm' ? 'h-1.5' : size === 'lg' ? 'h-3' : 'h-2';
+  
   return (
     <div className="w-full">
-      {showLabel && (
-        <div className="flex justify-between mb-1.5">
-          <span className="text-sm text-text-secondary">{label}</span>
-          <span className="text-sm font-semibold text-text">{pct}%</span>
-        </div>
-      )}
-      <div
-        className="w-full rounded-full overflow-hidden bg-bg-tertiary"
-        style={{ height: `${height}px` }}
-      >
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-sm text-text-secondary">{label}</span>
+        <span className={`text-sm font-medium ${isOver ? 'text-accent-gold' : 'text-text'}`}>
+          {Math.round(current)}{unit} / {goal}{unit}
+        </span>
+      </div>
+      <div className={`w-full bg-bg-tertiary rounded-full ${heightClass}`} style={{ overflow: 'hidden' }}>
         <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
-          style={{ width: `${pct}%`, backgroundColor: color }}
+          className={`${heightClass} rounded-full transition-all duration-700 ease-out`}
+          style={{ 
+            width: `${pct}%`,
+            backgroundColor: color,
+          }}
         />
       </div>
     </div>
