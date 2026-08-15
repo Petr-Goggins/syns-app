@@ -129,21 +129,26 @@ export default function CoachPage() {
   const [strengthExercise, setStrengthExercise] = useState('bench');
   const [strengthTarget, setStrengthTarget] = useState<number>(0);
   const [goalTimeEstimate, setGoalTimeEstimate] = useState<{ weeks: number; date: string } | null>(null);
+  const [strengthMode, setStrengthMode] = useState<'specific' | 'general'>('specific');
 
   useEffect(() => {
     // Вычисляем прогноз времени достижения цели при изменении весов
-    if (form.main_goal === 'gain_muscle' && currentWeight > 0 && targetWeight > 0) {
-      const diff = targetWeight - currentWeight;
-      const weeks = Math.ceil(diff / 0.5); // 0.5 кг в неделю для набора массы
-      const estimatedDate = new Date();
-      estimatedDate.setDate(estimatedDate.getDate() + weeks * 7);
-      setGoalTimeEstimate({ weeks, date: estimatedDate.toLocaleDateString('ru', { day: '2-digit', month: '2-digit', year: '2-digit' }) });
-    } else if (form.main_goal === 'lose_weight' && currentWeight > 0 && targetWeight > 0) {
-      const diff = currentWeight - targetWeight;
-      const weeks = Math.ceil(diff / 0.5); // 0.5 кг в неделю для похудения
-      const estimatedDate = new Date();
-      estimatedDate.setDate(estimatedDate.getDate() + weeks * 7);
-      setGoalTimeEstimate({ weeks, date: estimatedDate.toLocaleDateString('ru', { day: '2-digit', month: '2-digit', year: '2-digit' }) });
+    if ((form.main_goal === 'gain_muscle' || form.main_goal === 'lose_weight') && currentWeight > 0 && targetWeight > 0) {
+      let diff = 0;
+      if (form.main_goal === 'gain_muscle') {
+        diff = targetWeight - currentWeight;
+      } else if (form.main_goal === 'lose_weight') {
+        diff = currentWeight - targetWeight;
+      }
+      
+      if (diff <= 0) {
+        setGoalTimeEstimate(null); // Уже достиг цели или превысил
+      } else {
+        const weeks = Math.ceil(diff / 0.5); // 0.5 кг в неделю
+        const estimatedDate = new Date();
+        estimatedDate.setDate(estimatedDate.getDate() + weeks * 7);
+        setGoalTimeEstimate({ weeks, date: estimatedDate.toLocaleDateString('ru', { day: '2-digit', month: '2-digit', year: '2-digit' }) });
+      }
     } else {
       setGoalTimeEstimate(null);
     }
@@ -159,18 +164,8 @@ export default function CoachPage() {
   const isLastStep = step === totalSteps - 1;
 
   const canProceed = (): boolean => {
-    switch (step) {
-      case 0:
-        if (!form.main_goal) return false;
-        if (form.main_goal === 'increase_strength' && !strengthTarget) return false;
-        if (form.main_goal === 'custom' && !customGoalText) return false;
-        return !!form.experience_duration && !!form.training_level && form.injuries!.length > 0;
-      case 1:
-        return !!form.gender && !!form.age && !!form.weight && !!form.height && selectedInventory.length > 0;
-      case 2:
-        return selectedMuscles.length > 0 && (customGoalText || form.main_goal !== 'custom');
-      default: return true;
-    }
+    // Кнопка "Далее" всегда активна, валидация только визуальная
+    return true;
   };
 
   const handleNext = () => {
@@ -184,14 +179,24 @@ export default function CoachPage() {
   const handleFinish = async () => {
     if (!user) return;
 
+    // Сохраняем текущий и целевой вес в form.weight и form.goal_amount
+    if (currentWeight > 0) {
+      set('weight', currentWeight);
+    }
+    
     if (form.main_goal === 'custom') {
       set('personal_goal', customGoalText);
     } else if (form.main_goal === 'increase_strength') {
-      set('personal_goal', `${strengthExercise === 'bench' ? 'Жим лёжа' : strengthExercise === 'squat' ? 'Присед' : 'Становая тяга'} ${strengthTarget} кг`);
+      if (strengthMode === 'specific') {
+        const exerciseNames: Record<string, string> = { bench: 'Жим лёжа', squat: 'Присед', deadlift: 'Становая тяга', overhead: 'Жим стоя' };
+        set('personal_goal', `${exerciseNames[strengthExercise] || strengthExercise} ${strengthTarget} кг`);
+      } else {
+        set('personal_goal', 'Общее увеличение силы');
+      }
     } else if (form.main_goal === 'lose_weight') {
       set('personal_goal', `Похудение до ${targetWeight} кг`);
     } else if (form.main_goal === 'gain_muscle') {
-      set('personal_goal', 'Набор мышечной массы');
+      set('personal_goal', `Набор мышечной массы до ${targetWeight} кг`);
     }
 
     if (selectedMuscles.length > 0) {
@@ -208,12 +213,12 @@ export default function CoachPage() {
       set('goal_unit', 'кг');
     } else if (form.main_goal === 'gain_muscle') {
       set('goal_type', 'muscle_gain');
-      set('goal_amount', 0);
-      set('goal_unit', '');
+      set('goal_amount', targetWeight);
+      set('goal_unit', 'кг');
     } else if (form.main_goal === 'increase_strength') {
       set('goal_type', 'strength');
-      set('goal_amount', strengthTarget);
-      set('goal_unit', 'кг');
+      set('goal_amount', strengthMode === 'specific' ? strengthTarget : null);
+      set('goal_unit', strengthMode === 'specific' ? 'кг' : '');
     }
 
     const ok = await saveCoachData(user.id, form);
@@ -299,36 +304,75 @@ export default function CoachPage() {
 
               {form.main_goal === 'increase_strength' && (
                 <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Выберите упражнение</label>
-                  <div className="space-y-2 mb-3">
-                    <OptionButton
-                      active={strengthExercise === 'bench'}
-                      onClick={() => setStrengthExercise('bench')}
-                      label="Жим лёжа"
-                    />
-                    <OptionButton
-                      active={strengthExercise === 'squat'}
-                      onClick={() => setStrengthExercise('squat')}
-                      label="Приседания"
-                    />
-                    <OptionButton
-                      active={strengthExercise === 'deadlift'}
-                      onClick={() => setStrengthExercise('deadlift')}
-                      label="Становая тяга"
-                    />
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Режим увеличения силы</label>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setStrengthMode('specific')}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                        strengthMode === 'specific'
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      В конкретном упражнении
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStrengthMode('general')}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                        strengthMode === 'general'
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      Просто увеличить силу
+                    </button>
                   </div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Целевой вес (кг)</label>
-                  <input
-                    type="number"
-                    value={strengthTarget || ''}
-                    onChange={(e) => setStrengthTarget(Number(e.target.value))}
-                    placeholder="Например: 100"
-                    className="input-field w-full px-3 py-2.5 text-sm"
-                    min="1"
-                    step="5"
-                  />
-                  {isFemale && strengthTarget > 100 && (
-                    <p className="text-xs text-accent-red mt-2">⚠️ Для женщин такой вес может быть нереалистичен.</p>
+                  
+                  {strengthMode === 'specific' && (
+                    <>
+                      <label className="block text-sm font-medium text-text-secondary mb-2">Выберите упражнение</label>
+                      <div className="space-y-2 mb-3">
+                        <OptionButton
+                          active={strengthExercise === 'bench'}
+                          onClick={() => setStrengthExercise('bench')}
+                          label="Жим лёжа"
+                        />
+                        <OptionButton
+                          active={strengthExercise === 'squat'}
+                          onClick={() => setStrengthExercise('squat')}
+                          label="Приседания"
+                        />
+                        <OptionButton
+                          active={strengthExercise === 'deadlift'}
+                          onClick={() => setStrengthExercise('deadlift')}
+                          label="Становая тяга"
+                        />
+                        <OptionButton
+                          active={strengthExercise === 'overhead'}
+                          onClick={() => setStrengthExercise('overhead')}
+                          label="Жим стоя"
+                        />
+                      </div>
+                      <label className="block text-sm font-medium text-text-secondary mb-2">Желаемый вес в упражнении (кг)</label>
+                      <input
+                        type="number"
+                        value={strengthTarget || ''}
+                        onChange={(e) => setStrengthTarget(Number(e.target.value))}
+                        placeholder="Например: 100"
+                        className="input-field w-full px-3 py-2.5 text-sm"
+                        min="1"
+                        step="5"
+                      />
+                      {isFemale && strengthTarget > 100 && (
+                        <p className="text-xs text-accent-red mt-2">⚠️ Для женщин такой вес может быть нереалистичен.</p>
+                      )}
+                    </>
+                  )}
+                  
+                  {strengthMode === 'general' && (
+                    <p className="text-sm text-text-secondary">Тренировки будут направлены на общее увеличение силы без привязки к конкретному упражнению.</p>
                   )}
                 </div>
               )}
@@ -347,17 +391,67 @@ export default function CoachPage() {
 
               {form.main_goal === 'lose_weight' && (
                 <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Целевой вес (кг)</label>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Текущий вес (кг)</label>
                   <input
                     type="number"
-                    value={targetWeight || ''}
-                    onChange={(e) => setTargetWeight(Number(e.target.value))}
-                    placeholder={`Текущий: ${currentWeight || '--'} кг`}
+                    value={currentWeight || ''}
+                    onChange={(e) => setCurrentWeight(Number(e.target.value))}
+                    placeholder="Например: 80"
                     className="input-field w-full px-3 py-2.5 text-sm"
                     min="1"
                     step="0.5"
                   />
-                  <p className="text-xs text-text-secondary mt-2">Рекомендуемая потеря: 0.5-1 кг в неделю</p>
+                  <label className="block text-sm font-medium text-text-secondary mb-2 mt-3">Целевой вес (кг)</label>
+                  <input
+                    type="number"
+                    value={targetWeight || ''}
+                    onChange={(e) => setTargetWeight(Number(e.target.value))}
+                    placeholder="Например: 70"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="1"
+                    step="0.5"
+                  />
+                  {goalTimeEstimate ? (
+                    <p className="text-xs text-text-secondary mt-2">
+                      Примерно через {goalTimeEstimate.weeks} нед. (ориентировочно {goalTimeEstimate.date})
+                    </p>
+                  ) : currentWeight > 0 && targetWeight > 0 && currentWeight <= targetWeight ? (
+                    <p className="text-xs text-accent-green mt-2">Вы уже достигли цели или превысили её</p>
+                  ) : null}
+                  <p className="text-xs text-text-secondary mt-2">Рекомендуемая потеря: 0.5 кг в неделю</p>
+                </div>
+              )}
+
+              {form.main_goal === 'gain_muscle' && (
+                <div className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Текущий вес (кг)</label>
+                  <input
+                    type="number"
+                    value={currentWeight || ''}
+                    onChange={(e) => setCurrentWeight(Number(e.target.value))}
+                    placeholder="Например: 70"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="1"
+                    step="0.5"
+                  />
+                  <label className="block text-sm font-medium text-text-secondary mb-2 mt-3">Целевой вес (кг)</label>
+                  <input
+                    type="number"
+                    value={targetWeight || ''}
+                    onChange={(e) => setTargetWeight(Number(e.target.value))}
+                    placeholder="Например: 80"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="1"
+                    step="0.5"
+                  />
+                  {goalTimeEstimate ? (
+                    <p className="text-xs text-text-secondary mt-2">
+                      Примерно через {goalTimeEstimate.weeks} нед. (ориентировочно {goalTimeEstimate.date})
+                    </p>
+                  ) : currentWeight > 0 && targetWeight > 0 && currentWeight >= targetWeight ? (
+                    <p className="text-xs text-accent-green mt-2">Вы уже достигли цели или превысили её</p>
+                  ) : null}
+                  <p className="text-xs text-text-secondary mt-2">Рекомендуемый набор: 0.5 кг в неделю</p>
                 </div>
               )}
 
