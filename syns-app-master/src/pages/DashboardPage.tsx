@@ -79,16 +79,31 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     const loadDashboard = async () => {
       setLoading(true);
       try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('weight, goal, cycle_phase, cycle_last_period, cycle_length')
-          .eq('id', user.id)
-          .single();
+        // Загружаем профиль
+        let profile = null;
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('weight, goal, cycle_phase, cycle_last_period, cycle_length')
+            .eq('id', user.id)
+            .single();
+          if (profileError) {
+            console.error('Ошибка загрузки профиля:', profileError);
+          } else {
+            profile = profileData;
+          }
+        } catch (err) {
+          console.error('Ошибка при запросе профиля:', err);
+        }
 
         // Рекомендация по биоритмам
         if (profile?.cycle_phase && profile.cycle_phase !== 'not_specified') {
-          const rec = getPhaseRecommendation(profile.cycle_phase as any);
-          setCycleRecommendation(rec.recommendation);
+          try {
+            const rec = getPhaseRecommendation(profile.cycle_phase as any);
+            setCycleRecommendation(rec.recommendation);
+          } catch (err) {
+            console.error('Ошибка получения рекомендации:', err);
+          }
         }
 
         // Определяем дату для загрузки данных
@@ -101,38 +116,82 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         const dateStr = targetDate.toISOString().split('T')[0];
 
         // Загружаем калории и макросы из meals
-        const { data: meals } = await supabase
-          .from('meals')
-          .select('calories, protein, fat, carbs')
-          .eq('user_id', user.id)
-          .eq('date', dateStr);
-        
-        const totalCalories = meals?.reduce((sum, m) => sum + (m.calories || 0), 0) || 0;
-        const totalProtein = meals?.reduce((sum, m) => sum + (m.protein || 0), 0) || 0;
-        const totalFats = meals?.reduce((sum, m) => sum + (m.fat || 0), 0) || 0;
-        const totalCarbs = meals?.reduce((sum, m) => sum + (m.carbs || 0), 0) || 0;
+        let totalCalories = 0;
+        let totalProtein = 0;
+        let totalFats = 0;
+        let totalCarbs = 0;
+        try {
+          const { data: meals, error: mealsError } = await supabase
+            .from('meals')
+            .select('calories, protein, fat, carbs')
+            .eq('user_id', user.id)
+            .eq('date', dateStr);
+          
+          if (mealsError) {
+            console.error('Ошибка загрузки meals:', mealsError);
+          } else if (meals) {
+            totalCalories = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
+            totalProtein = meals.reduce((sum, m) => sum + (m.protein || 0), 0);
+            totalFats = meals.reduce((sum, m) => sum + (m.fat || 0), 0);
+            totalCarbs = meals.reduce((sum, m) => sum + (m.carbs || 0), 0);
+          }
+        } catch (err) {
+          console.error('Ошибка при запросе meals:', err);
+        }
 
-        const { data: sleep } = await supabase
-          .from('sleep_logs')
-          .select('hours')
-          .eq('user_id', user.id)
-          .eq('date', dateStr)
-          .single();
-        const sleepHoursVal = sleep?.hours || 0;
+        // Загружаем сон
+        let sleepHoursVal = 0;
+        try {
+          const { data: sleep, error: sleepError } = await supabase
+            .from('sleep_logs')
+            .select('hours')
+            .eq('user_id', user.id)
+            .eq('date', dateStr)
+            .single();
+          if (sleepError) {
+            console.error('Ошибка загрузки sleep_logs:', sleepError);
+          } else if (sleep) {
+            sleepHoursVal = sleep.hours || 0;
+          }
+        } catch (err) {
+          console.error('Ошибка при запросе sleep_logs:', err);
+        }
 
-        const { count: workoutsCount } = await supabase
-          .from('workout_logs')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('log_date', dateStr);
+        // Загружаем количество тренировок
+        let workoutsCount = 0;
+        try {
+          const { count, error: workoutError } = await supabase
+            .from('workout_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('log_date', dateStr);
+          if (workoutError) {
+            console.error('Ошибка загрузки workout_logs:', workoutError);
+          } else if (count !== null) {
+            workoutsCount = count;
+          }
+        } catch (err) {
+          console.error('Ошибка при запросе workout_logs:', err);
+        }
 
         // Загружаем воду из store
-        await waterStore.fetchToday(user.id);
-        const totalWater = waterStore.todayAmount;
+        let totalWater = 0;
+        try {
+          await waterStore.fetchToday(user.id);
+          totalWater = waterStore.todayAmount || 0;
+        } catch (err) {
+          console.error('Ошибка при загрузке воды:', err);
+        }
 
         // Загружаем серию
-        await longPathStore.calculateStreak(user.id);
-        setStreak(longPathStore.streak);
+        let streakVal = 0;
+        try {
+          await longPathStore.calculateStreak(user.id);
+          streakVal = longPathStore.streak || 0;
+          setStreak(streakVal);
+        } catch (err) {
+          console.error('Ошибка при загрузке серии:', err);
+        }
 
         // Устанавливаем цель калорий из профиля или по умолчанию
         const goalCalories = profile?.goal ? 
@@ -148,11 +207,24 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           },
           water: totalWater / 1000,
           sleep: sleepHoursVal,
-          workouts: workoutsCount || 0,
+          workouts: workoutsCount,
           progress: 65,
         });
       } catch (error) {
-        console.error(error);
+        console.error('Критическая ошибка загрузки дашборда:', error);
+        // Fallback значения при критической ошибке
+        setStats({
+          calories: 0,
+          macros: {
+            protein: { current: 0, goal: 150 },
+            fats: { current: 0, goal: 70 },
+            carbs: { current: 0, goal: 300 },
+          },
+          water: 0,
+          sleep: 0,
+          workouts: 0,
+          progress: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -170,13 +242,21 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const handleSleepSave = async () => {
     if (!user || !sleepHours) return;
     const today = new Date().toISOString().split('T')[0];
-    await supabase.from('sleep_logs').insert({
-      user_id: user.id,
-      date: today,
-      hours: parseFloat(sleepHours),
-      quality: 80,
-    });
-    setStats(prev => ({ ...prev, sleep: parseFloat(sleepHours) }));
+    try {
+      const { error } = await supabase.from('sleep_logs').insert({
+        user_id: user.id,
+        date: today,
+        hours: parseFloat(sleepHours),
+        quality: 80,
+      });
+      if (error) {
+        console.error('Ошибка сохранения сна:', error);
+        return;
+      }
+      setStats(prev => ({ ...prev, sleep: parseFloat(sleepHours) }));
+    } catch (err) {
+      console.error('Ошибка при сохранении сна:', err);
+    }
     setShowSleepModal(false);
     setSleepHours('');
   };
@@ -197,6 +277,13 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const getMacroColor = (current: number, goal: number, baseColor: string, overColor: string) => {
     return current > goal ? overColor : baseColor;
   };
+
+  // Функция для стиля range input
+  const rangeStyle = (active: boolean) => 
+    active ? 'bg-accent-blue text-white' : 'bg-bg-card text-text-secondary';
+
+  // Процент заполнения воды (для styling)
+  const waterPercent = waterAmount > 0;
 
   return (
     <div className="p-4 max-w-4xl mx-auto animate-fade-in">
@@ -568,8 +655,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             step="50"
             value={waterAmount}
             onChange={(e) => setWaterAmount(Number(e.target.value))}
-            className="w-full h-2 rounded-lg appearance-none cursor-pointer transition-all"
-            style={rangeStyle(waterPercent)}
+            className={`w-full h-2 rounded-lg appearance-none cursor-pointer transition-all ${rangeStyle(waterPercent)}`}
           />
           <span className="text-text font-medium min-w-[60px] text-right">{waterAmount} мл</span>
         </div>

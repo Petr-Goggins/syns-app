@@ -149,23 +149,32 @@ export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () =
 
   const loadExerciseHistory = async (exerciseName: string) => {
     setSelectedExercise(exerciseName);
-    const { data } = await supabase
-      .from('workout_logs')
-      .select('log_date, weight, reps, sets')
-      .eq('user_id', user.id)
-      .eq('exercise_name', exerciseName)
-      .order('log_date', { ascending: true })
-      .limit(20);
-    
-    if (data) {
-      setExerciseHistory(data.map(d => ({
-        date: new Date(d.log_date).toLocaleDateString('ru', { day: 'numeric', month: 'short' }),
-        weight: d.weight,
-        volume: d.sets * d.reps * d.weight,
-        reps: d.reps,
-      })));
-      setShowGraph(true);
-      setActiveTab('progress');
+    try {
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select('log_date, weight, reps, sets')
+        .eq('user_id', user.id)
+        .eq('exercise_name', exerciseName)
+        .order('log_date', { ascending: true })
+        .limit(20);
+      
+      if (error) {
+        console.error('Ошибка загрузки истории упражнений:', error);
+        return;
+      }
+      
+      if (data) {
+        setExerciseHistory(data.map(d => ({
+          date: new Date(d.log_date).toLocaleDateString('ru', { day: 'numeric', month: 'short' }),
+          weight: d.weight,
+          volume: d.sets * d.reps * d.weight,
+          reps: d.reps,
+        })));
+        setShowGraph(true);
+        setActiveTab('progress');
+      }
+    } catch (err) {
+      console.error('Ошибка при запросе истории упражнений:', err);
     }
   };
 
