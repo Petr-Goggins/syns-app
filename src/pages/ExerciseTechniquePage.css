@@ -1,0 +1,330 @@
+.exercise-technique-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Категории */
+.categories-container {
+  text-align: center;
+}
+
+.categories-container h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.page-subtitle {
+  color: var(--text-secondary, #666);
+  margin-bottom: 30px;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.category-card {
+  background: var(--bg-card, #ffffff);
+  border-radius: 16px;
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: var(--accent-blue, #007aff);
+}
+
+.category-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.category-card h3 {
+  font-size: 1.1rem;
+  margin: 8px 0 4px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.exercise-count {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+}
+
+/* Список упражнений */
+.exercises-list h1 {
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.exercises-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.exercise-card {
+  background: var(--bg-card, #ffffff);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+}
+
+.exercise-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: var(--accent-blue, #007aff);
+}
+
+.exercise-card-image {
+  height: 160px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.exercise-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-placeholder {
+  font-size: 4rem;
+}
+
+.exercise-card h3 {
+  font-size: 1.2rem;
+  margin: 0 0 8px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.exercise-short-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  line-height: 1.5;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.view-details-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--accent-blue, #007aff);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.view-details-btn:hover {
+  background: var(--accent-blue-hover, #0066d6);
+}
+
+/* Детальный просмотр */
+.exercise-detail {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.back-button {
+  background: transparent;
+  border: none;
+  color: var(--accent-blue, #007aff);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  transition: opacity 0.2s ease;
+}
+
+.back-button:hover {
+  opacity: 0.8;
+}
+
+.exercise-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.exercise-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--text-primary, #1a1a1a);
+  flex: 1;
+}
+
+.category-badge {
+  background: var(--bg-secondary, #f5f7fa);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+}
+
+.exercise-image-placeholder {
+  height: 300px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.exercise-image-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  color: var(--text-secondary, #666);
+  font-size: 1.1rem;
+}
+
+.exercise-content {
+  background: var(--bg-card, #ffffff);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.exercise-content h2 {
+  font-size: 1.4rem;
+  margin: 24px 0 16px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.exercise-content h2:first-child {
+  margin-top: 0;
+}
+
+.exercise-description p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #444);
+  margin: 0;
+}
+
+.exercise-steps ol {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.exercise-steps li {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #444);
+  margin-bottom: 12px;
+}
+
+.exercise-mistakes ul {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.exercise-mistakes li {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #dc3545;
+  margin-bottom: 8px;
+}
+
+.exercise-breathing p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #444);
+  margin: 0;
+  padding: 16px;
+  background: var(--bg-secondary, #f5f7fa);
+  border-radius: 8px;
+  border-left: 4px solid var(--accent-blue, #007aff);
+}
+
+.add-to-program-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent-blue, #007aff);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: background 0.2s ease;
+}
+
+.add-to-program-btn:hover {
+  background: var(--accent-blue-hover, #0066d6);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .exercise-technique-page {
+    padding: 16px;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .category-card {
+    padding: 16px 12px;
+  }
+
+  .category-icon {
+    font-size: 2.5rem;
+  }
+
+  .exercises-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .exercise-image-placeholder {
+    height: 200px;
+  }
+
+  .exercise-content {
+    padding: 16px;
+  }
+
+  .exercise-content h2 {
+    font-size: 1.2rem;
+  }
+}

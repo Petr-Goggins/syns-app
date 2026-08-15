@@ -1,27 +1,11 @@
-```gitignore
+```
 # Dependencies
 node_modules/
-.pnpm-store/
-.npm/
-.yarn/
-.bazel/
 
 # Build outputs
 dist/
 build/
-coverage/
 target/
-out/
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Environment
-.env
-.env.local
-.env.*
 
 # Python
 __pycache__/
@@ -29,43 +13,148 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-*.so
-.coverage
-htmlcov/
-.pytest_cache/
-.mypy_cache/
-.tox/
-.eggs/
-*.egg-info/
-.venv/
+env/
 venv/
-ENV/
+.venv/
+.ENV
+.ENV.*
+.venv.bak/
+pip-log.txt
+pip-selfcheck.json
 
-# Node.js
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Temporary files
 *.tmp
+*.temp
+*.bak
 
-# OS
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Icon?
-.directory
-*.nib
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+
+# Gradle
+.gradle/
+build/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# PyTest
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Rust
+Cargo.lock
+
+# Go
+*.out
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# C/C++
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.out
+*.obj
+
+# Ruby
+*.gem
+.bundle/
+Gemfile.lock
+
+# Node
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+
+# Bower
+bower_components/
+
+# Web
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+puppeteer/
+speed-measure-plugin/
+webpack.config.js
+webpack.config.*.js
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Backup
 *~
-.DS_Store?
-```
+*.bak
+*.orig
+*.rej
 
-Wait, I need to reconsider. The only modified file is a TypeScript React component (`ProgressPage.tsx`), which is source code. There are no build artifacts, dependency directories, or temporary files in the changes. According to rule #6, if the changes contain only source/config files and no build artifacts, dependencies, or temp files, I should output nothing.
-
-```gitignore
-
+# Sensitive
+config/secrets.yml
+secrets.yml
+*.key
+*.pem
+*.crt
+*.cert
 ```
