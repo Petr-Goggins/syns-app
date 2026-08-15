@@ -1,49 +1,71 @@
-```
+```gitignore
 # Dependencies
 node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.bazel/
 
 # Build outputs
 dist/
 build/
-.next/
+coverage/
+target/
 out/
+.DS_Store
+Thumbs.db
 
-# Environment variables
+# Logs
+*.log
+
+# Environment
 .env
 .env.local
 .env.*
 
-# IDE specific
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Python related
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-env/
-venv/
+*.so
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.eggs/
+*.egg-info/
 .venv/
-pip-log.txt
-pip-delete-this-directory.txt
+venv/
+ENV/
 
-# Logs
-*.log
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# OS generated files
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Icon?
+.directory
+*.nib
+*~
+.DS_Store?
+```
 
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
+Wait, I need to reconsider. The only modified file is a TypeScript React component (`ProgressPage.tsx`), which is source code. There are no build artifacts, dependency directories, or temporary files in the changes. According to rule #6, if the changes contain only source/config files and no build artifacts, dependencies, or temp files, I should output nothing.
 
-# Temporary files
-*.tmp
-*.temp
+```gitignore
+
 ```

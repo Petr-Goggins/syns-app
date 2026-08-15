@@ -1,307 +1,469 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { useLongPathStore } from '@/store/longPathStore';
-import { Award, Lock, Target, TrendingUp, ChevronRight, Zap } from 'lucide-react';
-import { getLevelByXP, LEVELS } from '@/lib/levels';
-import { ACHIEVEMENTS } from '@/data/achievements';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Dumbbell, Flame, Moon, Activity, AlertCircle } from 'lucide-react';
 
-type Tab = 'levels' | 'achievements';
-type AchievementFilter = 'all' | 'unlocked' | 'in_progress' | 'locked';
+type Period = 'week' | 'month' | 'year';
 
-export default function ProgressPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+interface WeightData {
+  date: string;
+  weight: number;
+}
+
+interface OnePMData {
+  date: string;
+  onePM: number;
+}
+
+interface CalorieData {
+  date: string;
+  calories: number;
+}
+
+interface SleepData {
+  date: string;
+  hours: number;
+}
+
+interface Metrics {
+  totalWorkouts: number;
+  totalVolume: number;
+  avgCalories: number;
+  avgSleep: number;
+}
+
+const EXERCISES = ['Присед', 'Жим лёжа', 'Становая', 'Жим гантелей', 'Тяга штанги', 'Подтягивания'];
+
+export default function ProgressPage() {
   const user = useAuthStore((s) => s.user);
-  const longPathStore = useLongPathStore();
-  const [activeTab, setActiveTab] = useState<Tab>('levels');
-  const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('all');
+  const [period, setPeriod] = useState<Period>('month');
+  const [selectedExercise, setSelectedExercise] = useState<string>('Присед');
   const [loading, setLoading] = useState(true);
-  const [userXP, setUserXP] = useState(0);
-  const [levelInfo, setLevelInfo] = useState<{ level: number; title: string; progressInLevel: number } | null>(null);
-  const [achievements, setAchievements] = useState(ACHIEVEMENTS);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Data states
+  const [weightData, setWeightData] = useState<WeightData[]>([]);
+  const [onePMData, setOnePMData] = useState<OnePMData[]>([]);
+  const [calorieData, setCalorieData] = useState<CalorieData[]>([]);
+  const [sleepData, setSleepData] = useState<SleepData[]>([]);
+  const [metrics, setMetrics] = useState<Metrics>({ totalWorkouts: 0, totalVolume: 0, avgCalories: 0, avgSleep: 0 });
+  const [aiInsight, setAiInsight] = useState<string>('');
 
   if (!user) {
     return <div className="p-4">Пожалуйста, войдите в аккаунт.</div>;
   }
 
   useEffect(() => {
-    const loadProgress = async () => {
+    const loadData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const { data: workouts } = await supabase
-          .from('workout_logs')
-          .select('id')
-          .eq('user_id', user.id);
-
-        const workoutCount = workouts?.length || 0;
-        const streak = longPathStore.streak || 0;
-        
-        const calculatedXP = workoutCount * 10 + streak * 5;
-        setUserXP(calculatedXP);
-        
-        const lvlInfo = getLevelByXP(calculatedXP);
-        setLevelInfo(lvlInfo);
-
-        const updatedAchievements = ACHIEVEMENTS.map(a => ({
-          ...a,
-          unlocked: checkAchievementUnlocked(a.id, workoutCount, streak, lvlInfo.level),
-        }));
-        setAchievements(updatedAchievements);
-
-        await longPathStore.fetchUserGoals(user.id);
-        await longPathStore.calculateStreak(user.id);
-      } catch (error) {
-        console.error('Error loading progress:', error);
+        await Promise.all([
+          fetchWeightData(user.id, period),
+          fetchOnePMData(user.id, period, selectedExercise),
+          fetchCalorieData(user.id, period),
+          fetchSleepData(user.id, period),
+          fetchMetrics(user.id, period),
+        ]);
+      } catch (err) {
+        setError('Ошибка загрузки данных');
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    loadProgress();
-  }, [user]);
+    loadData();
+  }, [user, period, selectedExercise]);
 
-  const checkAchievementUnlocked = (id: string, workouts: number, streak: number, level: number): boolean => {
-    switch (id) {
-      case 'first_workout': return workouts >= 1;
-      case 'week_streak': return streak >= 7;
-      case 'level_5': return level >= 5;
-      case 'level_10': return level >= 10;
-      case 'century': return workouts >= 100;
-      case 'water_master': return streak >= 30;
-      case 'iron_will': return workouts >= 30;
-      default: return false;
+  // Generate AI insight based on data
+  useEffect(() => {
+    if (weightData.length >= 2) {
+      const firstWeight = weightData[0].weight;
+      const lastWeight = weightData[weightData.length - 1].weight;
+      const diff = lastWeight - firstWeight;
+      
+      if (diff < -0.5) {
+        setAiInsight(`Вы сбросили ${Math.abs(diff).toFixed(1)} кг за период. Отличная работа!`);
+      } else if (diff > 0.5) {
+        setAiInsight(`Вы набрали ${diff.toFixed(1)} кг за период. Продолжайте в том же духе!`);
+      } else {
+        setAiInsight('Ваш вес стабилен. Хорошая работа по поддержанию формы!');
+      }
+    } else if (onePMData.length >= 2) {
+      const firstPM = onePMData[0].onePM;
+      const lastPM = onePMData[onePMData.length - 1].onePM;
+      const diff = lastPM - firstPM;
+      
+      if (diff > 2) {
+        setAiInsight(`Ваш 1ПМ в упражнении "${selectedExercise}" вырос на ${diff.toFixed(1)} кг. Прогресс очевиден!`);
+      } else {
+        setAiInsight('Продолжайте тренироваться для улучшения результатов.');
+      }
+    } else {
+      setAiInsight('Данных за выбранный период недостаточно. Заполните дневник питания и тренировок.');
+    }
+  }, [weightData, onePMData, selectedExercise]);
+
+  const fetchWeightData = async (userId: string, p: Period) => {
+    const startDate = getStartDate(p);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('weight, updated_at')
+      .eq('id', userId)
+      .gte('updated_at', startDate)
+      .order('updated_at', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      // Try body_measurements if profiles has no data
+      const { data: bmData } = await supabase
+        .from('body_measurements')
+        .select('weight, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', startDate)
+        .order('created_at', { ascending: true });
+      
+      if (bmData && bmData.length > 0) {
+        setWeightData(bmData.map(d => ({ date: d.created_at.split('T')[0], weight: d.weight })));
+      } else {
+        setWeightData([]);
+      }
+    } else {
+      setWeightData(data.map(d => ({ date: d.updated_at.split('T')[0], weight: d.weight })));
     }
   };
 
-  const filteredAchievements = achievements.filter(a => {
-    if (achievementFilter === 'unlocked') return a.unlocked;
-    if (achievementFilter === 'locked') return !a.unlocked;
-    if (achievementFilter === 'in_progress') return false;
-    return true;
-  });
+  const fetchOnePMData = async (userId: string, p: Period, exercise: string) => {
+    const startDate = getStartDate(p);
+    const { data, error } = await supabase
+      .from('workout_logs')
+      .select('log_date, weight, reps')
+      .eq('user_id', userId)
+      .ilike('exercise_name', `%${exercise}%`)
+      .gte('log_date', startDate)
+      .order('log_date', { ascending: true });
 
-  if (loading) return <div className="p-4 flex justify-center"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>;
+    if (error || !data || data.length === 0) {
+      setOnePMData([]);
+      return;
+    }
 
-  const nextLevelXP = LEVELS.find(l => l.level === (levelInfo?.level || 1))?.maxXP || 0;
-  const currentLevelMinXP = LEVELS.find(l => l.level === (levelInfo?.level || 1))?.minXP || 0;
-  const progressToNext = nextLevelXP === Infinity ? 100 : Math.round(((userXP - currentLevelMinXP) / (nextLevelXP - currentLevelMinXP)) * 100);
+    // Calculate 1PM: weight * (1 + reps / 30)
+    const onePMPoints = data.map(d => ({
+      date: d.log_date,
+      onePM: parseFloat((d.weight * (1 + d.reps / 30)).toFixed(2)),
+    }));
+
+    // Group by date and take max 1PM per day
+    const grouped: Record<string, number> = {};
+    onePMPoints.forEach(p => {
+      if (!grouped[p.date] || p.onePM > grouped[p.date]) {
+        grouped[p.date] = p.onePM;
+      }
+    });
+
+    setOnePMData(Object.entries(grouped).map(([date, onePM]) => ({ date, onePM })));
+  };
+
+  const fetchCalorieData = async (userId: string, p: Period) => {
+    const startDate = getStartDate(p);
+    const { data, error } = await supabase
+      .from('nutrition_log')
+      .select('log_date, calories')
+      .eq('user_id', userId)
+      .gte('log_date', startDate)
+      .order('log_date', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      setCalorieData([]);
+      return;
+    }
+
+    // Sum calories per day
+    const daily: Record<string, number> = {};
+    data.forEach(d => {
+      daily[d.log_date] = (daily[d.log_date] || 0) + d.calories;
+    });
+
+    setCalorieData(Object.entries(daily).map(([date, calories]) => ({ date, calories })));
+  };
+
+  const fetchSleepData = async (userId: string, p: Period) => {
+    const startDate = getStartDate(p);
+    const { data, error } = await supabase
+      .from('sleep_logs')
+      .select('log_date, hours')
+      .eq('user_id', userId)
+      .gte('log_date', startDate)
+      .order('log_date', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      setSleepData([]);
+      return;
+    }
+
+    setSleepData(data.map(d => ({ date: d.log_date, hours: d.hours })));
+  };
+
+  const fetchMetrics = async (userId: string, p: Period) => {
+    const startDate = getStartDate(p);
+    
+    // Total workouts
+    const { count: workoutCount } = await supabase
+      .from('workout_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('log_date', startDate);
+
+    // Total volume (weight × sets × reps)
+    const { data: volumeData } = await supabase
+      .from('workout_logs')
+      .select('weight, sets, reps')
+      .eq('user_id', userId)
+      .gte('log_date', startDate);
+
+    const totalVolume = volumeData?.reduce((sum, d) => sum + (d.weight * d.sets * d.reps), 0) || 0;
+
+    // Avg calories
+    const { data: calorieData } = await supabase
+      .from('nutrition_log')
+      .select('calories')
+      .eq('user_id', userId)
+      .gte('log_date', startDate);
+
+    const avgCalories = calorieData && calorieData.length > 0
+      ? Math.round(calorieData.reduce((sum, d) => sum + d.calories, 0) / calorieData.length)
+      : 0;
+
+    // Avg sleep
+    const { data: sleepData } = await supabase
+      .from('sleep_logs')
+      .select('hours')
+      .eq('user_id', userId)
+      .gte('log_date', startDate);
+
+    const avgSleep = sleepData && sleepData.length > 0
+      ? parseFloat((sleepData.reduce((sum, d) => sum + d.hours, 0) / sleepData.length).toFixed(1))
+      : 0;
+
+    setMetrics({
+      totalWorkouts: workoutCount || 0,
+      totalVolume: Math.round(totalVolume),
+      avgCalories,
+      avgSleep,
+    });
+  };
+
+  const getStartDate = (p: Period): string => {
+    const now = new Date();
+    if (p === 'week') {
+      now.setDate(now.getDate() - 7);
+    } else if (p === 'month') {
+      now.setMonth(now.getMonth() - 1);
+    } else if (p === 'year') {
+      now.setFullYear(now.getFullYear() - 1);
+    }
+    return now.toISOString().split('T')[0];
+  };
+
+  const formatDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    if (period === 'week') {
+      return date.toLocaleDateString('ru-RU', { weekday: 'short' });
+    } else if (period === 'month') {
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    } else {
+      return date.toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 space-y-4">
+        <div className="h-8 bg-bg-tertiary rounded animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 bg-bg-tertiary rounded-2xl animate-pulse" />
+          ))}
+        </div>
+        <div className="h-64 bg-bg-tertiary rounded-2xl animate-pulse" />
+        <div className="h-64 bg-bg-tertiary rounded-2xl animate-pulse" />
+        <div className="h-64 bg-bg-tertiary rounded-2xl animate-pulse" />
+        <div className="h-64 bg-bg-tertiary rounded-2xl animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center min-h-[400px]">
+        <AlertCircle size={48} className="text-accent-blue mb-4" />
+        <p className="text-text-secondary">{error}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 max-w-3xl mx-auto animate-fade-in">
+    <div className="p-4 max-w-5xl mx-auto animate-fade-in">
+      {/* Header with period selector */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-text flex items-center gap-2">
-          <Award className="text-accent-gold" size={28} />
+          <TrendingUp className="text-accent-blue" size={28} />
           Прогресс
         </h1>
+        <div className="flex gap-2 bg-bg-secondary p-1 rounded-xl">
+          {(['week', 'month', 'year'] as Period[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                period === p
+                  ? 'bg-accent-blue text-white shadow-lg'
+                  : 'text-text-secondary hover:text-text'
+              }`}
+            >
+              {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex gap-2 mb-6 bg-bg-secondary p-1 rounded-xl">
-        <button
-          onClick={() => setActiveTab('levels')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'levels'
-              ? 'bg-accent-blue text-white shadow-lg'
-              : 'text-text-secondary hover:text-text'
-          }`}
-        >
-          Уровни
-        </button>
-        <button
-          onClick={() => setActiveTab('achievements')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'achievements'
-              ? 'bg-accent-gold text-white shadow-lg'
-              : 'text-text-secondary hover:text-text'
-          }`}
-        >
-          Достижения
-        </button>
+      {/* Key metrics cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          icon={<Activity size={20} className="text-accent-blue" />}
+          label="Всего тренировок"
+          value={metrics.totalWorkouts.toString()}
+        />
+        <MetricCard
+          icon={<Dumbbell size={20} className="text-accent-green" />}
+          label="Общий объём (кг)"
+          value={metrics.totalVolume.toLocaleString()}
+        />
+        <MetricCard
+          icon={<Flame size={20} className="text-accent-orange" />}
+          label="Средняя калорийность"
+          value={`${metrics.avgCalories} ккал`}
+        />
+        <MetricCard
+          icon={<Moon size={20} className="text-accent-purple" />}
+          label="Средний сон"
+          value={`${metrics.avgSleep} ч`}
+        />
       </div>
 
-      {activeTab === 'levels' && (
-        <div className="space-y-6">
-          <div className="card-modern bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-text-secondary text-xs uppercase tracking-wide">Текущее звание</p>
-                <h2 className="text-2xl font-bold text-text">{levelInfo?.title}</h2>
-                <p className="text-accent-blue font-semibold">Уровень {levelInfo?.level}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-accent-blue">{levelInfo?.level}</p>
-                <p className="text-xs text-text-secondary">из 50</p>
-              </div>
-            </div>
+      {/* Chart 1: Body weight */}
+      <div className="card-modern mb-6">
+        <h3 className="text-lg font-semibold text-text mb-4">Изменение веса за выбранный период</h3>
+        {weightData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={weightData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" domain={['auto', 'auto']} />
+              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }} />
+              <Legend />
+              <Line type="monotone" dataKey="weight" stroke="#3B82F6" strokeWidth={2} name="Вес (кг)" />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChartMessage />
+        )}
+      </div>
 
-            <div className="mb-3">
-              <div className="flex justify-between text-xs text-text-secondary mb-1">
-                <span>XP: {userXP}</span>
-                <span>{progressToNext}% до следующего</span>
-              </div>
-              <div className="w-full bg-bg-tertiary rounded-full h-3 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-accent-blue to-accent-purple h-full rounded-full transition-all duration-500"
-                  style={{ width: `${progressToNext}%` }}
-                />
-              </div>
-              <p className="text-xs text-text-secondary mt-2">
-                Следующий уровень: {nextLevelXP === Infinity ? 'Максимум' : `${nextLevelXP} XP`}
-              </p>
-            </div>
-
-            <div className="mt-4 p-3 bg-bg-tertiary/50 rounded-lg">
-              <p className="text-sm text-text">{levelInfo?.description}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="card-modern">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap size={18} className="text-accent-gold" />
-                <span className="text-text-secondary text-sm">Серия</span>
-              </div>
-              <p className="text-2xl font-bold text-text">{longPathStore.streak} дней</p>
-            </div>
-            <div className="card-modern">
-              <div className="flex items-center gap-2 mb-2">
-                <Target size={18} className="text-accent-green" />
-                <span className="text-text-secondary text-sm">Тренировок</span>
-              </div>
-              <p className="text-2xl font-bold text-text">{workoutCountFromXP(userXP)}+</p>
-            </div>
-          </div>
-
-          <div className="card-modern">
-            <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-              <TrendingUp size={20} className="text-accent-blue" />
-              Путь к мастерству
-            </h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {LEVELS.map((lvl) => {
-                const isCompleted = (levelInfo?.level || 0) > lvl.level;
-                const isCurrent = (levelInfo?.level || 0) === lvl.level;
-                
-                return (
-                  <div
-                    key={lvl.level}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                      isCurrent
-                        ? 'bg-accent-blue/10 border-accent-blue/40'
-                        : isCompleted
-                        ? 'bg-accent-green/5 border-accent-green/20'
-                        : 'bg-bg-tertiary/30 border-border'
-                    }`}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                        isCurrent
-                          ? 'bg-accent-blue text-white'
-                          : isCompleted
-                          ? 'bg-accent-green text-white'
-                          : 'bg-bg-tertiary text-text-secondary'
-                      }`}
-                    >
-                      {isCompleted ? '✓' : lvl.level}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-semibold text-sm ${isCurrent ? 'text-accent-blue' : 'text-text'}`}>
-                        {lvl.title}
-                      </p>
-                      <p className="text-xs text-text-secondary">{lvl.description}</p>
-                    </div>
-                    {isCurrent && <ChevronRight size={18} className="text-accent-blue" />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'achievements' && (
-        <div className="space-y-6">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {[
-              { id: 'all', label: 'Все' },
-              { id: 'unlocked', label: 'Полученные' },
-              { id: 'in_progress', label: 'В процессе' },
-              { id: 'locked', label: 'Заблокированные' },
-            ].map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setAchievementFilter(filter.id as AchievementFilter)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                  achievementFilter === filter.id
-                    ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/40'
-                    : 'bg-bg-secondary text-text-secondary border border-border hover:border-text-tertiary'
-                }`}
-              >
-                {filter.label}
-              </button>
+      {/* Chart 2: 1PM progress */}
+      <div className="card-modern mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-text">Прогресс 1ПМ (кг)</h3>
+          <select
+            value={selectedExercise}
+            onChange={(e) => setSelectedExercise(e.target.value)}
+            className="bg-bg-tertiary text-text px-3 py-2 rounded-lg text-sm border border-border focus:outline-none focus:border-accent-blue"
+          >
+            {EXERCISES.map(ex => (
+              <option key={ex} value={ex}>{ex}</option>
             ))}
-          </div>
-
-          <div className="card-modern bg-gradient-to-r from-accent-gold/5 to-transparent border-accent-gold/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-text-secondary text-sm">Получено достижений</p>
-                <p className="text-2xl font-bold text-accent-gold">
-                  {achievements.filter(a => a.unlocked).length} / {achievements.length}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-accent-gold">
-                  {Math.round((achievements.filter(a => a.unlocked).length / achievements.length) * 100)}%
-                </p>
-                <p className="text-xs text-text-secondary">прогресс</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredAchievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`card-modern p-4 flex items-start gap-4 transition-all ${
-                  achievement.unlocked
-                    ? 'border-accent-gold/30 hover:border-accent-gold/50'
-                    : 'opacity-60'
-                }`}
-              >
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
-                    achievement.unlocked
-                      ? 'bg-accent-gold/15'
-                      : 'bg-bg-tertiary grayscale'
-                  }`}
-                >
-                  {achievement.unlocked ? achievement.icon : <Lock size={24} className="text-text-tertiary" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-text text-sm truncate">{achievement.title}</h4>
-                  <p className="text-xs text-text-secondary mt-1 line-clamp-2">
-                    {achievement.description}
-                  </p>
-                  {achievement.unlocked && (
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-accent-gold/20 text-accent-gold">
-                      Получено
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredAchievements.length === 0 && (
-            <div className="text-center py-12">
-              <Lock size={48} className="mx-auto text-text-tertiary mb-3" />
-              <p className="text-text-secondary">Нет достижений в этой категории</p>
-            </div>
-          )}
+          </select>
         </div>
-      )}
+        {onePMData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={onePMData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" domain={['auto', 'auto']} />
+              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }} />
+              <Legend />
+              <Line type="monotone" dataKey="onePM" stroke="#10B981" strokeWidth={2} name="1ПМ (кг)" />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChartMessage />
+        )}
+      </div>
+
+      {/* Chart 3: Calories */}
+      <div className="card-modern mb-6">
+        <h3 className="text-lg font-semibold text-text mb-4">Калорийность за день</h3>
+        {calorieData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={calorieData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }} />
+              <Legend />
+              <Bar dataKey="calories" fill="#F97316" name="Калории (ккал)" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChartMessage />
+        )}
+      </div>
+
+      {/* Chart 4: Sleep */}
+      <div className="card-modern mb-6">
+        <h3 className="text-lg font-semibold text-text mb-4">Продолжительность сна (часы)</h3>
+        {sleepData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={sleepData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" domain={[0, 12]} />
+              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }} />
+              <Legend />
+              <Bar dataKey="hours" fill="#A855F7" name="Сон (часы)" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChartMessage />
+        )}
+      </div>
+
+      {/* AI Insight block */}
+      <div className="card-modern bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
+        <h3 className="text-lg font-semibold text-text mb-2">Ваш прогресс за период</h3>
+        <p className="text-text">{aiInsight}</p>
+      </div>
     </div>
   );
 }
 
-function workoutCountFromXP(xp: number): number {
-  return Math.floor(xp / 10);
+function MetricCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="card-modern bg-bg-card p-4 rounded-2xl shadow-lg">
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <span className="text-text-secondary text-xs">{label}</span>
+      </div>
+      <p className="text-2xl font-bold text-text">{value}</p>
+    </div>
+  );
+}
+
+function EmptyChartMessage() {
+  return (
+    <div className="h-[280px] flex items-center justify-center text-text-secondary">
+      <p>Нет данных для отображения</p>
+    </div>
+  );
 }
