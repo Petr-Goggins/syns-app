@@ -7,34 +7,22 @@
 @layer base {
   /* ── Базовые переменные (будут переопределяться) ──── */
   :root {
-    --bg: #0D1117;
-    --bg-secondary: #161B22;
-    --bg-tertiary: #21262D;
-    --card: #161B22;
-    --card-hover: #1C2128;
-    --border: #30363D;
-    --border-subtle: #21262D;
+    --bg: #0D0D1A;
+    --bg-secondary: #1A1A2E;
+    --bg-tertiary: #252542;
+    --card: #1A1A2E;
+    --card-hover: #23233A;
+    --border: #3A3A5C;
+    --border-subtle: #2A2A4A;
     --text: #E6EDF3;
-    --text-secondary: #8B949E;
-    --text-tertiary: #6E7681;
-    --accent-blue: #1E2A4A;
+    --text-secondary: #9CA3AF;
+    --text-tertiary: #6B7280;
+    --accent-blue: #4F46E5;
     --accent-green: #3FB950;
     --accent-gold: #D29922;
     --accent-orange: #F0883E;
     --accent-red: #F85149;
-    --accent-purple: #BB86FC;
-    
-    /* Единые размеры и отступы */
-    --font-base: 16px;
-    --font-sm: 14px;
-    --font-lg: 18px;
-    --font-xl: 22px;
-    --card-radius: 16px;
-    --btn-radius: 12px;
-    --shadow-light: 0 4px 12px rgba(0,0,0,0.1);
-    --shadow-light-hover: 0 8px 24px rgba(0,0,0,0.15);
-    --shadow-dark: 0 4px 12px rgba(0,0,0,0.3);
-    --shadow-dark-hover: 0 8px 24px rgba(0,0,0,0.4);
+    --accent-purple: #2A3B6B;
   }
 
   /* ── Тема: тёмно-синяя (по умолчанию) ────────────── */
@@ -49,7 +37,7 @@
     --text: #E6EDF3;
     --text-secondary: #9CA3AF;
     --text-tertiary: #6B7280;
-    --accent-blue: #1E2A4A;
+    --accent-blue: #4F46E5;
     --accent-green: #3FB950;
     --accent-gold: #D29922;
     --accent-orange: #F0883E;
@@ -89,7 +77,7 @@
     --text: #D4D4D4;
     --text-secondary: #A0A0A0;
     --text-tertiary: #777777;
-    --accent-blue: #1E2A4A;
+    --accent-blue: #4F46E5;
     --accent-green: #3FB950;
     --accent-gold: #D29922;
     --accent-orange: #F0883E;
