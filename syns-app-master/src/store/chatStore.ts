@@ -139,8 +139,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { data: savedUser, error: insertErr } = await supabase
       .from('chat_messages')
       .insert({ user_id: userId, role: 'user', content })
-      .select()
-      .single();
+      .select();
     if (insertErr) {
       set({ loading: false, error: insertErr.message });
       return;
@@ -151,8 +150,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
 
     // Simulate AI response (MVP stub — would call VITE_API_URL in production)
-    const context = buildContext(profile);
-    console.log('[Chat] Sending to API. Context:', context);
 
     // Check for plan adjustment commands
     const lower = content.toLowerCase();
@@ -173,8 +170,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { data: savedAi, error: aiErr } = await supabase
       .from('chat_messages')
       .insert({ user_id: userId, role: 'assistant', content: reply })
-      .select()
-      .single();
+      .select();
     if (aiErr) {
       set({ loading: false, error: aiErr.message });
       return;

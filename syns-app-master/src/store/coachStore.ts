@@ -53,8 +53,7 @@ export const useCoachStore = create<CoachState>((set, get) => ({
         .from('user_coach_data')
         .update({ ...data, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
-        .select()
-        .single();
+        .select();
       if (error) {
         set({ saving: false, error: error.message });
         return false;
@@ -65,8 +64,7 @@ export const useCoachStore = create<CoachState>((set, get) => ({
       const { data: created, error } = await supabase
         .from('user_coach_data')
         .insert({ user_id: userId, ...data })
-        .select()
-        .single();
+        .select();
       if (error) {
         set({ saving: false, error: error.message });
         return false;
@@ -84,8 +82,7 @@ export const useCoachStore = create<CoachState>((set, get) => ({
         .from('user_goals')
         .update({ ...data, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
-        .select()
-        .single();
+        .select();
       if (error) {
         set({ saving: false, error: error.message });
         return false;
@@ -96,8 +93,7 @@ export const useCoachStore = create<CoachState>((set, get) => ({
       const { data: created, error } = await supabase
         .from('user_goals')
         .insert({ user_id: userId, status: 'active', ...data })
-        .select()
-        .single();
+        .select();
       if (error) {
         set({ saving: false, error: error.message });
         return false;
