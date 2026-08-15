@@ -85,13 +85,13 @@ export const useWorkoutLogStore = create<WorkoutLogState>((set, get) => ({
     const { data, error } = await supabase
       .from('workout_logs')
       .insert({ user_id: userId, ...entryData })
-      .select()
-      .single();
+      .select();
     if (error) {
       set({ saving: false, error: error.message });
       return false;
     }
-    set({ logs: [...get().logs, data as WorkoutLog], saving: false });
+    const newLog = (data as WorkoutLog[])[0];
+    set({ logs: [...get().logs, newLog], saving: false });
 
     // Award XP: +50 per workout session (first log of the day)
     const statsStore = useStatsStore.getState();

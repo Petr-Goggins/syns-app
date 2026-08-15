@@ -457,66 +457,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       </div>
 
-      {/* КАРТОЧКА СЕРИИ */}
-      <div className="card-modern mb-6">
-        <p className="text-sm text-text-secondary mb-1">Серия тренировок</p>
-        <p className="text-xl font-bold text-text">{longPathStore.streak} дней</p>
-      </div>
-
-      {/* Блок выбора глобальной цели */}
-      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
-        {!longPathStore.userGoals || longPathStore.userGoals.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-4">
-            <Target size={40} className="text-accent-blue mb-3" />
-            <p className="text-text font-semibold text-lg mb-2">Выбери свою цель</p>
-            <p className="text-text-secondary text-sm mb-4">Определи направление движения к лучшей версии себя</p>
-            <button 
-              onClick={() => navigate('/coach')}
-              className="btn-primary px-6 py-2.5 rounded-xl flex items-center gap-2"
-            >
-              Начать путь <ChevronRight size={18} />
-            </button>
-          </div>
-        ) : (
-          <div className="py-2">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="text-text-secondary text-xs uppercase tracking-wide">Глобальная цель</p>
-                <h3 className="text-xl font-bold text-text flex items-center gap-2">
-                  <Award size={20} className="text-accent-gold" />
-                  {longPathStore.userGoals[0]?.goal_type === 'strength' ? 'Сила' : 
-                   longPathStore.userGoals[0]?.goal_type === 'cardio' ? 'Выносливость' : 
-                   longPathStore.userGoals[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Масса'}
-                </h3>
-              </div>
-              <button 
-                onClick={() => navigate('/coach')}
-                className="text-accent-blue text-sm hover:underline flex items-center gap-1"
-              >
-                Изменить <ChevronRight size={14} />
-              </button>
-            </div>
-            <div className="flex items-center gap-4 mb-2">
-              <div className="flex-1">
-                <div className="flex justify-between text-xs text-text-secondary mb-1">
-                  <span>Уровень {longPathStore.currentLevelIndex + 1}</span>
-                  <span>{Math.round(longPathStore.progressToNextLevel)}%</span>
-                </div>
-                <div className="w-full bg-bg-tertiary rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-accent-blue to-accent-purple h-2 rounded-full transition-all duration-500" 
-                    style={{ width: `${longPathStore.progressToNextLevel}%` }} 
-                  />
-                </div>
-              </div>
-            </div>
-            <p className="text-text-secondary text-xs">
-              До следующей ступени: {longPathStore.goalLevels[longPathStore.currentLevelIndex + 1]?.targetValue || 'Финиш'} {longPathStore.userGoals[0]?.goal_unit}
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* Рекомендация по биоритмам */}
       {cycleRecommendation && (
         <div className="card-modern mb-6 bg-gradient-to-r from-accent-purple/5 to-transparent border-accent-purple/20">
@@ -553,13 +493,13 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       </div>
 
-      {/* КАРТОЧКА СЕРИИ */}
+      {/* КАРТОЧКА СЕРИИ - ОДИН БЛОК ВНИЗУ */}
       <div className="card-modern mb-6">
         <p className="text-sm text-text-secondary mb-1">Серия тренировок</p>
         <p className="text-xl font-bold text-text">{longPathStore.streak} дней</p>
       </div>
 
-      {/* Блок выбора глобальной цели */}
+      {/* Блок выбора глобальной цели - ОДИН БЛОК ПОД ПРИВЕТСТВИЕМ */}
       <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
         {!longPathStore.userGoals || longPathStore.userGoals.length === 0 ? (
           <div className="flex flex-col items-center text-center py-4">

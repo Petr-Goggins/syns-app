@@ -52,10 +52,9 @@ export const useWaterStore = create<WaterState>((set, get) => ({
     const { data, error } = await supabase
       .from('water_logs')
       .insert({ user_id: userId, amount })
-      .select()
-      .single();
+      .select();
     if (error) return;
-    const newLog = data as WaterLog;
+    const newLog = (data as WaterLog[])[0];
     set({
       logs: [newLog, ...get().logs],
       todayAmount: get().todayAmount + amount,
