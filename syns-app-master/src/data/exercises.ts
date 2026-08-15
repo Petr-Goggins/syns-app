@@ -256,3 +256,47 @@ export const categories = [
 ] as const;
 
 export type CategoryId = typeof categories[number]['id'];
+
+/**
+ * Поиск упражнения по ID
+ */
+export function getExerciseById(id: string): Exercise | undefined {
+  return exercises.find(e => e.id === id);
+}
+
+/**
+ * Поиск упражнения по названию (для сопоставления с программой тренировок)
+ * Нормализует название: приводит к нижнему регистру, заменяет пробелы на дефисы
+ */
+export function getExerciseByName(name: string): Exercise | undefined {
+  const normalizedName = name.toLowerCase().replace(/\s+/g, '-').replace(/[(),]/g, '');
+  
+  // Прямое совпадение по ID
+  const byId = exercises.find(e => e.id === normalizedName);
+  if (byId) return byId;
+  
+  // Совпадение по названию (частичное)
+  const byName = exercises.find(e => {
+    const exerciseNameNormalized = e.name.toLowerCase().replace(/\s+/g, '-');
+    return exerciseNameNormalized === normalizedName || 
+           exerciseNameNormalized.includes(normalizedName) ||
+           normalizedName.includes(exerciseNameNormalized);
+  });
+  
+  return byName;
+}
+
+/**
+ * Извлечь название упражнения из строки формата "Приседания со штангой 4×8"
+ * Возвращает нормализованное название для поиска
+ */
+export function extractExerciseName(exerciseString: string): string {
+  // Удаляем подходы и повторения (4×8, 3х10, 4-5 и т.д.)
+  let cleaned = exerciseString.replace(/\s*\d+[×x]\d+\s*/g, '');
+  // Удаляем время (30 мин, 45с и т.д.)
+  cleaned = cleaned.replace(/\s*\d+\s*(мин|сек|с)\s*/g, '');
+  // Удаляем эмодзи
+  cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+  // Trim и lowercase
+  return cleaned.trim().toLowerCase().replace(/\s+/g, '-');
+}

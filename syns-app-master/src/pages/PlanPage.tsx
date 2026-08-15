@@ -5,8 +5,8 @@ import { useProfileStore } from '@/store/profileStore';
 import { useCoachStore } from '@/store/coachStore';
 import { Calendar, Dumbbell, Sparkles, CheckCircle, Loader2, ArrowRight, Clock, Target, Zap, Info, AlertTriangle, StretchHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Link } from 'react-router-dom';
-import { getExerciseById } from '@/data/exercises';
+import { Link, useNavigate } from 'react-router-dom';
+import { getExerciseByName, extractExerciseName } from '@/data/exercises';
 
 export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -15,6 +15,22 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const navigate = useNavigate();
+
+  const handleOpenTechnique = (exerciseName: string) => {
+    // Извлекаем чистое название упражнения из строки формата "Приседания со штангой 4×8"
+    const extractedName = extractExerciseName(exerciseName);
+    const exercise = getExerciseByName(extractedName);
+    
+    if (exercise) {
+      // Переходим на страницу техники с ID упражнения
+      navigate(`/technique/${exercise.id}`);
+    } else {
+      // Если упражнение не найдено, переходим на общую страницу техники
+      navigate('/technique');
+      toast.error('Техника для этого упражнения пока недоступна');
+    }
+  };
 
   // Загружаем профиль и анкету при монтировании
   useEffect(() => {
@@ -228,13 +244,13 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
                                 {ex}
                               </span>
                               {!isWarmup && !isCooldown && (
-                                <Link
-                                  to="/technique"
-                                  className="ml-auto text-accent-blue/50 hover:text-accent-blue transition-colors"
-                                  title="Посмотреть технику"
+                                <button
+                                  onClick={() => handleOpenTechnique(ex)}
+                                  className="ml-auto text-accent-blue/50 hover:text-accent-blue transition-colors flex items-center justify-center p-1 rounded-full hover:bg-accent-blue/10"
+                                  title="Смотреть технику выполнения"
                                 >
                                   <Info size={14} />
-                                </Link>
+                                </button>
                               )}
                             </li>
                           );
