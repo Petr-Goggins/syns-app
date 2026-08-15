@@ -92,8 +92,7 @@ function AppRoutes() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="technique" element={<ExerciseTechniquePage />} />
-        <Route path="technique/:categoryId" element={<ExerciseTechniquePage />} />
-        <Route path="technique/:categoryId/:exerciseId" element={<ExerciseTechniquePage />} />
+        <Route path="technique/:exerciseId?" element={<ExerciseTechniquePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
