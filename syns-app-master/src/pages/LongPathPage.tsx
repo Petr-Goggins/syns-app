@@ -35,16 +35,16 @@ const LongPathPage: React.FC = () => {
             <button
               key={goal.id}
               onClick={() => createUserGoal(goal.type, goal.title)}
-              className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all flex items-center justify-between group"
+              className="p-6 rounded-2xl border border-border bg-bg-secondary hover:shadow-lg transition-all flex items-center justify-between group"
             >
               <div className="flex items-center gap-4">
                 <span className="text-4xl">{goal.icon}</span>
                 <div className="text-left">
-                  <h3 className="font-bold text-lg group-hover:text-blue-600 transition-colors">{goal.title}</h3>
-                  <p className="text-sm text-gray-500">Нажмите для старта</p>
+                  <h3 className="font-bold text-lg group-hover:text-accent-blue transition-colors">{goal.title}</h3>
+                  <p className="text-sm text-text-secondary">Нажмите для старта</p>
                 </div>
               </div>
-              <ArrowRight className="w-6 h-6 text-gray-400 group-hover:text-blue-600" />
+              <ArrowRight className="w-6 h-6 text-text-secondary group-hover:text-accent-blue" />
             </button>
           ))}
         </div>
@@ -80,26 +80,26 @@ const LongPathPage: React.FC = () => {
       </div>
 
       {/* Прогресс уровня */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-bg-secondary p-6 rounded-2xl shadow-sm border border-border">
         <div className="flex justify-between items-end mb-4">
           <div>
-            <span className="text-sm text-gray-500 uppercase tracking-wide">Текущий уровень</span>
+            <span className="text-sm text-text-secondary uppercase tracking-wide">Текущий уровень</span>
             <h3 className="text-2xl font-bold">{currentLevel.name}</h3>
           </div>
           <div className="text-right">
-            <span className="text-sm text-gray-500">До следующего: {nextLevel ? nextLevel.name : 'Финиш!'}</span>
-            <div className="text-xl font-bold text-blue-600">{Math.round(progressToNextLevel)}%</div>
+            <span className="text-sm text-text-secondary">До следующего: {nextLevel ? nextLevel.name : 'Финиш!'}</span>
+            <div className="text-xl font-bold text-accent-blue">{Math.round(progressToNextLevel)}%</div>
           </div>
         </div>
         
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+        <div className="w-full bg-bg-tertiary rounded-full h-4 overflow-hidden">
           <div 
-            className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full transition-all duration-1000 ease-out"
+            className="bg-gradient-to-r from-accent-blue to-accent-purple h-4 rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progressToNextLevel}%` }}
           />
         </div>
         
-        <div className="mt-4 flex justify-between text-xs text-gray-400">
+        <div className="mt-4 flex justify-between text-xs text-text-secondary">
           <span>Начало уровня</span>
           <span>Цель: {currentLevel.targetValue} {userGoal.unit}</span>
         </div>
@@ -120,18 +120,18 @@ const LongPathPage: React.FC = () => {
                 key={level.id}
                 className={`relative p-4 rounded-xl border flex flex-col items-center justify-center text-center transition-all
                   ${isCompleted 
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                    ? 'bg-accent-green/10 border-accent-green/30' 
                     : isCurrent 
-                      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 ring-2 ring-blue-500/20' 
-                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60'
+                      ? 'bg-accent-blue/10 border-accent-blue ring-2 ring-accent-blue/20' 
+                      : 'bg-bg-secondary border-border opacity-60'
                   }`}
               >
-                {isCompleted && <Award className="w-6 h-6 text-green-600 mb-2" />}
-                {isCurrent && <Target className="w-6 h-6 text-blue-600 mb-2 animate-pulse" />}
-                {!isCompleted && !isCurrent && <div className="w-6 h-6 mb-2 rounded-full border-2 border-gray-300" />}
+                {isCompleted && <Award className="w-6 h-6 text-accent-green mb-2" />}
+                {isCurrent && <Target className="w-6 h-6 text-accent-blue mb-2 animate-pulse" />}
+                {!isCompleted && !isCurrent && <div className="w-6 h-6 mb-2 rounded-full border-2 border-border" />}
                 
                 <span className="font-bold text-sm">{level.name}</span>
-                <span className="text-xs text-gray-500 mt-1">{level.targetValue} {userGoal.unit}</span>
+                <span className="text-xs text-text-secondary mt-1">{level.targetValue} {userGoal.unit}</span>
               </div>
             );
           })}
@@ -139,20 +139,20 @@ const LongPathPage: React.FC = () => {
       </div>
 
       {/* График прогноза */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-bg-secondary p-6 rounded-2xl shadow-sm border border-border">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-purple-500" /> Прогноз прогресса
+            <TrendingUp className="w-5 h-5 text-accent-purple" /> Прогноз прогресса
           </h3>
-          <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+          <div className="flex gap-2 bg-bg-tertiary p-1 rounded-lg">
             {(['week', 'month', '3months'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setSelectedPeriod(p)}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                   selectedPeriod === p 
-                    ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-white' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-bg-secondary shadow text-accent-blue' 
+                    : 'text-text-secondary hover:text-text'
                 }`}
               >
                 {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : '3 мес'}
@@ -164,25 +164,27 @@ const LongPathPage: React.FC = () => {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis 
                 dataKey="name" 
                 tick={{ fontSize: 10 }} 
                 tickFormatter={(val) => val.split('.').slice(0,2).join('.')}
                 axisLine={false}
                 tickLine={false}
+                stroke="var(--text-secondary)"
               />
               <YAxis 
                 tick={{ fontSize: 10 }} 
                 axisLine={false}
                 tickLine={false}
                 domain={['dataMin - 5', 'dataMax + 5']}
+                stroke="var(--text-secondary)"
               />
               <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text)' }}
                 formatter={(value: number) => [`${value} ${userGoal.unit}`, 'Прогноз']}
               />
-              <ReferenceDot x={chartData.find(d => !d.isPrediction)?.name} y={chartData.find(d => !d.isPrediction)?.value} r={4} fill="#3b82f6" stroke="#fff" strokeWidth={2} />
+              <ReferenceDot x={chartData.find(d => !d.isPrediction)?.name} y={chartData.find(d => !d.isPrediction)?.value} r={4} fill="#4F46E5" stroke="var(--bg)" strokeWidth={2} />
               <Line 
                 type="monotone" 
                 dataKey="value" 
@@ -194,22 +196,22 @@ const LongPathPage: React.FC = () => {
               <Line 
                 type="monotone" 
                 dataKey="currentValue" 
-                stroke="#3b82f6" 
+                stroke="#4F46E5" 
                 strokeWidth={3} 
-                dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                dot={{ r: 4, fill: '#4F46E5', strokeWidth: 2, stroke: 'var(--bg)' }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-text-secondary mt-4">
           * Прогноз основан на вашей текущей частоте тренировок и прогрессе
         </p>
       </div>
 
       {/* Календарь активности (мини) */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-bg-secondary p-6 rounded-2xl shadow-sm border border-border">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-green-500" /> Активность (последние 28 дней)
+          <Calendar className="w-5 h-5 text-accent-green" /> Активность (последние 28 дней)
         </h3>
         <div className="grid grid-cols-7 gap-2">
           {Array.from({ length: 28 }).map((_, i) => {
@@ -223,8 +225,8 @@ const LongPathPage: React.FC = () => {
                 key={i}
                 className={`aspect-square rounded-md flex items-center justify-center text-xs font-medium transition-all
                   ${hasWorkout 
-                    ? 'bg-green-500 text-white shadow-md scale-105' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                    ? 'bg-accent-green text-bg shadow-md scale-105' 
+                    : 'bg-bg-tertiary text-text-secondary'
                   }`}
                 title={dateStr}
               >
@@ -233,10 +235,10 @@ const LongPathPage: React.FC = () => {
             );
           })}
         </div>
-        <div className="flex justify-end items-center gap-2 mt-4 text-xs text-gray-500">
+        <div className="flex justify-end items-center gap-2 mt-4 text-xs text-text-secondary">
           <span>Меньше</span>
-          <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="w-3 h-3 bg-green-500 rounded"></div>
+          <div className="w-3 h-3 bg-bg-tertiary rounded"></div>
+          <div className="w-3 h-3 bg-accent-green rounded"></div>
           <span>Больше</span>
         </div>
       </div>

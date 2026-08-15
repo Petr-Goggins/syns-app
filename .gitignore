@@ -1,39 +1,36 @@
-```
+```gitignore
 # Dependencies
 node_modules/
 
-# Build artifacts
+# Build outputs
 dist/
 build/
-target/
+*.js
+*.css
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
-venv/
-.venv/
-.ENV
-.venv.bak/
-pip-log.txt
-pip-delete-this-directory.txt
 
-# Logs
-*.log
-
-# Environment variables
-.env
-.env.local
-.env.*
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Temporary files
+*.tmp
+*.temp
 
 # OS
 .DS_Store
@@ -44,7 +41,22 @@ coverage/
 htmlcov/
 .coverage
 
-# Compressed files
+# Package manager caches
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Compiled files
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.o
+*.obj
+*.out
+
+# Compression
 *.zip
 *.gz
 *.tar
@@ -63,4 +75,8 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
