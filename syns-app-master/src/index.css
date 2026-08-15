@@ -39,17 +39,17 @@
 
   /* ── Тема: тёмно-синяя (по умолчанию) ────────────── */
   [data-theme="dark-blue"], .dark, .dark-blue {
-    --bg: #0D1117;
-    --bg-secondary: #161B22;
-    --bg-tertiary: #21262D;
-    --card: #161B22;
-    --card-hover: #1C2128;
-    --border: #30363D;
-    --border-subtle: #21262D;
+    --bg: #0D0D1A;
+    --bg-secondary: #1A1A2E;
+    --bg-tertiary: #252542;
+    --card: #1A1A2E;
+    --card-hover: #23233A;
+    --border: #3A3A5C;
+    --border-subtle: #2A2A4A;
     --text: #E6EDF3;
-    --text-secondary: #8B949E;
-    --text-tertiary: #6E7681;
-    --accent-blue: #58A6FF;
+    --text-secondary: #9CA3AF;
+    --text-tertiary: #6B7280;
+    --accent-blue: #6C3CE1;
     --accent-green: #3FB950;
     --accent-gold: #D29922;
     --accent-orange: #F0883E;
@@ -69,7 +69,7 @@
     --text: #1F2937;
     --text-secondary: #656D76;
     --text-tertiary: #848D97;
-    --accent-blue: #2563EB;
+    --accent-blue: #5B2CBF;
     --accent-green: #1A7F37;
     --accent-gold: #9A6700;
     --accent-orange: #BC4C00;
@@ -225,6 +225,9 @@
   .animate-fade-in {
     animation: fade-in 0.3s ease forwards;
   }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s ease forwards;
+  }
   .animate-bounce-dot {
     animation: bounce-dot 0.8s ease-in-out infinite;
   }
@@ -237,6 +240,10 @@
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes bounce-dot {
   0%, 100% { transform: translateY(0); }

@@ -288,14 +288,14 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   return (
     <div className="p-4 max-w-4xl mx-auto animate-fade-in">
       {/* ШАПКА: Цитата дня, Приветствие, Цель */}
-      <div className="mb-6">
+      <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0s' }}>
         <p className="text-sm italic text-text-secondary mb-2">"{quote.text}"</p>
         <h1 className="text-2xl font-bold text-text mb-1">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</h1>
         <p className="text-sm text-text-secondary">Цель: {longPathStore.userGoals?.[0]?.goal_type === 'strength' ? 'Сила' : longPathStore.userGoals?.[0]?.goal_type === 'cardio' ? 'Выносливость' : longPathStore.userGoals?.[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Поддержание'}</p>
       </div>
 
       {/* ПЕРЕКЛЮЧАТЕЛЬ ДАТЫ */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
         <button
           onClick={() => setDateFilter('today')}
           className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
@@ -415,39 +415,45 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {/* Вода */}
         <div 
-          className="card-modern p-4 bg-bg-card rounded-2xl shadow cursor-pointer hover:border-accent-blue/50 transition-colors"
+          className="card-modern p-5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl shadow-lg cursor-pointer active:scale-[0.98] transition-transform duration-100"
           onClick={() => setShowWaterModal(true)}
+          style={{ animationDelay: '0.1s' }}
         >
-          <Droplet size={20} className="text-accent-blue mb-2" />
-          <p className="text-lg font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : '—'}</p>
-          <p className="text-xs text-text-secondary">литров</p>
+          <Droplet size={24} className="text-blue-500 mb-3" />
+          <p className="text-xs font-medium text-text-secondary mb-1">Вода</p>
+          <p className="text-2xl font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : <span className="text-sm">Выпей стакан воды</span>}</p>
         </div>
 
         {/* Сон */}
         <div 
-          className="card-modern p-4 bg-bg-card rounded-2xl shadow cursor-pointer hover:border-accent-purple/50 transition-colors"
+          className="card-modern p-5 bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 rounded-2xl shadow-lg cursor-pointer active:scale-[0.98] transition-transform duration-100"
           onClick={() => setShowSleepModal(true)}
+          style={{ animationDelay: '0.2s' }}
         >
-          <Moon size={20} className="text-indigo-500 mb-2" />
-          <p className="text-lg font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}` : '—'}</p>
-          <p className="text-xs text-text-secondary">часов</p>
+          <Moon size={24} className="text-indigo-500 mb-3" />
+          <p className="text-xs font-medium text-text-secondary mb-1">Сон</p>
+          <p className="text-2xl font-bold text-text">{stats.sleep > 0 ? `${stats.sleep}` : <span className="text-sm">Запиши сон</span>}</p>
         </div>
 
         {/* Тренировки */}
         <div 
-          className="card-modern p-4 bg-bg-card rounded-2xl shadow cursor-pointer hover:border-accent-green/50 transition-colors"
+          className="card-modern p-5 bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-2xl shadow-lg cursor-pointer active:scale-[0.98] transition-transform duration-100"
           onClick={() => navigate('/workouts')}
+          style={{ animationDelay: '0.3s' }}
         >
-          <Dumbbell size={20} className="text-accent-green mb-2" />
-          <p className="text-lg font-bold text-text">{stats.workouts > 0 ? stats.workouts : '—'}</p>
-          <p className="text-xs text-text-secondary">тренировки</p>
+          <Dumbbell size={24} className="text-green-500 mb-3" />
+          <p className="text-xs font-medium text-text-secondary mb-1">Тренировки</p>
+          <p className="text-2xl font-bold text-text">{stats.workouts > 0 ? stats.workouts : <span className="text-sm">Начни первую тренировку</span>}</p>
         </div>
 
         {/* Прогресс */}
-        <div className="card-modern p-4 bg-bg-card rounded-2xl shadow">
-          <Target size={20} className="text-purple-500 mb-2" />
-          <p className="text-lg font-bold text-text">{stats.progress}%</p>
-          <p className="text-xs text-text-secondary">прогресс</p>
+        <div 
+          className="card-modern p-5 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100"
+          style={{ animationDelay: '0.4s' }}
+        >
+          <Target size={24} className="text-purple-500 mb-3" />
+          <p className="text-xs font-medium text-text-secondary mb-1">Прогресс</p>
+          <p className="text-2xl font-bold text-text">{stats.progress}%</p>
         </div>
       </div>
 
