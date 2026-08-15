@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
-import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, Moon, Sun, LogOut, Palette, Zap } from 'lucide-react';
+import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, Moon, Sun, LogOut, Palette, Zap, Utensils } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loadNotificationSettings, saveNotificationSettings, requestNotificationPermission } from '@/lib/notifications';
 import MuscleHeatmap from '@/components/MuscleHeatmap';
@@ -284,49 +284,26 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
       )}
 
       {/* Тепловая карта мышц */}
-      <div className="card-modern mb-6">
+      <div className="card-modern mb-6 animate-fade-in-up">
         <h2 className="text-lg font-semibold text-text mb-4">Тепловая карта мышц</h2>
-        <MuscleHeatmap data={{ 
-          chest_upper: 70, 
-          chest_lower: 65,
-          biceps_left: 45, 
-          biceps_right: 48, 
-          triceps_left: 30, 
-          triceps_right: 32,
-          front_delts_left: 50,
-          front_delts_right: 52,
-          abs_upper: 20,
-          abs_lower: 15,
-          quads_left: 85,
-          quads_right: 82,
-          calves_left: 40,
-          calves_right: 42,
-          lats: 60,
-          traps_upper: 55,
-          traps_lower: 50,
-          rear_delts_left: 45,
-          rear_delts_right: 47,
-          hamstrings_left: 70,
-          hamstrings_right: 68,
-          glutes_left: 60,
-          glutes_right: 62,
-          lower_back: 35
-        }} />
+        <MuscleHeatmap userId={user!.id} />
       </div>
 
       {/* Календари питания и тренировок */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Календарь питания */}
-        <div className="card-modern">
-          <h3 className="text-sm font-semibold text-text-secondary mb-3">Питание</h3>
-          <div className="grid grid-cols-7 gap-1">
+        <div className="card-modern p-5 bg-gradient-to-br from-green-500/10 to-emerald-600/5 rounded-2xl shadow-lg">
+          <h3 className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+            <Utensils size={16} className="text-green-500" /> Питание (30 дней)
+          </h3>
+          <div className="grid grid-cols-7 gap-1.5">
             {nutritionCalendar.map((day, i) => {
               const color = day.status === 'good' ? '#22c55e' : day.status === 'bad' ? '#ef4444' : day.status === 'medium' ? '#eab308' : '#d1d5db';
               return (
                 <div
                   key={`nutrition-${i}`}
-                  className="rounded-sm"
-                  style={{ width: '12px', height: '12px', backgroundColor: color }}
+                  className="rounded-[4px] hover:scale-110 transition-transform cursor-pointer"
+                  style={{ width: '16px', height: '16px', backgroundColor: color }}
                   title={`${day.date}: ${day.status === 'good' ? 'Идеально' : day.status === 'bad' ? 'Плохо' : day.status === 'medium' ? 'Средне' : 'Нет данных'}`}
                 />
               );
@@ -335,14 +312,16 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         </div>
 
         {/* Календарь тренировок */}
-        <div className="card-modern">
-          <h3 className="text-sm font-semibold text-text-secondary mb-3">Тренировки</h3>
-          <div className="grid grid-cols-7 gap-1">
+        <div className="card-modern p-5 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 rounded-2xl shadow-lg">
+          <h3 className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+            <Dumbbell size={16} className="text-blue-500" /> Тренировки (30 дней)
+          </h3>
+          <div className="grid grid-cols-7 gap-1.5">
             {workoutCalendar.map((day, i) => (
               <div
                 key={`workout-${i}`}
-                className="rounded-sm"
-                style={{ width: '12px', height: '12px', backgroundColor: day.hasWorkout ? '#22c55e' : '#d1d5db' }}
+                className="rounded-[4px] hover:scale-110 transition-transform cursor-pointer"
+                style={{ width: '16px', height: '16px', backgroundColor: day.hasWorkout ? '#22c55e' : '#d1d5db' }}
                 title={`${day.date}: ${day.hasWorkout ? 'Тренировка' : 'Отдых'}`}
               />
             ))}
@@ -352,18 +331,18 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
 
       {/* Статистика профиля */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="card-modern p-4 text-center">
-          <Dumbbell size={24} className="text-accent-blue mx-auto mb-2" />
+        <div className="card-modern p-5 text-center bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
+          <Dumbbell size={24} className="text-blue-500 mx-auto mb-2" />
           <p className="text-2xl font-bold text-text">{stats.totalWorkouts}</p>
           <p className="text-xs text-text-secondary">тренировок</p>
         </div>
-        <div className="card-modern p-4 text-center">
-          <Target size={24} className="text-accent-green mx-auto mb-2" />
+        <div className="card-modern p-5 text-center bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
+          <Target size={24} className="text-green-500 mx-auto mb-2" />
           <p className="text-2xl font-bold text-text">{stats.activeDays}</p>
           <p className="text-xs text-text-secondary">активных дней</p>
         </div>
-        <div className="card-modern p-4 text-center">
-          <Zap size={24} className="text-accent-orange mx-auto mb-2" />
+        <div className="card-modern p-5 text-center bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
+          <Zap size={24} className="text-orange-500 mx-auto mb-2" />
           <p className="text-2xl font-bold text-text">{Math.round(stats.totalCaloriesBurned / 1000)}k</p>
           <p className="text-xs text-text-secondary">ккал сожжено</p>
         </div>
