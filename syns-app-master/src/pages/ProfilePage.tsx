@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
-import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, Moon, Sun, LogOut, Palette, Zap, Utensils } from 'lucide-react';
+import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, LogOut, Palette, Zap, Utensils, Droplets, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loadNotificationSettings, saveNotificationSettings, requestNotificationPermission } from '@/lib/notifications';
 import MuscleHeatmap from '@/components/MuscleHeatmap';
+import { calculateWaterNorm, formatWaterNorm } from '@/lib/waterNorm';
 
 const RELIGION_OPTIONS = [
   { id: 'none', label: 'Нет', icon: '⛔' },
@@ -51,9 +52,10 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
   });
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [currentTheme, setCurrentTheme] = useState('dark-blue');
-  const [nutritionCalendar, setNutritionCalendar] = useState<{ date: string; status: 'good' | 'medium' | 'bad' | 'none' }[]>([]);
-  const [workoutCalendar, setWorkoutCalendar] = useState<{ date: string; hasWorkout: boolean }[]>([]);
-  const [stats, setStats] = useState({ totalWorkouts: 0, totalCaloriesBurned: 0, activeDays: 0 });
+  const [nutritionCalendar, setNutritionCalendar] = useState<{ date: string; status: 'good' | 'medium' | 'bad' | 'none'; color?: string }[]>([]);
+  const [workoutCalendar, setWorkoutCalendar] = useState<{ date: string; hasWorkout: boolean; color?: string }[]>([]);
+  const [stats, setStats] = useState({ totalWorkouts: 0, totalCaloriesBurned: 0, activeDays: 0, daysInApp: 0 });
+  const [waterNorm, setWaterNorm] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
@@ -67,12 +69,12 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
   }, [user]);
 
   const loadCalendars = async () => {
-    // Загружаем календарь питания (последние 49 дней)
+    // Загружаем календарь питания (последние 30 дней)
     const today = new Date();
-    const nutritionDays: { date: string; status: 'good' | 'medium' | 'bad' | 'none' }[] = [];
-    const workoutDays: { date: string; hasWorkout: boolean }[] = [];
+    const nutritionDays: { date: string; status: 'good' | 'medium' | 'bad' | 'none'; color?: string }[] = [];
+    const workoutDays: { date: string; hasWorkout: boolean; color?: string }[] = [];
     
-    for (let i = 48; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
@@ -85,6 +87,8 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         .eq('date', dateStr);
       
       let mealStatus: 'good' | 'medium' | 'bad' | 'none' = 'none';
+      let mealColor = '#d1d5db';
+      
       if (meals && meals.length > 0) {
         const totalProtein = meals.reduce((sum, m) => sum + (m.protein || 0), 0);
         const totalFats = meals.reduce((sum, m) => sum + (m.fat || 0), 0);
@@ -96,12 +100,19 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         if (totalFats < 50 || totalFats > 90) deviations++;
         if (totalCarbs < 200 || totalCarbs > 400) deviations++;
         
-        if (deviations === 0) mealStatus = 'good';
-        else if (deviations <= 2) mealStatus = 'medium';
-        else mealStatus = 'bad';
+        if (deviations === 0) {
+          mealStatus = 'good';
+          mealColor = '#22c55e';
+        } else if (deviations <= 2) {
+          mealStatus = 'medium';
+          mealColor = '#eab308';
+        } else {
+          mealStatus = 'bad';
+          mealColor = '#ef4444';
+        }
       }
       
-      nutritionDays.push({ date: dateStr, status: mealStatus });
+      nutritionDays.push({ date: dateStr, status: mealStatus, color: mealColor });
       
       // Проверяем тренировку за этот день
       const { data: workouts } = await supabase
@@ -111,7 +122,12 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         .eq('log_date', dateStr)
         .limit(1);
       
-      workoutDays.push({ date: dateStr, hasWorkout: !!workouts && workouts.length > 0 });
+      const hasWorkout = !!workouts && workouts.length > 0;
+      workoutDays.push({ 
+        date: dateStr, 
+        hasWorkout,
+        color: hasWorkout ? '#22c55e' : '#d1d5db'
+      });
     }
     
     setNutritionCalendar(nutritionDays);
@@ -124,7 +140,35 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
       .eq('user_id', user!.id);
     
     const activeDaysCount = workoutDays.filter(d => d.hasWorkout).length;
-    setStats({ totalWorkouts: totalWorkouts || 0, totalCaloriesBurned: 0, activeDays: activeDaysCount });
+    
+    // Считаем сожжённые калории из meals за всё время
+    const { data: allMeals } = await supabase
+      .from('meals')
+      .select('calories')
+      .eq('user_id', user!.id);
+    
+    const totalCalories = allMeals?.reduce((sum, m) => sum + (m.calories || 0), 0) || 0;
+    
+    // Расчёт дней в приложении
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('created_at')
+      .eq('id', user!.id)
+      .single();
+    
+    let daysInApp = 0;
+    if (profile?.created_at) {
+      const registrationDate = new Date(profile.created_at);
+      const diffTime = Math.abs(today.getTime() - registrationDate.getTime());
+      daysInApp = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    setStats({ 
+      totalWorkouts: totalWorkouts || 0, 
+      totalCaloriesBurned: totalCalories, 
+      activeDays: activeDaysCount,
+      daysInApp
+    });
   };
 
   const loadProfile = async () => {
@@ -147,6 +191,12 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         diet: data.diet || 'none',
         equipment: data.equipment || [],
       });
+      
+      // Расчёт нормы воды
+      const weight = data.weight || 70;
+      const activityLevel = data.activity_level || 'moderate';
+      const norm = calculateWaterNorm(weight, activityLevel);
+      setWaterNorm(norm);
     }
     setLoading(false);
   };
@@ -256,6 +306,31 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         </button>
       </div>
 
+      {/* Шапка профиля с аватаркой и информацией */}
+      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-transparent border-accent-blue/20 p-6">
+        <div className="flex items-center gap-4">
+          {/* Аватарка - круг 80px с инициалами */}
+          <div 
+            className="w-20 h-20 rounded-full bg-accent-blue flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+            style={{ minWidth: '80px', minHeight: '80px' }}
+          >
+            {user?.email ? user.email.split('@')[0].substring(0, 2).toUpperCase() : 'U'}
+          </div>
+          
+          {/* Информация о пользователе */}
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-text">
+              {user?.email ? user.email.split('@')[0] : 'Пользователь'}
+            </h2>
+            <p className="text-sm text-text-secondary">{user?.email}</p>
+            <p className="text-sm text-text-secondary mt-1 flex items-center gap-1">
+              <Target size={14} />
+              Цель: {coachData?.main_goal || formData.goal === 'lose' ? 'Похудение' : formData.goal === 'gain' ? 'Набор массы' : 'Поддержание'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {coachData && (
         <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20">
           <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
@@ -283,6 +358,25 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         </div>
       )}
 
+      {/* Статистика профиля - три карточки */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="card-modern p-5 text-center bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
+          <Dumbbell size={24} className="text-blue-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-text">{stats.totalWorkouts}</p>
+          <p className="text-xs text-text-secondary">тренировок</p>
+        </div>
+        <div className="card-modern p-5 text-center bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
+          <Calendar size={24} className="text-green-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-text">{stats.daysInApp}</p>
+          <p className="text-xs text-text-secondary">дней в приложении</p>
+        </div>
+        <div className="card-modern p-5 text-center bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
+          <Zap size={24} className="text-orange-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-text">{Math.round(stats.totalCaloriesBurned / 1000)}k</p>
+          <p className="text-xs text-text-secondary">ккал</p>
+        </div>
+      </div>
+
       {/* Тепловая карта мышц */}
       <div className="card-modern mb-6 animate-fade-in-up">
         <h2 className="text-lg font-semibold text-text mb-4">Тепловая карта мышц</h2>
@@ -297,17 +391,14 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
             <Utensils size={16} className="text-green-500" /> Питание (30 дней)
           </h3>
           <div className="grid grid-cols-7 gap-1.5">
-            {nutritionCalendar.map((day, i) => {
-              const color = day.status === 'good' ? '#22c55e' : day.status === 'bad' ? '#ef4444' : day.status === 'medium' ? '#eab308' : '#d1d5db';
-              return (
-                <div
-                  key={`nutrition-${i}`}
-                  className="rounded-[4px] hover:scale-110 transition-transform cursor-pointer"
-                  style={{ width: '16px', height: '16px', backgroundColor: color }}
-                  title={`${day.date}: ${day.status === 'good' ? 'Идеально' : day.status === 'bad' ? 'Плохо' : day.status === 'medium' ? 'Средне' : 'Нет данных'}`}
-                />
-              );
-            })}
+            {nutritionCalendar.map((day, i) => (
+              <div
+                key={`nutrition-${i}`}
+                className="rounded-[4px] hover:scale-110 transition-transform cursor-pointer"
+                style={{ width: '16px', height: '16px', backgroundColor: day.color || '#d1d5db' }}
+                title={`${day.date}: ${day.status === 'good' ? 'Идеально' : day.status === 'bad' ? 'Плохо' : day.status === 'medium' ? 'Средне' : 'Нет данных'}`}
+              />
+            ))}
           </div>
         </div>
 
@@ -321,7 +412,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
               <div
                 key={`workout-${i}`}
                 className="rounded-[4px] hover:scale-110 transition-transform cursor-pointer"
-                style={{ width: '16px', height: '16px', backgroundColor: day.hasWorkout ? '#22c55e' : '#d1d5db' }}
+                style={{ width: '16px', height: '16px', backgroundColor: day.color || '#d1d5db' }}
                 title={`${day.date}: ${day.hasWorkout ? 'Тренировка' : 'Отдых'}`}
               />
             ))}
@@ -329,23 +420,17 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
         </div>
       </div>
 
-      {/* Статистика профиля */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="card-modern p-5 text-center bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
-          <Dumbbell size={24} className="text-blue-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-text">{stats.totalWorkouts}</p>
-          <p className="text-xs text-text-secondary">тренировок</p>
-        </div>
-        <div className="card-modern p-5 text-center bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
-          <Target size={24} className="text-green-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-text">{stats.activeDays}</p>
-          <p className="text-xs text-text-secondary">активных дней</p>
-        </div>
-        <div className="card-modern p-5 text-center bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100">
-          <Zap size={24} className="text-orange-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-text">{Math.round(stats.totalCaloriesBurned / 1000)}k</p>
-          <p className="text-xs text-text-secondary">ккал сожжено</p>
-        </div>
+      {/* Норма воды */}
+      <div className="card-modern mb-6 bg-gradient-to-br from-blue-500/10 to-cyan-600/5 rounded-2xl shadow-lg p-5">
+        <h3 className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+          <Droplets size={16} className="text-blue-500" /> Индивидуальная норма воды
+        </h3>
+        <p className="text-2xl font-bold text-text mb-1">
+          {formatWaterNorm(waterNorm)}
+        </p>
+        <p className="text-xs text-text-secondary">
+          Рассчитана на основе веса ({formData.weight || '—'} кг) и активности
+        </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
