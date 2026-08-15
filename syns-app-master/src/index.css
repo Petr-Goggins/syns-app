@@ -49,12 +49,12 @@
     --text: #E6EDF3;
     --text-secondary: #9CA3AF;
     --text-tertiary: #6B7280;
-    --accent-blue: #6C3CE1;
+    --accent-blue: #1E2A4A;
     --accent-green: #3FB950;
     --accent-gold: #D29922;
     --accent-orange: #F0883E;
     --accent-red: #F85149;
-    --accent-purple: #BB86FC;
+    --accent-purple: #2A3B6B;
   }
 
   /* ── Тема: светлая ──────────────────────────────────── */
@@ -69,7 +69,7 @@
     --text: #1F2937;
     --text-secondary: #656D76;
     --text-tertiary: #848D97;
-    --accent-blue: #5B2CBF;
+    --accent-blue: #2A3B6B;
     --accent-green: #1A7F37;
     --accent-gold: #9A6700;
     --accent-orange: #BC4C00;

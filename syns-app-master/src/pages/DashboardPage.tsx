@@ -86,10 +86,10 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             .from('profiles')
             .select('weight, goal, cycle_phase, cycle_last_period, cycle_length')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
           if (profileError) {
             console.error('Ошибка загрузки профиля:', profileError);
-          } else {
+          } else if (profileData) {
             profile = profileData;
           }
         } catch (err) {
@@ -147,7 +147,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             .select('hours')
             .eq('user_id', user.id)
             .eq('date', dateStr)
-            .single();
+            .maybeSingle();
           if (sleepError) {
             console.error('Ошибка загрузки sleep_logs:', sleepError);
           } else if (sleep) {
