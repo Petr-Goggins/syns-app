@@ -23,10 +23,10 @@ const MAIN_GOAL_OPTIONS = [
 ];
 
 const EXPERIENCE_OPTIONS = [
-  ['never', 'Никогда'],
-  ['up_3m', 'До 3 месяцев'],
-  ['3_12m', '3-12 месяцев'],
-  ['over_year', 'Более года'],
+  ['never', '0–6 мес'],
+  ['up_3m', '6–18 мес'],
+  ['3_12m', '18+ мес'],
+  ['over_year', 'Профессиональный'],
 ];
 
 const LEVEL_OPTIONS = [
@@ -89,8 +89,8 @@ function OptionButton({ active, onClick, label }: OptionButtonProps) {
 }
 
 const STEPS = [
-  { icon: Target, title: 'Цель + Опыт' },
-  { icon: Dumbbell, title: 'Данные + Инвентарь' },
+  { icon: Target, title: 'Данные + Инвентарь' },
+  { icon: Dumbbell, title: 'Цель + Опыт' },
   { icon: Sparkles, title: 'Фокус + Личная цель' },
 ];
 
@@ -144,7 +144,14 @@ export default function CoachPage() {
       if (diff <= 0) {
         setGoalTimeEstimate(null); // Уже достиг цели или превысил
       } else {
-        const weeks = Math.ceil(diff / 0.5); // 0.5 кг в неделю
+        // Коэффициент опыта: Новичок → 1.2, Средний → 1.0, Продвинутый → 0.8, Профессиональный → 0.6
+        let experienceCoeff = 1.0;
+        if (form.training_level === 'beginner') experienceCoeff = 1.2;
+        else if (form.training_level === 'intermediate') experienceCoeff = 1.0;
+        else if (form.training_level === 'advanced') experienceCoeff = 0.8;
+        else if (form.training_level === 'professional') experienceCoeff = 0.6;
+        
+        const weeks = Math.ceil(diff / (0.5 * experienceCoeff));
         const estimatedDate = new Date();
         estimatedDate.setDate(estimatedDate.getDate() + weeks * 7);
         setGoalTimeEstimate({ weeks, date: estimatedDate.toLocaleDateString('ru', { day: '2-digit', month: '2-digit', year: '2-digit' }) });
@@ -152,7 +159,7 @@ export default function CoachPage() {
     } else {
       setGoalTimeEstimate(null);
     }
-  }, [currentWeight, targetWeight, form.main_goal]);
+  }, [currentWeight, targetWeight, form.main_goal, form.training_level]);
 
   if (!user) return null;
 
@@ -280,11 +287,109 @@ export default function CoachPage() {
         </div>
 
         <div className="card p-6 space-y-5">
-          {/* Шаг 0: Цель + Опыт */}
+          {/* Шаг 0: Данные + Инвентарь */}
           {step === 0 && (
             <>
               <div className="flex items-center gap-2 mb-3">
                 <Target size={18} className="text-accent-blue" />
+                <p className="text-sm text-text-secondary">Ваши данные и доступный инвентарь</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Пол</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => set('gender', 'male')}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                        form.gender === 'male'
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      Мужской
+                    </button>
+                    <button
+                      onClick={() => set('gender', 'female')}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                        form.gender === 'female'
+                          ? 'bg-accent-purple/15 border-accent-purple/40 text-accent-purple'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      Женский
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Возраст</label>
+                  <input
+                    type="number"
+                    value={form.age || ''}
+                    onChange={(e) => set('age', Number(e.target.value))}
+                    placeholder="лет"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="14"
+                    max="100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Вес (кг)</label>
+                  <input
+                    type="number"
+                    value={form.weight || ''}
+                    onChange={(e) => set('weight', Number(e.target.value))}
+                    placeholder="кг"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="30"
+                    max="200"
+                    step="0.5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Рост (см)</label>
+                  <input
+                    type="number"
+                    value={form.height || ''}
+                    onChange={(e) => set('height', Number(e.target.value))}
+                    placeholder="см"
+                    className="input-field w-full px-3 py-2.5 text-sm"
+                    min="100"
+                    max="250"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Инвентарь</label>
+                <div className="flex flex-wrap gap-2">
+                  {INVENTORY_OPTIONS.map((inv) => (
+                    <button
+                      key={inv.id}
+                      onClick={() => toggleInventory(inv.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                        selectedInventory.includes(inv.id)
+                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
+                          : 'border-border text-text-secondary'
+                      }`}
+                    >
+                      {inv.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-text-secondary mt-2">Выберите хотя бы один вариант</p>
+              </div>
+            </>
+          )}
+
+          {/* Шаг 1: Цель + Опыт */}
+          {step === 1 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <Dumbbell size={18} className="text-accent-blue" />
                 <p className="text-sm text-text-secondary">От этого выбора зависит тип тренировок в плане</p>
               </div>
 
@@ -508,104 +613,6 @@ export default function CoachPage() {
             </>
           )}
 
-          {/* Шаг 1: Данные + Инвентарь */}
-          {step === 1 && (
-            <>
-              <div className="flex items-center gap-2 mb-3">
-                <Dumbbell size={18} className="text-accent-blue" />
-                <p className="text-sm text-text-secondary">Ваши данные и доступный инвентарь</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Пол</label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => set('gender', 'male')}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
-                        form.gender === 'male'
-                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
-                          : 'border-border text-text-secondary'
-                      }`}
-                    >
-                      Мужской
-                    </button>
-                    <button
-                      onClick={() => set('gender', 'female')}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all ${
-                        form.gender === 'female'
-                          ? 'bg-accent-purple/15 border-accent-purple/40 text-accent-purple'
-                          : 'border-border text-text-secondary'
-                      }`}
-                    >
-                      Женский
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Возраст</label>
-                  <input
-                    type="number"
-                    value={form.age || ''}
-                    onChange={(e) => set('age', Number(e.target.value))}
-                    placeholder="лет"
-                    className="input-field w-full px-3 py-2.5 text-sm"
-                    min="14"
-                    max="100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Вес (кг)</label>
-                  <input
-                    type="number"
-                    value={form.weight || ''}
-                    onChange={(e) => set('weight', Number(e.target.value))}
-                    placeholder="кг"
-                    className="input-field w-full px-3 py-2.5 text-sm"
-                    min="30"
-                    max="200"
-                    step="0.5"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Рост (см)</label>
-                  <input
-                    type="number"
-                    value={form.height || ''}
-                    onChange={(e) => set('height', Number(e.target.value))}
-                    placeholder="см"
-                    className="input-field w-full px-3 py-2.5 text-sm"
-                    min="100"
-                    max="250"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Инвентарь</label>
-                <div className="flex flex-wrap gap-2">
-                  {INVENTORY_OPTIONS.map((inv) => (
-                    <button
-                      key={inv.id}
-                      onClick={() => toggleInventory(inv.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                        selectedInventory.includes(inv.id)
-                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue'
-                          : 'border-border text-text-secondary'
-                      }`}
-                    >
-                      {inv.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-text-secondary mt-2">Выберите хотя бы один вариант</p>
-              </div>
-            </>
-          )}
-
           {/* Шаг 2: Фокус + Личная цель */}
           {step === 2 && (
             <>
@@ -695,7 +702,7 @@ export default function CoachPage() {
               disabled={saving}
               className="btn-primary px-6 py-2.5 text-sm flex items-center gap-1.5 disabled:opacity-40"
             >
-              <Sparkles size={18} /> Сохранить
+              {saving ? 'Сохранение...' : 'Сохранить'}
             </button>
           )}
         </div>
