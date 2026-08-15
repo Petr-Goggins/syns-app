@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import Modal from '@/components/Modal';
-import WaterGlass from '@/components/WaterGlass';
 
 type DateFilter = 'today' | 'yesterday' | 'week';
 
@@ -431,13 +430,23 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       </div>
 
-      {/* Стакан с водой */}
-      <div className="card-modern mb-6 flex flex-col items-center py-6">
-        <WaterGlass 
-          currentAmount={Math.round(stats.water * 1000)} 
-          goalAmount={2000}
+      {/* КАРТОЧКА ВОДЫ С КНОПКОЙ + */}
+      <div className="card-modern mb-6 p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <Droplet size={24} className="text-blue-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-text-secondary">Вода</p>
+            <p className="text-xl font-bold text-text">{Math.round(stats.water * 1000)} мл</p>
+          </div>
+        </div>
+        <button
           onClick={() => setShowWaterModal(true)}
-        />
+          className="w-10 h-10 rounded-full bg-accent-blue hover:bg-accent-blue/80 flex items-center justify-center transition-colors"
+        >
+          <Plus size={20} className="text-white" />
+        </button>
       </div>
 
       {/* ЧЕТЫРЕ КАРТОЧКИ: Сон, Тренировки, Прогресс */}
@@ -511,28 +520,23 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       </div>
 
-      {/* КАРТОЧКА СЕРИИ - ОДИН БЛОК ВНИЗУ */}
-      <div className="card-modern mb-6">
-        <p className="text-sm text-text-secondary mb-1">Серия тренировок: {longPathStore.streak} дней</p>
-      </div>
-
-      {/* Прогресс и Серия в одной строке удалены - дублирование */}
-
-      {/* Приветствие и цель (упрощённый блок) */}
+      {/* Приветствие и цель - под шапкой */}
       <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-text font-semibold">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</p>
-            <p className="text-text-secondary text-sm mt-1">Цель: {stats.goal}</p>
+            <p className="text-text font-semibold">Цель: {profile?.goal || 'Не выбрана'}</p>
           </div>
           <div className="flex items-center gap-2">
             <Target size={18} className="text-accent-blue" />
-            <span className="text-sm text-text-secondary">{stats.weight} кг</span>
+            <span className="text-sm text-text-secondary">{profile?.weight ? `${profile.weight} кг` : '—'}</span>
           </div>
         </div>
       </div>
 
-      {/* Добавление воды удалено - теперь используется стакан */}
+      {/* КАРТОЧКА СЕРИИ - ОДИН БЛОК ВНИЗУ */}
+      <div className="card-modern mb-6">
+        <p className="text-sm text-text-secondary mb-1">Серия тренировок: {longPathStore.streak} дней</p>
+      </div>
 
       {/* Модальное окно для воды с выбором своего значения */}
       {showWaterModal && (

@@ -133,7 +133,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
       .from('profiles')
       .select('*')
       .eq('id', user!.id)
-      .single();
+      .maybeSingle();
     if (!error && data) {
       setFormDataData({
         full_name: data.full_name || '',
