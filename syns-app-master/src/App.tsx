@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
@@ -25,19 +25,33 @@ import ExerciseTechniquePage from '@/pages/ExerciseTechniquePage';
 
 function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar для десктопа */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Sidebar для десктопа - всегда виден */}
+      {isDesktop && <Sidebar isOpen={true} onClose={() => setSidebarOpen(false)} />}
+      
+      {/* Sidebar для мобильных - открывается по кнопке */}
+      {!isDesktop && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
       
       {/* Основной контент со сдвигом для десктопа */}
-      <div className="lg:ml-60 pb-20 lg:pb-0">
+      <div className={isDesktop ? "lg:ml-60 pb-20 lg:pb-0" : "pb-20"}>
         <Outlet />
       </div>
       
       {/* BottomNav только для мобилок */}
-      <BottomNav />
+      {!isDesktop && <BottomNav />}
     </div>
   );
 }

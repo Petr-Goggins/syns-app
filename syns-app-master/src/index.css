@@ -24,6 +24,8 @@
     --accent-orange: #F0883E;
     --accent-red: #EF4444;
     --accent-purple: #7C3AED;
+    --card-radius: 16px;
+    --btn-radius: 12px;
   }
 
   /* ── Тема: тёмно-синяя (по умолчанию) ────────────── */
@@ -45,6 +47,8 @@
     --accent-orange: #F0883E;
     --accent-red: #EF4444;
     --accent-purple: #7C3AED;
+    --card-radius: 16px;
+    --btn-radius: 12px;
   }
 
   /* ── Тема: светлая ──────────────────────────────────── */
@@ -66,6 +70,8 @@
     --accent-orange: #EA580C;
     --accent-red: #DC2626;
     --accent-purple: #7C3AED;
+    --card-radius: 16px;
+    --btn-radius: 12px;
   }
 
   /* ── Тема: серая ────────────────────────────────────── */
@@ -87,6 +93,8 @@
     --accent-orange: #F0883E;
     --accent-red: #EF4444;
     --accent-purple: #BB86FC;
+    --card-radius: 16px;
+    --btn-radius: 12px;
   }
 
   /* ── Тема: чёрная ───────────────────────────────────── */
@@ -108,6 +116,8 @@
     --accent-orange: #F0883E;
     --accent-red: #EF4444;
     --accent-purple: #BB86FC;
+    --card-radius: 16px;
+    --btn-radius: 12px;
   }
   
   * {
