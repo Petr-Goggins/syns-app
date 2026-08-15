@@ -2,15 +2,14 @@
 # Dependencies
 node_modules/
 
-# Build artifacts
-dist/
-build/
-*.js.map
-
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
 
 # Editors
 .vscode/
@@ -22,10 +21,24 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Logs
-*.log
+# Build outputs
+dist/
+build/
+*.min.js
+*.min.css
 
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+coverage/
+.pytest_cache/
+.mypy_cache/
+
+# Package manager
+package-lock.json
+yarn.lock
 ```
