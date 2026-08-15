@@ -35,7 +35,6 @@ export default function AuthPage() {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         if (data.user) {
-          console.log('✅ Вход выполнен:', data.user.email);
           navigate('/dashboard');
           return;
         }

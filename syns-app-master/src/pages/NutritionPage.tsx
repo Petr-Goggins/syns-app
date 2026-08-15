@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { Plus, Sparkles, Search, Clock, Utensils, Filter, X } from 'lucide-react';
+import { Plus, Sparkles, Search, Clock, Utensils, Filter, X, Repeat, Calendar, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { searchVkusvillProducts } from '@/services/vkusvillService';
 import { searchPyaterochkaProducts } from '@/services/pyaterochkaService';
+import { generateMealPlan, saveMealPlan, type GeneratedMealPlan } from '@/services/mealPlanService';
 
 interface MealPlan {
   id: string;
@@ -34,6 +35,11 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [protein, setProtein] = useState('');
   const [fat, setFat] = useState('');
   const [carbs, setCarbs] = useState('');
+  // Новые состояния для длительности и разнообразия
+  const [planDuration, setPlanDuration] = useState<'day' | 'week'>('day');
+  const [varietyLevel, setVarietyLevel] = useState<'minimal' | 'medium' | 'maximal'>('medium');
+  const [generatedPlan, setGeneratedPlan] = useState<GeneratedMealPlan | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [calories, setCalories] = useState('');
 
   useEffect(() => {
@@ -149,6 +155,41 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     }
   };
 
+
+  const handleGeneratePlan = async () => {
+    setIsGenerating(true);
+    try {
+      const userContext = `Пользователь: бюджет ${budget}₽, любимые продукты: ${favoriteFoods}`;
+      const plan = await generateMealPlan(user!.id, userContext, planDuration, varietyLevel, budget, favoriteFoods);
+      if (plan) {
+        setGeneratedPlan(plan);
+        setShowAIModal(false);
+        toast.success('План питания сгенерирован!');
+      } else {
+        toast.error('Не удалось сгенерировать план');
+      }
+    } catch (error) {
+      console.error('Ошибка генерации плана:', error);
+      toast.error('Ошибка при генерации плана');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSavePlan = async () => {
+    if (!generatedPlan) return;
+    const saved = await saveMealPlan(generatedPlan);
+    if (saved) {
+      toast.success('План питания сохранён!');
+    } else {
+      toast.error('Не удалось сохранить план');
+    }
+  };
+
+  const handleReplaceProduct = (mealType: string, foodIndex: number) => {
+    toast.success(`Замена продукта: ${mealType}[${foodIndex}]`);
+    // Здесь будет логика поиска альтернативного продукта
+  };
   const handleSelectProduct = (product: any) => {
     setProductName(product.name);
     setProtein(String(product.proteins || product.protein || product.nutritional_info?.protein || 0));
@@ -351,20 +392,82 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             <button type="submit" className="btn-primary px-6 py-2 rounded-lg flex items-center gap-2">
               <Plus size={18} /> Добавить
             </button>
-          </div>
-        </form>
-      </div>
 
       {/* Модалка ИИ */}
       {showAIModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-bg-secondary p-6 rounded-2xl max-w-md w-full border border-border shadow-2xl">
+          <div className="bg-bg-secondary p-6 rounded-2xl max-w-2xl w-full border border-border shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-text">Сгенерировать рацион с ИИ</h2>
               <button onClick={() => setShowAIModal(false)} className="text-text-secondary hover:text-text">
                 <X size={24} />
               </button>
             </div>
+            
+            {/* Переключатель длительности */}
+            <div className="mb-4">
+              <label className="text-text-secondary text-sm block mb-2">Длительность плана</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPlanDuration('day')}
+                  className={`flex-1 py-2 px-4 rounded-lg transition ${
+                    planDuration === 'day'
+                      ? 'bg-accent-blue text-white'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-blue'
+                  }`}
+                >
+                  На день
+                </button>
+                <button
+                  onClick={() => setPlanDuration('week')}
+                  className={`flex-1 py-2 px-4 rounded-lg transition ${
+                    planDuration === 'week'
+                      ? 'bg-accent-blue text-white'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-blue'
+                  }`}
+                >
+                  На неделю
+                </button>
+              </div>
+            </div>
+
+            {/* Уровень разнообразия */}
+            <div className="mb-4">
+              <label className="text-text-secondary text-sm block mb-2">Уровень разнообразия</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setVarietyLevel('minimal')}
+                  className={`py-2 px-3 rounded-lg text-xs transition ${
+                    varietyLevel === 'minimal'
+                      ? 'bg-accent-blue text-white'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-blue'
+                  }`}
+                >
+                  Минимальный
+                </button>
+                <button
+                  onClick={() => setVarietyLevel('medium')}
+                  className={`py-2 px-3 rounded-lg text-xs transition ${
+                    varietyLevel === 'medium'
+                      ? 'bg-accent-blue text-white'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-blue'
+                  }`}
+                >
+                  Средний
+                </button>
+                <button
+                  onClick={() => setVarietyLevel('maximal')}
+                  className={`py-2 px-3 rounded-lg text-xs transition ${
+                    varietyLevel === 'maximal'
+                      ? 'bg-accent-blue text-white'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-blue'
+                  }`}
+                >
+                  Максимальный
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <label className="text-text-secondary text-sm">Бюджет на день (₽)</label>
@@ -385,14 +488,148 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
                   rows={3}
                 />
               </div>
-              <button className="w-full btn-primary py-3 flex items-center justify-center gap-2">
-                <Sparkles size={18} />
-                Сгенерировать
+              <button
+                onClick={handleGeneratePlan}
+                disabled={isGenerating}
+                className="w-full btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Генерация...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} />
+                    Сгенерировать
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Отображение сгенерированного плана */}
+      {generatedPlan && (
+        <div className="mt-8 card-modern">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-text">
+              План питания на {generatedPlan.duration === 'day' ? 'день' : 'неделю'}
+            </h2>
+            <div className="flex gap-2">
+              <span className="text-xs px-2 py-1 rounded-full bg-accent-blue/10 text-accent-blue">
+                {generatedPlan.varietyLevel === 'minimal' ? 'Мин. разнообразие' :
+                 generatedPlan.varietyLevel === 'medium' ? 'Среднее разнообразие' : 'Макс. разнообразие'}
+              </span>
+            </div>
+          </div>
+
+          {generatedPlan.days ? (
+            <div className="space-y-6">
+              {generatedPlan.days.map((dayPlan, idx) => (
+                <div key={idx} className="border-b border-border pb-4 last:border-0">
+                  <h3 className="font-semibold text-text mb-2">День {idx + 1} ({dayPlan.date})</h3>
+                  <MealPlanContent plan={dayPlan} onReplaceProduct={handleReplaceProduct} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <MealPlanContent plan={generatedPlan} onReplaceProduct={handleReplaceProduct} />
+          )}
+
+          <div className="mt-6 pt-4 border-t border-border">
+            <h3 className="font-semibold text-text mb-2">Итого за день:</h3>
+            <div className="grid grid-cols-4 gap-2 text-sm">
+              <div className="text-center p-2 bg-bg-card rounded-lg">
+                <p className="text-text-secondary">{generatedPlan.totalCalories} ккал</p>
+              </div>
+              <div className="text-center p-2 bg-bg-card rounded-lg">
+                <p className="text-text-secondary">Б: {Math.round(generatedPlan.totalProtein)}г</p>
+              </div>
+              <div className="text-center p-2 bg-bg-card rounded-lg">
+                <p className="text-text-secondary">Ж: {Math.round(generatedPlan.totalFat)}г</p>
+              </div>
+              <div className="text-center p-2 bg-bg-card rounded-lg">
+                <p className="text-text-secondary">У: {Math.round(generatedPlan.totalCarbs)}г</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border">
+            <h3 className="font-semibold text-text mb-2 flex items-center gap-2">
+              <Calendar size={18} />
+              Список покупок
+            </h3>
+            <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-text-secondary">
+              {generatedPlan.shoppingList.map((item, idx) => (
+                <li key={idx} className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-accent-blue rounded-full" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={handleSavePlan}
+              className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
+            >
+              <Plus size={18} />
+              Сохранить план
+            </button>
+            <button
+              onClick={() => setGeneratedPlan(null)}
+              className="px-4 py-2 border border-border rounded-lg text-text-secondary hover:bg-bg-card"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Компонент отображения содержимого плана
+function MealPlanContent({ plan, onReplaceProduct }: { plan: GeneratedMealPlan; onReplaceProduct: (mealType: string, foodIndex: number) => void }) {
+  const mealTypeNames: Record<string, string> = {
+    breakfast: 'Завтрак',
+    lunch: 'Обед',
+    dinner: 'Ужин',
+    snack: 'Перекус',
+  };
+
+  return (
+    <div className="space-y-4">
+      {plan.meals.map((meal, mealIdx) => (
+        <div key={mealIdx} className="bg-bg-card p-4 rounded-xl">
+          <h4 className="font-medium text-text mb-2">{mealTypeNames[meal.type]}</h4>
+          <div className="space-y-2">
+            {meal.foods.map((food, foodIdx) => (
+              <div key={foodIdx} className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="text-text">{food.name}</p>
+                  <p className="text-text-secondary text-xs">{food.weight}г • {food.calories} ккал</p>
+                </div>
+                <button
+                  onClick={() => onReplaceProduct(meal.type, foodIdx)}
+                  className="p-2 text-text-secondary hover:text-accent-blue transition"
+                  title="Заменить продукт"
+                >
+                  <Repeat size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 pt-2 border-t border-border flex gap-4 text-xs text-text-secondary">
+            <span>Б: {Math.round(meal.totalProtein)}г</span>
+            <span>Ж: {Math.round(meal.totalFat)}г</span>
+            <span>У: {Math.round(meal.totalCarbs)}г</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

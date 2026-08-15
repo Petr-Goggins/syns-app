@@ -3,10 +3,15 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useCoachStore } from '@/store/coachStore';
-import { Calendar, Dumbbell, Sparkles, CheckCircle, Loader2, ArrowRight, Clock, Target, Zap, Info, AlertTriangle, StretchHorizontal } from 'lucide-react';
+import { Calendar, Dumbbell, Sparkles, CheckCircle, Loader2, ArrowRight, Clock, Target, Zap, Info, AlertTriangle, StretchHorizontal, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Link, useNavigate } from 'react-router-dom';
-import { getExerciseByName, extractExerciseName } from '@/data/exercises';
+import { Link } from 'react-router-dom';
+import { 
+  getAllWarmupExercises, 
+  getAllCooldownExercises, 
+  safetyGuidelines,
+  type WarmupExercise 
+} from '@/data/warmup';
 
 export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -15,22 +20,13 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const navigate = useNavigate();
+  const [showWarmupDetail, setShowWarmupDetail] = useState(false);
+  const [showCooldownDetail, setShowCooldownDetail] = useState(false);
+  const [showSafetyDetail, setShowSafetyDetail] = useState(false);
 
-  const handleOpenTechnique = (exerciseName: string) => {
-    // Извлекаем чистое название упражнения из строки формата "Приседания со штангой 4×8"
-    const extractedName = extractExerciseName(exerciseName);
-    const exercise = getExerciseByName(extractedName);
-    
-    if (exercise) {
-      // Переходим на страницу техники с ID упражнения
-      navigate(`/technique/${exercise.id}`);
-    } else {
-      // Если упражнение не найдено, переходим на общую страницу техники
-      navigate('/technique');
-      toast.error('Техника для этого упражнения пока недоступна');
-    }
-  };
+  // Получаем упражнения разминки и заминки
+  const warmupExercises = getAllWarmupExercises();
+  const cooldownExercises = getAllCooldownExercises();
 
   // Загружаем профиль и анкету при монтировании
   useEffect(() => {
@@ -104,18 +100,35 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
     // Выбираем подходящий план
     const selectedPlan = plans[goal as keyof typeof plans] || plans['gain_muscle'];
 
-    // Для новичков добавляем разминку и заминку
+    // Для новичков добавляем разминку и заминку в структуру данных
     if (isBeginner) {
       Object.keys(selectedPlan.structure).forEach((week) => {
         const weekData = selectedPlan.structure[week];
         Object.keys(weekData).forEach((day) => {
           const exercises = weekData[day];
-          // Добавляем разминку в начало
-          weekData[day] = [
-            '🔥 РАЗМИНКА: 5-7 мин лёгкого кардио + суставная гимнастика',
-            ...exercises,
-            '🧘 ЗАМИНКА: 10-15 мин статической растяжки'
-          ];
+          // Добавляем разминку и заминку как структурированные данные
+          weekData[day] = {
+            warmup: [
+              { name: '🔥 РАЗМИНКА', type: 'header' },
+              ...warmupExercises.slice(0, 5).map(ex => ({ name: ex.name, duration: ex.duration, reps: ex.reps, description: ex.description })),
+            ],
+            main: exercises.map((ex: string) => ({ name: ex, type: 'main' })),
+            cooldown: [
+              { name: '🧘 ЗАМИНКА', type: 'header' },
+              ...cooldownExercises.slice(0, 4).map(ex => ({ name: ex.name, duration: ex.duration, reps: ex.reps, description: ex.description })),
+            ]
+          };
+        });
+      });
+    } else {
+      // Для опытных пользователей оставляем простую структуру
+      Object.keys(selectedPlan.structure).forEach((week) => {
+        const weekData = selectedPlan.structure[week];
+        Object.keys(weekData).forEach((day) => {
+          const exercises = weekData[day];
+          weekData[day] = {
+            main: exercises.map((ex: string) => ({ name: ex, type: 'main' }))
+          };
         });
       });
     }
