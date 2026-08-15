@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Dumbbell, Flame, Moon, Activity, AlertCircle } from 'lucide-react';
+import { TrendingUp, Dumbbell, Flame, Moon, Activity, AlertCircle, CheckCircle, TrendingDown, MessageCircle } from 'lucide-react';
 
 type Period = 'week' | 'month' | 'year';
 
@@ -26,6 +28,13 @@ interface SleepData {
   hours: number;
 }
 
+interface InsightData {
+  type: 'success' | 'warning' | 'danger';
+  title: string;
+  message: string;
+  icon: 'check' | 'alert' | 'trend';
+}
+
 interface Metrics {
   totalWorkouts: number;
   totalVolume: number;
@@ -37,6 +46,9 @@ const EXERCISES = ['Присед', 'Жим лёжа', 'Становая', 'Жи�
 
 export default function ProgressPage() {
   const user = useAuthStore((s) => s.user);
+  const profile = useProfileStore((s) => s.profile);
+  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>('month');
   const [selectedExercise, setSelectedExercise] = useState<string>('Присед');
   const [loading, setLoading] = useState(true);
@@ -48,7 +60,8 @@ export default function ProgressPage() {
   const [calorieData, setCalorieData] = useState<CalorieData[]>([]);
   const [sleepData, setSleepData] = useState<SleepData[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({ totalWorkouts: 0, totalVolume: 0, avgCalories: 0, avgSleep: 0 });
-  const [aiInsight, setAiInsight] = useState<string>('');
+  const [insights, setInsights] = useState<InsightData[]>([]);
+  const [hasData, setHasData] = useState(false);
 
   if (!user) {
     return <div className="p-4">Пожалуйста, войдите в аккаунт.</div>;
@@ -59,6 +72,10 @@ export default function ProgressPage() {
       setLoading(true);
       setError(null);
       try {
+        // Fetch profile if not loaded
+        if (!profile) {
+          await fetchProfile(user.id);
+        }
         await Promise.all([
           fetchWeightData(user.id, period),
           fetchOnePMData(user.id, period, selectedExercise),
@@ -74,36 +91,205 @@ export default function ProgressPage() {
       }
     };
     loadData();
-  }, [user, period, selectedExercise]);
+  }, [user, period, selectedExercise, profile, fetchProfile]);
 
-  // Generate AI insight based on data
+  // Generate AI insights based on data
   useEffect(() => {
-    if (weightData.length >= 2) {
+    const newInsights: InsightData[] = [];
+    let anyData = false;
+
+    // 1. Weight analysis - compare with planned trajectory
+    if (weightData.length >= 2 && profile?.target_weight && profile?.weight) {
+      anyData = true;
       const firstWeight = weightData[0].weight;
       const lastWeight = weightData[weightData.length - 1].weight;
       const diff = lastWeight - firstWeight;
       
-      if (diff < -0.5) {
-        setAiInsight(`Вы сбросили ${Math.abs(diff).toFixed(1)} кг за период. Отличная работа!`);
-      } else if (diff > 0.5) {
-        setAiInsight(`Вы набрали ${diff.toFixed(1)} кг за период. Продолжайте в том же духе!`);
-      } else {
-        setAiInsight('Ваш вес стабилен. Хорошая работа по поддержанию формы!');
-      }
-    } else if (onePMData.length >= 2) {
-      const firstPM = onePMData[0].onePM;
-      const lastPM = onePMData[onePMData.length - 1].onePM;
-      const diff = lastPM - firstPM;
+      // Calculate planned weight change
+      const currentWeight = profile.weight;
+      const targetWeight = profile.target_weight;
+      const totalGoalDiff = targetWeight - currentWeight;
       
-      if (diff > 2) {
-        setAiInsight(`Ваш 1ПМ в упражнении "${selectedExercise}" вырос на ${diff.toFixed(1)} кг. Прогресс очевиден!`);
+      // Estimate days in period
+      const daysInPeriod = period === 'week' ? 7 : period === 'month' ? 30 : 365;
+      const plannedDiff = (totalGoalDiff / 365) * daysInPeriod; // Linear projection
+      
+      const deviation = diff - plannedDiff;
+      
+      if (Math.abs(deviation) <= 0.5) {
+        newInsights.push({
+          type: 'success',
+          title: 'План выполняется',
+          message: `Вы идёте по плану. Текущее отклонение: ${deviation >= 0 ? '+' : ''}${deviation.toFixed(1)} кг.`,
+          icon: 'check'
+        });
+      } else if (deviation > 0.5) {
+        newInsights.push({
+          type: 'warning',
+          title: 'Отставание от плана',
+          message: `Вы отстаёте на ${deviation.toFixed(1)} кг. Рекомендуем увеличить интенсивность тренировок или скорректировать питание.`,
+          icon: 'alert'
+        });
       } else {
-        setAiInsight('Продолжайте тренироваться для улучшения результатов.');
+        newInsights.push({
+          type: 'success',
+          title: 'Опережение плана!',
+          message: `Вы опережаете план на ${Math.abs(deviation).toFixed(1)} кг. Отличная работа!`,
+          icon: 'trend'
+        });
       }
-    } else {
-      setAiInsight('Данных за выбранный период недостаточно. Заполните дневник питания и тренировок.');
+      
+      // Weight change insight
+      if (diff < -0.5) {
+        newInsights.push({
+          type: 'success',
+          title: 'Снижение веса',
+          message: `Вы сбросили ${Math.abs(diff).toFixed(1)} кг за период. Отличная работа!`,
+          icon: 'trend'
+        });
+      } else if (diff > 0.5) {
+        newInsights.push({
+          type: 'warning',
+          title: 'Набор веса',
+          message: `Вы набрали ${diff.toFixed(1)} кг за период. ${profile.goal === 'lose' ? 'Рекомендуем пересмотреть калорийность.' : 'Продолжайте в том же духе!'}`,
+          icon: 'alert'
+        });
+      }
     }
-  }, [weightData, onePMData, selectedExercise]);
+
+    // 2. Calorie analysis
+    if (metrics.avgCalories > 0 && profile?.goal) {
+      anyData = true;
+      // Estimate target calories based on goal
+      const baseCalories = 2000; // Simplified, should use BMR calculation
+      let targetCalories = baseCalories;
+      if (profile.goal === 'lose') targetCalories = baseCalories - 300;
+      else if (profile.goal === 'gain') targetCalories = baseCalories + 300;
+      
+      const calorieDeviation = metrics.avgCalories - targetCalories;
+      
+      if (calorieDeviation < -200) {
+        newInsights.push({
+          type: 'warning',
+          title: 'Недостаток калорий',
+          message: `Вы недоедаете на ${Math.abs(calorieDeviation).toFixed(0)} ккал. Увеличьте калории на 200–300 ккал для лучшего восстановления.`,
+          icon: 'alert'
+        });
+      } else if (calorieDeviation > 200) {
+        newInsights.push({
+          type: 'warning',
+          title: 'Избыток калорий',
+          message: `Вы переедаете на ${calorieDeviation.toFixed(0)} ккал. Снизьте калории на 200–300 ккал для достижения цели.`,
+          icon: 'alert'
+        });
+      } else {
+        newInsights.push({
+          type: 'success',
+          title: 'Калорийность в норме',
+          message: `Ваша средняя калорийность (${metrics.avgCalories} ккал) соответствует цели.`,
+          icon: 'check'
+        });
+      }
+    }
+
+    // 3. Workout frequency analysis
+    if (metrics.totalWorkouts > 0 && profile?.days_per_week) {
+      anyData = true;
+      const weeksInPeriod = period === 'week' ? 1 : period === 'month' ? 4 : 52;
+      const plannedWorkouts = profile.days_per_week * weeksInPeriod;
+      const workoutDeviation = metrics.totalWorkouts - plannedWorkouts;
+      
+      if (workoutDeviation < -2) {
+        newInsights.push({
+          type: 'warning',
+          title: 'Недостаточно тренировок',
+          message: `Вы пропустили ${Math.abs(workoutDeviation)} тренировок. Постарайтесь не пропускать занятия для стабильного прогресса.`,
+          icon: 'alert'
+        });
+      } else if (workoutDeviation > 2) {
+        newInsights.push({
+          type: 'success',
+          title: 'Высокая активность',
+          message: `Вы тренируетесь чаще плана (${metrics.totalWorkouts} вместо ${plannedWorkouts}). Отлично! Но не забывайте про восстановление.`,
+          icon: 'check'
+        });
+      } else {
+        newInsights.push({
+          type: 'success',
+          title: 'Частота тренировок в норме',
+          message: `Вы провели ${metrics.totalWorkouts} тренировок за период. Хороший темп!`,
+          icon: 'check'
+        });
+      }
+    }
+
+    // 4. Sleep analysis
+    if (metrics.avgSleep > 0) {
+      anyData = true;
+      if (metrics.avgSleep < 6) {
+        newInsights.push({
+          type: 'danger',
+          title: 'Недостаток сна',
+          message: `Вы спите в среднем ${metrics.avgSleep} ч. Сон критичен для восстановления. Постарайтесь спать 7–8 часов.`,
+          icon: 'alert'
+        });
+      } else if (metrics.avgSleep > 9) {
+        newInsights.push({
+          type: 'warning',
+          title: 'Избыток сна',
+          message: `Вы спите в среднем ${metrics.avgSleep} ч. Это больше нормы. Проверьте качество сна.`,
+          icon: 'alert'
+        });
+      } else {
+        newInsights.push({
+          type: 'success',
+          title: 'Норма сна',
+          message: `Ваш средний сон ${metrics.avgSleep} ч — это отлично для восстановления!`,
+          icon: 'check'
+        });
+      }
+    }
+
+    // 5. Goal achievement forecast
+    if (weightData.length >= 2 && profile?.target_weight) {
+      anyData = true;
+      const firstWeight = weightData[0].weight;
+      const lastWeight = weightData[weightData.length - 1].weight;
+      const daysTracked = weightData.length;
+      const weeklyChange = ((lastWeight - firstWeight) / daysTracked) * 7;
+      
+      if (weeklyChange !== 0) {
+        const remainingDiff = profile.target_weight - lastWeight;
+        const weeksToGoal = Math.abs(remainingDiff / weeklyChange);
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + Math.round(weeksToGoal * 7));
+        
+        if (weeksToGoal > 0 && weeksToGoal < 100) {
+          newInsights.push({
+            type: 'success',
+            title: 'Прогноз достижения цели',
+            message: `При текущем темпе вы достигнете целевого веса через ${Math.round(weeksToGoal)} недель (ориентировочно ${targetDate.toLocaleDateString('ru-RU')}).`,
+            icon: 'trend'
+          });
+        }
+      }
+    }
+
+    setHasData(anyData);
+    
+    if (!anyData) {
+      setInsights([]);
+    } else if (newInsights.length === 0) {
+      setInsights([{
+        type: 'warning',
+        title: 'Недостаточно данных',
+        message: 'Данных за выбранный период недостаточно для полного анализа. Заполните дневник питания и тренировок.',
+        icon: 'alert'
+      }]);
+    } else {
+      setInsights(newInsights);
+    }
+  }, [weightData, onePMData, selectedExercise, metrics, profile, period]);
 
   const fetchWeightData = async (userId: string, p: Period) => {
     const startDate = getStartDate(p);
@@ -440,9 +626,85 @@ export default function ProgressPage() {
       </div>
 
       {/* AI Insight block */}
-      <div className="card-modern bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
-        <h3 className="text-lg font-semibold text-text mb-2">Ваш прогресс за период</h3>
-        <p className="text-text">{aiInsight}</p>
+      <div className="card-modern p-5 bg-bg-card rounded-[16px] shadow-lg">
+        <h3 className="text-lg font-bold text-text mb-1">Аналитика прогресса</h3>
+        <p className="text-sm text-text-secondary mb-4">Еженедельный отчёт ИИ</p>
+        
+        {!hasData ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <AlertCircle size={48} className="text-text-secondary mb-4" />
+            <p className="text-text-secondary mb-4">За выбранный период недостаточно данных для анализа</p>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => navigate('/workout-log')}
+                className="px-4 py-2 bg-accent-blue text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Перейти к тренировкам
+              </button>
+              <button 
+                onClick={() => navigate('/nutrition')}
+                className="px-4 py-2 bg-bg-tertiary text-text rounded-lg text-sm font-medium hover:bg-border transition-colors"
+              >
+                Перейти к питанию
+              </button>
+            </div>
+          </div>
+        ) : insights.length === 0 ? (
+          <div className="py-4 text-text-secondary">
+            <p>Данных за выбранный период недостаточно для полного анализа. Заполните дневник питания и тренировок.</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3 mb-4">
+              {insights.map((insight, idx) => (
+                <InsightItem key={idx} insight={insight} />
+              ))}
+            </div>
+            
+            <button
+              onClick={() => navigate('/chat', { state: { 
+                context: {
+                  metrics,
+                  weightChange: weightData.length >= 2 ? weightData[weightData.length - 1].weight - weightData[0].weight : null,
+                  period,
+                  insights: insights.map(i => i.message)
+                }
+              }})}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-bg-tertiary text-text rounded-xl font-medium hover:bg-border transition-colors"
+            >
+              <MessageCircle size={18} />
+              Задать вопрос ИИ
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InsightItem({ insight }: { insight: InsightData }) {
+  const colors = {
+    success: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
+    warning: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-500' },
+    danger: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' }
+  };
+  
+  const icons = {
+    check: <CheckCircle size={20} />,
+    alert: <AlertCircle size={20} />,
+    trend: <TrendingDown size={20} />
+  };
+  
+  const colorScheme = colors[insight.type];
+  
+  return (
+    <div className={`flex items-start gap-3 p-4 rounded-xl ${colorScheme.bg} border ${colorScheme.border}`}>
+      <div className={`${colorScheme.text} flex-shrink-0`}>
+        {icons[insight.icon]}
+      </div>
+      <div>
+        <h4 className={`font-semibold ${colorScheme.text} mb-1`}>{insight.title}</h4>
+        <p className="text-text-secondary text-sm">{insight.message}</p>
       </div>
     </div>
   );

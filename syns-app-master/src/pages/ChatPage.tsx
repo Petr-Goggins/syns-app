@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Send, Trash2, Sparkles, Utensils, ShoppingBag, RotateCcw, X } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
@@ -10,7 +11,23 @@ import { searchVkusvillProducts } from '@/services/vkusvillService';
 import { searchPyaterochkaProducts } from '@/services/pyaterochkaService';
 import toast from 'react-hot-toast';
 
+interface ChatLocationState {
+  context?: {
+    metrics?: {
+      totalWorkouts: number;
+      totalVolume: number;
+      avgCalories: number;
+      avgSleep: number;
+    };
+    weightChange?: number | null;
+    period?: string;
+    insights?: string[];
+  };
+}
+
 export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+  const location = useLocation();
+  const state = location.state as ChatLocationState | undefined;
   const user = useAuthStore((s) => s.user);
   const { profile } = useProfileStore();
   const { messages, loading, fetchMessages, sendMessage, clearMessages, setMessages } = useChatStore();
@@ -23,6 +40,36 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
   const [productSearchResults, setProductSearchResults] = useState<any[]>([]);
   const [replacingProduct, setReplacingProduct] = useState<{mealType: string, productName: string} | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Обработка контекста из ProgressPage
+  useEffect(() => {
+    if (state?.context && (!messages.length || messages[0].role !== 'system')) {
+      const ctx = state.context;
+      const contextText = `
+Контекст прогресса пользователя:
+- Период: ${ctx.period || 'не указан'}
+- Тренировок: ${ctx.metrics?.totalWorkouts || 0}
+- Объём: ${ctx.metrics?.totalVolume || 0} кг
+- Средняя калорийность: ${ctx.metrics?.avgCalories || 0} ккал
+- Средний сон: ${ctx.metrics?.avgSleep || 0} ч
+- Изменение веса: ${ctx.weightChange !== null && ctx.weightChange !== undefined ? `${ctx.weightChange.toFixed(1)} кг` : 'нет данных'}
+- Инсайты: ${ctx.insights?.join('; ') || 'нет'}
+
+Пользователь просит: "Проанализируй мой прогресс и дай рекомендации"
+      `.trim();
+      
+      setMessages([{
+        id: 'context-' + Date.now(),
+        role: 'system',
+        content: contextText,
+        created_at: new Date().toISOString()
+      }]);
+      
+      setTimeout(() => {
+        sendMessage(contextText + '\n\nДай подробный анализ и рекомендации.');
+      }, 500);
+    }
+  }, []);
 
   // Загрузка контекста пользователя при открытии чата
   useEffect(() => {
