@@ -1,11 +1,18 @@
 ```gitignore
 # Dependencies
 node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.bazel/
 
 # Build outputs
 dist/
 build/
+coverage/
 target/
+out/
+.bundle/
 
 # Python
 __pycache__/
@@ -16,44 +23,133 @@ __pycache__/
 env/
 venv/
 .venv/
-.ENV
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
+.env
+.env.local
+.env.*
+requirements.txt.bak
+.pytest_cache/
+.mypy_cache/
 .coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/modules/
-.DS_Store
-Thumbs.db
 
-# TypeScript/JavaScript
-*.tsbuildinfo
-*.js.map
-*.jsx.map
-*.ts.map
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
 
 # Editor
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
+*~
 
-# Environment
+# Environment variables
 .env
 .env.local
-*.env.*
+.env.*
+
+# Testing
+coverage/
+.nyc_output/
+istanbul/
+.mocha/
+
+# Browsers
+hs_err_pid*
+*.hprof
+
+# Temporary folders
+tmp/
+temp/
+.TemporaryItems/
+*.tmp
+
+# Compiled JavaScript
+*.min.js
+*.bundle.js
+
+# Compression
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.gz
+*.rar
+*.7z
+*.bz2
+*.xz
+*.zst
+
+# IDE and editor specific
+*.sublime-workspace
+*.tm_properties
+*.vsix
+*.code-workspace
+```
+
+Wait, let me reconsider this. The only modified file is a TypeScript React component (`DashboardPage.tsx`), which is source code. There are no build artifacts, dependency directories, or temporary files in the changes list that would require adding to .gitignore.
+
+Actually, looking at this again - I need to consider that this appears to be a React/TypeScript project based on the file extension, so common build artifacts and dependencies should likely be ignored even if not currently present in the changes.
+
+```gitignore
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+target/
+out/
+
+# Python (if needed for backend)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.venv/
 
 # Logs
 *.log
 
-# Coverage
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Testing
 coverage/
-htmlcov/
-.coverage
+
+# Temporary files
+*.tmp
+*.swp
+*~
 ```

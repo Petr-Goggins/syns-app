@@ -79,7 +79,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     const loadDashboard = async () => {
       setLoading(true);
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('weight, goal, cycle_phase, cycle_last_period, cycle_length')
           .eq('id', user.id)
@@ -101,7 +101,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         const dateStr = targetDate.toISOString().split('T')[0];
 
         // Загружаем калории и макросы из meals
-        const { data: meals } = await supabase
+        const { data: meals, error: mealsError } = await supabase
           .from('meals')
           .select('calories, protein, fat, carbs')
           .eq('user_id', user.id)
@@ -112,15 +112,15 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         const totalFats = meals?.reduce((sum, m) => sum + (m.fat || 0), 0) || 0;
         const totalCarbs = meals?.reduce((sum, m) => sum + (m.carbs || 0), 0) || 0;
 
-        const { data: sleep } = await supabase
+        const { data: sleep, error: sleepError } = await supabase
           .from('sleep_logs')
           .select('hours')
           .eq('user_id', user.id)
           .eq('date', dateStr)
           .single();
-        const sleepHoursVal = sleep?.hours || 0;
+        const sleepHoursVal = sleep?.hours ?? 0;
 
-        const { count: workoutsCount } = await supabase
+        const { count: workoutsCount, error: workoutError } = await supabase
           .from('workout_logs')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
@@ -148,11 +148,24 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           },
           water: totalWater / 1000,
           sleep: sleepHoursVal,
-          workouts: workoutsCount || 0,
+          workouts: workoutsCount ?? 0,
           progress: 65,
         });
       } catch (error) {
-        console.error(error);
+        console.error('Ошибка загрузки дашборда:', error);
+        // Показываем заглушки при ошибке
+        setStats({
+          calories: 0,
+          macros: {
+            protein: { current: 0, goal: 150 },
+            fats: { current: 0, goal: 70 },
+            carbs: { current: 0, goal: 300 },
+          },
+          water: 0,
+          sleep: 0,
+          workouts: 0,
+          progress: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -569,7 +582,6 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             value={waterAmount}
             onChange={(e) => setWaterAmount(Number(e.target.value))}
             className="w-full h-2 rounded-lg appearance-none cursor-pointer transition-all"
-            style={rangeStyle(waterPercent)}
           />
           <span className="text-text font-medium min-w-[60px] text-right">{waterAmount} мл</span>
         </div>
