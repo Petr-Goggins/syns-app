@@ -20,7 +20,7 @@ export default function CyclePage({ onOpenSidebar }: { onOpenSidebar?: () => voi
         .from('profiles')
         .select('cycle_length, cycle_last_period')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       if (!error && data) {
         setCycleLength(data.cycle_length || 28);
         setLastPeriodDate(data.cycle_last_period || '');
