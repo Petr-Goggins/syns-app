@@ -5,9 +5,10 @@ import { useWaterStore } from '@/store/waterStore';
 import { useLongPathStore } from '@/store/longPathStore';
 import { useWorkoutLogStore } from '@/store/workoutLogStore';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X } from 'lucide-react';
+import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import Modal from '@/components/Modal';
+import WaterGlass from '@/components/WaterGlass';
 
 type DateFilter = 'today' | 'yesterday' | 'week';
 
@@ -33,7 +34,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const longPathStore = useLongPathStore();
   const workoutLogStore = useWorkoutLogStore();
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [stats, setStats] = useState<DailyStats>({
     calories: 0,
     macros: {
@@ -44,13 +45,14 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     water: 0,
     sleep: 0,
     workouts: 0,
-    progress: 65,
+    progress: 0,
   });
   const [calorieGoal, setCalorieGoal] = useState(2500);
   const [cycleRecommendation, setCycleRecommendation] = useState<string | null>(null);
   const [waterAmount, setWaterAmount] = useState(200);
   const [quote, setQuote] = useState({ text: '', author: '' });
   const [streak, setStreak] = useState(0);
+  const [profile, setProfile] = useState<{ weight: number; goal: string | null } | null>(null);
   
   // Модальное окно для добавления воды
   const [showWaterModal, setShowWaterModal] = useState(false);
@@ -80,26 +82,27 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       setLoading(true);
       try {
         // Загружаем профиль
-        let profile = null;
+        let profileData = null;
         try {
-          const { data: profileData, error: profileError } = await supabase
+          const { data: pData, error: profileError } = await supabase
             .from('profiles')
             .select('weight, goal, cycle_phase, cycle_last_period, cycle_length')
             .eq('id', user.id)
             .maybeSingle();
           if (profileError) {
             console.error('Ошибка загрузки профиля:', profileError);
-          } else if (profileData) {
-            profile = profileData;
+          } else if (pData) {
+            profileData = pData;
+            setProfile({ weight: pData.weight || 0, goal: pData.goal });
           }
         } catch (err) {
           console.error('Ошибка при запросе профиля:', err);
         }
 
         // Рекомендация по биоритмам
-        if (profile?.cycle_phase && profile.cycle_phase !== 'not_specified') {
+        if (profileData?.cycle_phase && profileData.cycle_phase !== 'not_specified') {
           try {
-            const rec = getPhaseRecommendation(profile.cycle_phase as any);
+            const rec = getPhaseRecommendation(profileData.cycle_phase as any);
             setCycleRecommendation(rec.recommendation);
           } catch (err) {
             console.error('Ошибка получения рекомендации:', err);
@@ -107,13 +110,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         }
 
         // Определяем дату для загрузки данных
-        let targetDate = new Date();
-        if (dateFilter === 'yesterday') {
-          targetDate.setDate(targetDate.getDate() - 1);
-        } else if (dateFilter === 'week') {
-          targetDate.setDate(targetDate.getDate() - 7);
-        }
-        const dateStr = targetDate.toISOString().split('T')[0];
+        const dateStr = selectedDate.toISOString().split('T')[0];
 
         // Загружаем калории и макросы из meals
         let totalCalories = 0;
@@ -174,13 +171,22 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           console.error('Ошибка при запросе workout_logs:', err);
         }
 
-        // Загружаем воду из store
+        // Загружаем воду за выбранный день
         let totalWater = 0;
         try {
-          await waterStore.fetchToday(user.id);
-          totalWater = waterStore.todayAmount || 0;
+          const { data: waterLogs, error: waterError } = await supabase
+            .from('water_logs')
+            .select('amount')
+            .eq('user_id', user.id)
+            .gte('created_at', new Date(dateStr).toISOString())
+            .lt('created_at', new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1)).toISOString());
+          if (waterError) {
+            console.error('Ошибка загрузки water_logs:', waterError);
+          } else if (waterLogs) {
+            totalWater = waterLogs.reduce((sum, w) => sum + (w.amount || 0), 0);
+          }
         } catch (err) {
-          console.error('Ошибка при загрузке воды:', err);
+          console.error('Ошибка при запросе water_logs:', err);
         }
 
         // Загружаем серию
@@ -193,9 +199,30 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           console.error('Ошибка при загрузке серии:', err);
         }
 
+        // Расчёт прогресса за неделю
+        let progressPct = 0;
+        try {
+          const weekAgo = new Date(selectedDate);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          const { data: weekMeals, error: weekError } = await supabase
+            .from('meals')
+            .select('calories')
+            .eq('user_id', user.id)
+            .gte('date', weekAgo.toISOString().split('T')[0])
+            .lte('date', dateStr);
+          
+          if (!weekError && weekMeals) {
+            const weekCalories = weekMeals.reduce((sum, m) => sum + (m.calories || 0), 0);
+            const targetCalories = (profileData?.goal === 'lose' ? 2000 : profileData?.goal === 'gain' ? 3000 : 2500) * 7;
+            progressPct = Math.min(Math.round((weekCalories / targetCalories) * 100), 100);
+          }
+        } catch (err) {
+          console.error('Ошибка расчёта прогресса:', err);
+        }
+
         // Устанавливаем цель калорий из профиля или по умолчанию
-        const goalCalories = profile?.goal ? 
-          (profile.goal === 'lose' ? 2000 : profile.goal === 'gain' ? 3000 : 2500) : 2500;
+        const goalCalories = profileData?.goal ? 
+          (profileData.goal === 'lose' ? 2000 : profileData.goal === 'gain' ? 3000 : 2500) : 2500;
         setCalorieGoal(goalCalories);
 
         setStats({
@@ -208,11 +235,10 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           water: totalWater / 1000,
           sleep: sleepHoursVal,
           workouts: workoutsCount,
-          progress: 65,
+          progress: progressPct,
         });
       } catch (error) {
         console.error('Критическая ошибка загрузки дашборда:', error);
-        // Fallback значения при критической ошибке
         setStats({
           calories: 0,
           macros: {
@@ -230,7 +256,7 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       }
     };
     loadDashboard();
-  }, [user, dateFilter]);
+  }, [user, selectedDate]);
 
   const handleWaterAdd = async (amount: number) => {
     if (!user) return;
@@ -273,17 +299,10 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const circleColor = getCircleColor();
   const remainingCalories = calorieGoal - stats.calories;
 
-  // Функция для получения цвета макроса
+  // Функция для получения цвета макроса (как у YAZIO)
   const getMacroColor = (current: number, goal: number, baseColor: string, overColor: string) => {
     return current > goal ? overColor : baseColor;
   };
-
-  // Функция для стиля range input
-  const rangeStyle = (active: boolean) => 
-    active ? 'bg-accent-blue text-white' : 'bg-bg-card text-text-secondary';
-
-  // Процент заполнения воды (для styling)
-  const waterPercent = waterAmount > 0;
 
   return (
     <div className="p-4 max-w-4xl mx-auto animate-fade-in">
@@ -291,40 +310,41 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0s' }}>
         <p className="text-sm italic text-text-secondary mb-2">"{quote.text}"</p>
         <h1 className="text-2xl font-bold text-text mb-1">Привет, {user?.email?.split('@')[0] || 'Пользователь'}!</h1>
-        <p className="text-sm text-text-secondary">Цель: {longPathStore.userGoals?.[0]?.goal_type === 'strength' ? 'Сила' : longPathStore.userGoals?.[0]?.goal_type === 'cardio' ? 'Выносливость' : longPathStore.userGoals?.[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Поддержание'}</p>
+        <p className="text-sm text-text-secondary">
+          {longPathStore.userGoals && longPathStore.userGoals.length > 0 ? (
+            <>Цель: {longPathStore.userGoals[0].goal_type === 'strength' ? 'Сила' : longPathStore.userGoals[0].goal_type === 'cardio' ? 'Выносливость' : longPathStore.userGoals[0].goal_type === 'weight_loss' ? 'Похудение' : longPathStore.userGoals[0].goal_type === 'muscle_gain' ? 'Набор массы' : 'Поддержание'}</>
+          ) : (
+            <button onClick={() => navigate('/coach')} className="text-accent-blue hover:underline">Выберите свою цель</button>
+          )}
+        </p>
       </div>
 
-      {/* ПЕРЕКЛЮЧАТЕЛЬ ДАТЫ */}
-      <div className="flex gap-2 mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+      {/* ПЕРЕКЛЮЧЕНИЕ ДНЕЙ СО СТРЕЛКАМИ */}
+      <div className="flex items-center justify-between mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
         <button
-          onClick={() => setDateFilter('today')}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
-            dateFilter === 'today'
-              ? 'bg-accent-blue text-white'
-              : 'bg-bg-card text-text-secondary hover:bg-bg-card-hover'
-          }`}
+          onClick={() => {
+            const prev = new Date(selectedDate);
+            prev.setDate(prev.getDate() - 1);
+            if (prev <= new Date()) setSelectedDate(prev);
+          }}
+          className="p-2 rounded-lg bg-bg-card hover:bg-bg-card-hover transition-colors"
+          disabled={selectedDate >= new Date()}
         >
-          Сегодня
+          <ChevronLeft size={20} className="text-text-secondary" />
         </button>
+        <span className="text-sm font-medium text-text">
+          {selectedDate.toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </span>
         <button
-          onClick={() => setDateFilter('yesterday')}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
-            dateFilter === 'yesterday'
-              ? 'bg-accent-blue text-white'
-              : 'bg-bg-card text-text-secondary hover:bg-bg-card-hover'
-          }`}
+          onClick={() => {
+            const next = new Date(selectedDate);
+            next.setDate(next.getDate() + 1);
+            if (next <= new Date()) setSelectedDate(next);
+          }}
+          className="p-2 rounded-lg bg-bg-card hover:bg-bg-card-hover transition-colors"
+          disabled={selectedDate >= new Date()}
         >
-          Вчера
-        </button>
-        <button
-          onClick={() => setDateFilter('week')}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
-            dateFilter === 'week'
-              ? 'bg-accent-blue text-white'
-              : 'bg-bg-card text-text-secondary hover:bg-bg-card-hover'
-          }`}
-        >
-          Неделя
+          <ChevronRightIcon size={20} className="text-text-secondary" />
         </button>
       </div>
 
@@ -366,64 +386,62 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </span>
       </div>
 
-      {/* ТРИ ПРОГРЕСС-БАРА МАКРОСОВ */}
+      {/* ТРИ ПРОГРЕСС-БАРА МАКРОСОВ (как у YAZIO) */}
       <div className="card-modern mb-6 space-y-4">
-        {/* Белки - зелёный */}
+        {/* Белки - #FF6B6B (красный) */}
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span className="text-text font-medium">Белки</span>
             <span className="text-text-secondary">{Math.round(stats.macros.protein.current)} / {stats.macros.protein.goal} г</span>
           </div>
-          <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((stats.macros.protein.current / stats.macros.protein.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.protein.current, stats.macros.protein.goal, '#22c55e', '#ef4444') }}
+              style={{ width: `${Math.min((stats.macros.protein.current / stats.macros.protein.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.protein.current, stats.macros.protein.goal, '#FF6B6B', '#ff4757') }}
             />
           </div>
         </div>
 
-        {/* Жиры - красный */}
+        {/* Жиры - #FECA57 (жёлтый) */}
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span className="text-text font-medium">Жиры</span>
             <span className="text-text-secondary">{Math.round(stats.macros.fats.current)} / {stats.macros.fats.goal} г</span>
           </div>
-          <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((stats.macros.fats.current / stats.macros.fats.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.fats.current, stats.macros.fats.goal, '#ef4444', '#f97316') }}
+              style={{ width: `${Math.min((stats.macros.fats.current / stats.macros.fats.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.fats.current, stats.macros.fats.goal, '#FECA57', '#ffa502') }}
             />
           </div>
         </div>
 
-        {/* Углеводы - жёлтый */}
+        {/* Углеводы - #48DBFB (голубой) */}
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span className="text-text font-medium">Углеводы</span>
             <span className="text-text-secondary">{Math.round(stats.macros.carbs.current)} / {stats.macros.carbs.goal} г</span>
           </div>
-          <div className="w-full h-2 bg-border-color rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((stats.macros.carbs.current / stats.macros.carbs.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.carbs.current, stats.macros.carbs.goal, '#eab308', '#f59e0b') }}
+              style={{ width: `${Math.min((stats.macros.carbs.current / stats.macros.carbs.goal) * 100, 100)}%`, backgroundColor: getMacroColor(stats.macros.carbs.current, stats.macros.carbs.goal, '#48DBFB', '#0abde3') }}
             />
           </div>
         </div>
       </div>
 
-      {/* ЧЕТЫРЕ КАРТОЧКИ: Вода, Сон, Тренировки, Прогресс */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {/* Вода */}
-        <div 
-          className="card-modern p-5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl shadow-lg cursor-pointer active:scale-[0.98] transition-transform duration-100"
+      {/* Стакан с водой */}
+      <div className="card-modern mb-6 flex flex-col items-center py-6">
+        <WaterGlass 
+          currentAmount={Math.round(stats.water * 1000)} 
+          goalAmount={2000}
           onClick={() => setShowWaterModal(true)}
-          style={{ animationDelay: '0.1s' }}
-        >
-          <Droplet size={24} className="text-blue-500 mb-3" />
-          <p className="text-xs font-medium text-text-secondary mb-1">Вода</p>
-          <p className="text-2xl font-bold text-text">{stats.water > 0 ? `${stats.water.toFixed(1)}` : <span className="text-sm">Выпей стакан воды</span>}</p>
-        </div>
+        />
+      </div>
 
+      {/* ЧЕТЫРЕ КАРТОЧКИ: Сон, Тренировки, Прогресс */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         {/* Сон */}
         <div 
           className="card-modern p-5 bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 rounded-2xl shadow-lg cursor-pointer active:scale-[0.98] transition-transform duration-100"
@@ -448,12 +466,12 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
         {/* Прогресс */}
         <div 
-          className="card-modern p-5 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100"
+          className="card-modern p-5 bg-gradient-to-br from-accent-blue/10 to-accent-blue/5 rounded-2xl shadow-lg active:scale-[0.98] transition-transform duration-100"
           style={{ animationDelay: '0.4s' }}
         >
-          <Target size={24} className="text-purple-500 mb-3" />
+          <Target size={24} className="text-accent-blue mb-3" />
           <p className="text-xs font-medium text-text-secondary mb-1">Прогресс</p>
-          <p className="text-2xl font-bold text-text">{stats.progress}%</p>
+          <p className="text-2xl font-bold text-text">{stats.progress > 0 ? `${stats.progress}%` : <span className="text-sm">—</span>}</p>
         </div>
       </div>
 
@@ -495,86 +513,10 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
       {/* КАРТОЧКА СЕРИИ - ОДИН БЛОК ВНИЗУ */}
       <div className="card-modern mb-6">
-        <p className="text-sm text-text-secondary mb-1">Серия тренировок</p>
-        <p className="text-xl font-bold text-text">{longPathStore.streak} дней</p>
+        <p className="text-sm text-text-secondary mb-1">Серия тренировок: {longPathStore.streak} дней</p>
       </div>
 
-      {/* Блок выбора глобальной цели - ОДИН БЛОК ПОД ПРИВЕТСТВИЕМ */}
-      <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border-accent-blue/30">
-        {!longPathStore.userGoals || longPathStore.userGoals.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-4">
-            <Target size={40} className="text-accent-blue mb-3" />
-            <p className="text-text font-semibold text-lg mb-2">Выбери свою цель</p>
-            <p className="text-text-secondary text-sm mb-4">Определи направление движения к лучшей версии себя</p>
-            <button 
-              onClick={() => navigate('/coach')}
-              className="btn-primary px-6 py-2.5 rounded-xl flex items-center gap-2"
-            >
-              Начать путь <ChevronRight size={18} />
-            </button>
-          </div>
-        ) : (
-          <div className="py-2">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="text-text-secondary text-xs uppercase tracking-wide">Глобальная цель</p>
-                <h3 className="text-xl font-bold text-text flex items-center gap-2">
-                  <Award size={20} className="text-accent-gold" />
-                  {longPathStore.userGoals[0]?.goal_type === 'strength' ? 'Сила' : 
-                   longPathStore.userGoals[0]?.goal_type === 'cardio' ? 'Выносливость' : 
-                   longPathStore.userGoals[0]?.goal_type === 'weight_loss' ? 'Похудение' : 'Масса'}
-                </h3>
-              </div>
-              <button 
-                onClick={() => navigate('/coach')}
-                className="text-accent-blue text-sm hover:underline flex items-center gap-1"
-              >
-                Изменить <ChevronRight size={14} />
-              </button>
-            </div>
-            <div className="flex items-center gap-4 mb-2">
-              <div className="flex-1">
-                <div className="flex justify-between text-xs text-text-secondary mb-1">
-                  <span>Уровень {longPathStore.currentLevelIndex + 1}</span>
-                  <span>{Math.round(longPathStore.progressToNextLevel)}%</span>
-                </div>
-                <div className="w-full bg-bg-tertiary rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-accent-blue to-accent-purple h-2 rounded-full transition-all duration-500" 
-                    style={{ width: `${longPathStore.progressToNextLevel}%` }} 
-                  />
-                </div>
-              </div>
-            </div>
-            <p className="text-text-secondary text-xs">
-              До следующей ступени: {longPathStore.goalLevels[longPathStore.currentLevelIndex + 1]?.targetValue || 'Финиш'} {longPathStore.userGoals[0]?.goal_unit}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Прогресс и Серия в одной строке */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="card-modern p-4 bg-gradient-to-br from-accent-blue/10 to-transparent border-accent-blue/20">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={18} className="text-accent-blue" />
-            <span className="text-sm text-text-secondary">Прогресс</span>
-          </div>
-          <p className="text-2xl font-bold text-text">{stats.progress}%</p>
-          <div className="w-full bg-bg-tertiary rounded-full h-1.5 mt-2">
-            <div className="bg-accent-blue h-1.5 rounded-full transition-all duration-700" style={{ width: `${stats.progress}%` }} />
-          </div>
-        </div>
-
-        <div className="card-modern p-4 bg-gradient-to-br from-accent-gold/10 to-transparent border-accent-gold/20">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap size={18} className="text-accent-gold" />
-            <span className="text-sm text-text-secondary">Серия</span>
-          </div>
-          <p className="text-2xl font-bold text-text">{stats.streak}</p>
-          <p className="text-xs text-text-secondary mt-1">дней подряд</p>
-        </div>
-      </div>
+      {/* Прогресс и Серия в одной строке удалены - дублирование */}
 
       {/* Приветствие и цель (упрощённый блок) */}
       <div className="card-modern mb-6 bg-gradient-to-r from-accent-blue/5 to-transparent border-accent-blue/20">
@@ -590,32 +532,9 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         </div>
       </div>
 
-      {/* Добавление воды */}
-      <div className="card-modern mt-6">
-        <p className="text-text-secondary text-sm mb-2">Добавить воду</p>
-        <div className="flex items-center gap-3 mb-3">
-          <input
-            type="range"
-            min="0"
-            max="3000"
-            step="50"
-            value={waterAmount}
-            onChange={(e) => setWaterAmount(Number(e.target.value))}
-            className={`w-full h-2 rounded-lg appearance-none cursor-pointer transition-all ${rangeStyle(waterPercent)}`}
-          />
-          <span className="text-text font-medium min-w-[60px] text-right">{waterAmount} мл</span>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => handleWaterAdd(waterAmount)} className="btn-primary flex-1 py-2">
-            Добавить
-          </button>
-          <button onClick={() => { setWaterAmount(200); setShowWaterModal(true); }} className="btn-secondary flex-1 py-2">+200</button>
-          <button onClick={() => { setWaterAmount(500); setShowWaterModal(true); }} className="btn-secondary flex-1 py-2">+500</button>
-          <button onClick={() => { setWaterAmount(1000); setShowWaterModal(true); }} className="btn-secondary flex-1 py-2">+1 л</button>
-        </div>
-      </div>
+      {/* Добавление воды удалено - теперь используется стакан */}
 
-      {/* Модальное окно для воды */}
+      {/* Модальное окно для воды с выбором своего значения */}
       {showWaterModal && (
         <Modal onClose={() => setShowWaterModal(false)} title="Добавить воду">
           <div className="space-y-4">
@@ -630,7 +549,17 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
               <button onClick={() => handleWaterAdd(1000)} className="btn-secondary py-3">
                 🪣 1 л
               </button>
-              <button onClick={() => setShowWaterModal(false)} className="btn-secondary py-3">
+              <button onClick={() => {
+                const amount = prompt('Введите количество воды (мл):', '250');
+                if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
+                  handleWaterAdd(Number(amount));
+                }
+              }} className="btn-secondary py-3">
+                ✏️ Своё значение
+              </button>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowWaterModal(false)} className="btn-secondary flex-1 py-2.5">
                 ✕ Отмена
               </button>
             </div>
