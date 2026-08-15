@@ -7,34 +7,23 @@
 @layer base {
   /* ── Базовые переменные (будут переопределяться) ──── */
   :root {
-    --bg: #0D1117;
-    --bg-secondary: #161B22;
-    --bg-tertiary: #21262D;
-    --card: #161B22;
-    --card-hover: #1C2128;
-    --border: #30363D;
-    --border-subtle: #21262D;
-    --text: #E6EDF3;
-    --text-secondary: #8B949E;
-    --text-tertiary: #6E7681;
-    --accent-blue: #1E2A4A;
-    --accent-green: #3FB950;
-    --accent-gold: #D29922;
+    --bg: #0D0D1A;
+    --bg-secondary: #1A1A2E;
+    --bg-tertiary: #252542;
+    --card: #1A1A2E;
+    --card-hover: #23233A;
+    --border: #3A3A5C;
+    --border-subtle: #2A2A4A;
+    --text: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-tertiary: #6B7280;
+    --accent-blue: #4F46E5;
+    --accent-hover: #4338CA;
+    --accent-green: #22C55E;
+    --accent-gold: #EAB308;
     --accent-orange: #F0883E;
-    --accent-red: #F85149;
-    --accent-purple: #BB86FC;
-    
-    /* Единые размеры и отступы */
-    --font-base: 16px;
-    --font-sm: 14px;
-    --font-lg: 18px;
-    --font-xl: 22px;
-    --card-radius: 16px;
-    --btn-radius: 12px;
-    --shadow-light: 0 4px 12px rgba(0,0,0,0.1);
-    --shadow-light-hover: 0 8px 24px rgba(0,0,0,0.15);
-    --shadow-dark: 0 4px 12px rgba(0,0,0,0.3);
-    --shadow-dark-hover: 0 8px 24px rgba(0,0,0,0.4);
+    --accent-red: #EF4444;
+    --accent-purple: #7C3AED;
   }
 
   /* ── Тема: тёмно-синяя (по умолчанию) ────────────── */
@@ -46,15 +35,16 @@
     --card-hover: #23233A;
     --border: #3A3A5C;
     --border-subtle: #2A2A4A;
-    --text: #E6EDF3;
-    --text-secondary: #9CA3AF;
+    --text: #F8FAFC;
+    --text-secondary: #94A3B8;
     --text-tertiary: #6B7280;
-    --accent-blue: #1E2A4A;
-    --accent-green: #3FB950;
-    --accent-gold: #D29922;
+    --accent-blue: #4F46E5;
+    --accent-hover: #4338CA;
+    --accent-green: #22C55E;
+    --accent-gold: #EAB308;
     --accent-orange: #F0883E;
-    --accent-red: #F85149;
-    --accent-purple: #2A3B6B;
+    --accent-red: #EF4444;
+    --accent-purple: #7C3AED;
   }
 
   /* ── Тема: светлая ──────────────────────────────────── */
@@ -69,11 +59,12 @@
     --text: #1F2937;
     --text-secondary: #656D76;
     --text-tertiary: #848D97;
-    --accent-blue: #2A3B6B;
-    --accent-green: #1A7F37;
-    --accent-gold: #9A6700;
-    --accent-orange: #BC4C00;
-    --accent-red: #CF222E;
+    --accent-blue: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-green: #16A34A;
+    --accent-gold: #CA8A04;
+    --accent-orange: #EA580C;
+    --accent-red: #DC2626;
     --accent-purple: #7C3AED;
   }
 
@@ -86,14 +77,15 @@
     --card-hover: #383838;
     --border: #404040;
     --border-subtle: #333333;
-    --text: #D4D4D4;
-    --text-secondary: #A0A0A0;
+    --text: #F8FAFC;
+    --text-secondary: #94A3B8;
     --text-tertiary: #777777;
-    --accent-blue: #1E2A4A;
-    --accent-green: #3FB950;
-    --accent-gold: #D29922;
+    --accent-blue: #4F46E5;
+    --accent-hover: #4338CA;
+    --accent-green: #22C55E;
+    --accent-gold: #EAB308;
     --accent-orange: #F0883E;
-    --accent-red: #F85149;
+    --accent-red: #EF4444;
     --accent-purple: #BB86FC;
   }
 
@@ -106,14 +98,15 @@
     --card-hover: #1E1E1E;
     --border: #2A2A2A;
     --border-subtle: #1A1A1A;
-    --text: #E0E0E0;
-    --text-secondary: #A0A0A0;
+    --text: #F8FAFC;
+    --text-secondary: #94A3B8;
     --text-tertiary: #666666;
-    --accent-blue: #BB86FC;
-    --accent-green: #03DAC6;
-    --accent-gold: #FFB74D;
-    --accent-orange: #FF7043;
-    --accent-red: #CF6679;
+    --accent-blue: #4F46E5;
+    --accent-hover: #4338CA;
+    --accent-green: #22C55E;
+    --accent-gold: #EAB308;
+    --accent-orange: #F0883E;
+    --accent-red: #EF4444;
     --accent-purple: #BB86FC;
   }
   

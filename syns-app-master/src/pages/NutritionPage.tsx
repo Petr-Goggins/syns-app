@@ -41,6 +41,9 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedMealPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [calories, setCalories] = useState('');
+  const [productSearchModalOpen, setProductSearchModalOpen] = useState(false);
+  const [replacingMealType, setReplacingMealType] = useState<string>('');
+  const [replacingFoodIndex, setReplacingFoodIndex] = useState<number>(-1);
 
   useEffect(() => {
     const loadMealPlans = async () => {
@@ -73,9 +76,15 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
   // Поиск продуктов через ВкусВилл, Пятёрочку и Open Food Facts API
   const searchFood = async (query: string) => {
-    if (!query.trim()) return;
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
     setIsSearching(true);
     setSearchResults([]);
+
+    console.log('Поиск продукта:', query);
 
     try {
       // 1. Поиск во ВкусВилл
@@ -187,9 +196,101 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   };
 
   const handleReplaceProduct = (mealType: string, foodIndex: number) => {
-    toast.success(`Замена продукта: ${mealType}[${foodIndex}]`);
-    // Здесь будет логика поиска альтернативного продукта
+    setReplacingMealType(mealType);
+    setReplacingFoodIndex(foodIndex);
+    setProductSearchModalOpen(true);
   };
+
+  const handleSelectReplacement = async (newProduct: any) => {
+    if (!generatedPlan || replacingFoodIndex < 0) return;
+
+    const meal = generatedPlan.meals.find(m => m.type === replacingMealType);
+    if (!meal || !meal.foods[replacingFoodIndex]) return;
+
+    const oldFood = meal.foods[replacingFoodIndex];
+    const updatedFood = {
+      ...oldFood,
+      name: newProduct.name,
+      calories: newProduct.nutritional_info?.calories || oldFood.calories,
+      protein: newProduct.nutritional_info?.protein || oldFood.protein,
+      fat: newProduct.nutritional_info?.fat || oldFood.fat,
+      carbs: newProduct.nutritional_info?.carbs || oldFood.carbs,
+    };
+
+    meal.foods[replacingFoodIndex] = updatedFood;
+    meal.totalCalories = meal.foods.reduce((sum, f) => sum + f.calories, 0);
+    meal.totalProtein = meal.foods.reduce((sum, f) => sum + f.protein, 0);
+    meal.totalFat = meal.foods.reduce((sum, f) => sum + f.fat, 0);
+    meal.totalCarbs = meal.foods.reduce((sum, f) => sum + f.carbs, 0);
+
+    generatedPlan.totalCalories = generatedPlan.meals.reduce((sum, m) => sum + m.totalCalories, 0);
+    generatedPlan.totalProtein = generatedPlan.meals.reduce((sum, m) => sum + m.totalProtein, 0);
+    generatedPlan.totalFat = generatedPlan.meals.reduce((sum, m) => sum + m.totalFat, 0);
+    generatedPlan.totalCarbs = generatedPlan.meals.reduce((sum, m) => sum + m.totalCarbs, 0);
+
+    setGeneratedPlan({ ...generatedPlan });
+    setProductSearchModalOpen(false);
+    setReplacingMealType('');
+    setReplacingFoodIndex(-1);
+    toast.success(`Продукт заменён на ${newProduct.name}`);
+  };
+
+  const handleProductSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    setSearchResults([]);
+
+    console.log('Поиск продукта для замены:', query);
+
+    try {
+      const vkusvillResults = await searchVkusvillProducts(query);
+      if (vkusvillResults.length > 0) {
+        setSearchResults(vkusvillResults.map(p => ({ ...p, source: 'ВкусВилл' })));
+        setIsSearching(false);
+        return;
+      }
+
+      const pyaterochkaResults = await searchPyaterochkaProducts(query);
+      if (pyaterochkaResults.length > 0) {
+        setSearchResults(pyaterochkaResults.map(p => ({ ...p, source: 'Пятёрочка' })));
+        setIsSearching(false);
+        return;
+      }
+
+      const openFoodResponse = await fetch(
+        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=true`
+      );
+      const openFoodData = await openFoodResponse.json();
+      const openFoodResults = (openFoodData.products || []).map((p: any) => ({
+        id: p.id || p.code,
+        name: p.product_name || p.name,
+        image: p.image_url,
+        source: 'Open Food Facts',
+        nutritional_info: {
+          calories: p.nutriments?.['energy-kcal_100g'] || p.nutriments?.energy,
+          protein: p.nutriments?.proteins_100g || p.nutriments?.proteins,
+          fat: p.nutriments?.fat_100g || p.nutriments?.fat,
+          carbs: p.nutriments?.carbohydrates_100g || p.nutriments?.carbohydrates,
+        },
+      }));
+
+      if (openFoodResults.length > 0) {
+        setSearchResults(openFoodResults);
+        setIsSearching(false);
+        return;
+      }
+
+      setSearchResults([]);
+    } catch (err) {
+      console.error('Ошибка соединения:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleSelectProduct = (product: any) => {
     setProductName(product.name);
     setProtein(String(product.proteins || product.protein || product.nutritional_info?.protein || 0));
