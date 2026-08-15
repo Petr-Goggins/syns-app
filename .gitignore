@@ -1,49 +1,18 @@
-```
 # Dependencies
 node_modules/
 
-# Build outputs
-dist/
-build/
-.next/
-out/
-
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*
 
-# IDE specific
+# Logs and temp files
+*.log
+*.tmp
+
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# Python related
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Logs
+# Original rules preserved
 *.log
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
-
-# Temporary files
-*.tmp
-*.temp
-```
