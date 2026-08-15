@@ -25,6 +25,8 @@ export interface GeneratedMealPlan {
   userId: string;
   date: string;
   duration: 'day' | 'week';
+  varietyLevel: 'minimal' | 'medium' | 'maximal';
+  days?: GeneratedMealPlan[]; // Для недельного плана
   meals: MealPlanMeal[];
   totalCalories: number;
   totalProtein: number;
@@ -68,10 +70,19 @@ export const MEAL_PLAN_SYSTEM_PROMPT = `Ты — персональный ИИ-�
    - Предпочтения пользователя (любимые/нелюбимые продукты)
    - Доступное оборудование для готовки
    - Бюджет (если указан)
+   - Уровень разнообразия:
+     * Минимальный: одни и те же продукты каждый день (повторяющийся план)
+     * Средний: частичное разнообразие (некоторые блюда повторяются)
+     * Максимальный: уникальные продукты и блюда каждый день
 
-5. Сформируй список покупок на день/неделю.
+5. Для недельного плана:
+   - При минимальном разнообразии: один и тот же план на 7 дней
+   - При среднем разнообразии: 3-4 уникальных дня, остальные повторяются
+   - При максимальном разнообразии: 7 уникальных дней с разными продуктами
 
-6. ВСЕГДА указывай научные источники для рекомендаций:
+6. Сформируй список покупок на день/неделю.
+
+7. ВСЕГДА указывай научные источники для рекомендаций:
    - ACSM (American College of Sports Medicine)
    - WHO (World Health Organization)
    - USDA (United States Department of Agriculture)
@@ -100,6 +111,8 @@ export const MEAL_PLAN_SYSTEM_PROMPT = `Ты — персональный ИИ-�
   "sources": ["ACSM: норма белка 1.6-2.2 г/кг для набора массы", "WHO: рекомендации по углеводам"]
 }
 
+Для недельного плана добавь поле "days" с массивом из 7 объектов такой же структуры.
+
 Отвечай ТОЛЬКО JSON без дополнительного текста.`;
 
 /**
@@ -109,6 +122,7 @@ export async function generateMealPlan(
   userId: string,
   userContext: string,
   duration: 'day' | 'week' = 'day',
+  varietyLevel: 'minimal' | 'medium' | 'maximal' = 'medium',
   budget?: number,
   preferences?: string
 ): Promise<GeneratedMealPlan | null> {
@@ -118,6 +132,7 @@ export async function generateMealPlan(
 ${userContext}
 
 ЗАДАЧА: Сгенерируй рацион питания на ${duration === 'day' ? '1 день' : '7 дней'}.
+Уровень разнообразия: ${varietyLevel === 'minimal' ? 'Минимальный (одни и те же продукты каждый день)' : varietyLevel === 'medium' ? 'Средний (частичное разнообразие)' : 'Максимальный (уникальные продукты каждый день)'}.
 ${budget ? `Бюджет: ${budget} рублей в день.` : ''}
 ${preferences ? `Предпочтения: ${preferences}` : ''}
 
@@ -132,10 +147,11 @@ ${preferences ? `Предпочтения: ${preferences}` : ''}
     // const data = await response.json();
 
     // Заглушка для демонстрации
-    const mockPlan: GeneratedMealPlan = {
+    const basePlan: GeneratedMealPlan = {
       userId,
       date: new Date().toISOString().split('T')[0],
       duration,
+      varietyLevel,
       meals: [
         {
           type: 'breakfast',
@@ -162,7 +178,7 @@ ${preferences ? `Предпочтения: ${preferences}` : ''}
           totalCarbs: 51,
         },
         {
-          type: 'snack1',
+          type: 'snack',
           foods: [
             { name: 'Творог 5%', weight: 150, calories: 180, protein: 27, fat: 7.5, carbs: 4.5 },
             { name: 'Банан', weight: 120, calories: 107, protein: 1.3, fat: 0.4, carbs: 27 },
@@ -211,7 +227,41 @@ ${preferences ? `Предпочтения: ${preferences}` : ''}
       isSaved: false,
     };
 
-    return mockPlan;
+    // Если недельный план с максимальным разнообразием — генерируем 7 уникальных дней
+    if (duration === 'week' && varietyLevel === 'maximal') {
+      const variations = [
+        { breakfast: 'Гречка с яйцом', lunch: 'Индейка с рисом', dinner: 'Треска с овощами' },
+        { breakfast: 'Сырники', lunch: 'Говядина с гречкой', dinner: 'Курица с картофелем' },
+        { breakfast: 'Омлет с овощами', lunch: 'Рыба с пастой', dinner: 'Творог с фруктами' },
+        { breakfast: 'Овсянка с ягодами', lunch: 'Свинина с овощами', dinner: 'Креветки с салатом' },
+        { breakfast: 'Творожная запеканка', lunch: 'Баранина с булгуром', dinner: 'Тунец с авокадо' },
+        { breakfast: 'Панкейки с мёдом', lunch: 'Утка с яблоками', dinner: 'Кальмары с рисом' },
+        { breakfast: 'Шакушука', lunch: 'Лосось с киноа', dinner: 'Говяжья печень с гречкой' },
+      ];
+
+      basePlan.days = variations.map((variation, index) => ({
+        ...basePlan,
+        date: new Date(Date.now() + index * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        meals: basePlan.meals.map(meal => ({
+          ...meal,
+          foods: meal.foods.map(food => ({
+            ...food,
+            name: index === 0 ? food.name : 
+                  meal.type === 'breakfast' ? variation.breakfast :
+                  meal.type === 'lunch' ? variation.lunch :
+                  meal.type === 'dinner' ? variation.dinner : food.name,
+          })),
+        })),
+      }));
+    } else if (duration === 'week') {
+      // Для минимального и среднего разнообразия — повторяем базовый план
+      basePlan.days = Array.from({ length: 7 }, (_, i) => ({
+        ...basePlan,
+        date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      }));
+    }
+
+    return basePlan;
   } catch (error) {
     console.error('Ошибка генерации рациона:', error);
     return null;
