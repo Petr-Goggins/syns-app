@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Dumbbell, Utensils, BarChart2, User } from 'lucide-react';
+import { Home, Dumbbell, Utensils, BarChart2, User, BookOpen } from 'lucide-react';
 import './BottomNav.css';
 
 export default function BottomNav() {
@@ -10,6 +10,7 @@ export default function BottomNav() {
   const tabs = [
     { path: '/', icon: Home },
     { path: '/workouts', icon: Dumbbell },
+    { path: '/technique', icon: BookOpen },
     { path: '/nutrition', icon: Utensils },
     { path: '/reports', icon: BarChart2 },
     { path: '/profile', icon: User },
