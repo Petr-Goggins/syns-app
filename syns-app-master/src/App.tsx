@@ -21,6 +21,7 @@ import CoachPage from '@/pages/CoachPage';
 import ReportsPage from '@/pages/ReportsPage';
 import CyclePage from '@/pages/CyclePage';
 import LongPathPage from '@/pages/LongPathPage';
+import ExerciseTechniquePage from '@/pages/ExerciseTechniquePage';
 
 function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -90,6 +91,9 @@ function AppRoutes() {
         <Route path="achievements" element={<AchievementsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="progress" element={<ProgressPage />} />
+        <Route path="technique" element={<ExerciseTechniquePage />} />
+        <Route path="technique/:categoryId" element={<ExerciseTechniquePage />} />
+        <Route path="technique/:categoryId/:exerciseId" element={<ExerciseTechniquePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

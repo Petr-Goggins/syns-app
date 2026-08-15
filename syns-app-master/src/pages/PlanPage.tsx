@@ -3,8 +3,10 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useCoachStore } from '@/store/coachStore';
-import { Calendar, Dumbbell, Sparkles, CheckCircle, Loader2, ArrowRight, Clock, Target, Zap } from 'lucide-react';
+import { Calendar, Dumbbell, Sparkles, CheckCircle, Loader2, ArrowRight, Clock, Target, Zap, Info, AlertTriangle, StretchHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
+import { getExerciseById } from '@/data/exercises';
 
 export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
@@ -50,6 +52,8 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
     const focus = coachData?.focus_type || 'strength';
     const days = coachData?.days_per_week || 3;
     const duration = coachData?.workout_duration || '45_60';
+    const trainingLevel = coachData?.training_level || profile.training_level || 'beginner';
+    const isBeginner = trainingLevel === 'beginner' || trainingLevel === 'новичок';
 
     // Имитация ИИ-генерации (заглушка с разными вариантами)
     const plans = {
@@ -84,13 +88,30 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
     // Выбираем подходящий план
     const selectedPlan = plans[goal as keyof typeof plans] || plans['gain_muscle'];
 
-    // Сохраняем план в Supabase
+    // Для новичков добавляем разминку и заминку
+    if (isBeginner) {
+      Object.keys(selectedPlan.structure).forEach((week) => {
+        const weekData = selectedPlan.structure[week];
+        Object.keys(weekData).forEach((day) => {
+          const exercises = weekData[day];
+          // Добавляем разминку в начало
+          weekData[day] = [
+            '🔥 РАЗМИНКА: 5-7 мин лёгкого кардио + суставная гимнастика',
+            ...exercises,
+            '🧘 ЗАМИНКА: 10-15 мин статической растяжки'
+          ];
+        });
+      });
+    }
+
+    // Сохраняем план в Supabase с флагом для новичков
     const newPlan = {
       user_id: user.id,
       goal: selectedPlan.goal,
       structure: selectedPlan.structure,
       current_week: 1,
       is_active: true,
+      is_beginner_friendly: isBeginner,
     };
 
     const { data, error } = await supabase
@@ -130,6 +151,34 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
 
       {plan ? (
         <div className="space-y-6">
+          {/* Блок безопасности для новичков */}
+          {plan.is_beginner_friendly && (
+            <div className="bg-accent-blue/10 border border-accent-blue/30 p-5 rounded-xl">
+              <h3 className="font-semibold text-accent-blue mb-3 flex items-center gap-2">
+                <AlertTriangle size={20} />
+                Важно для новичков!
+              </h3>
+              <ul className="space-y-2 text-text-secondary text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-accent-green flex-shrink-0 mt-0.5" />
+                  <span><strong>Начинайте с малых весов</strong> — сначала отработайте технику без веса или с минимальным отягощением</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-accent-green flex-shrink-0 mt-0.5" />
+                  <span><strong>Следите за дыханием</strong> — выдох на усилии, вдох при возврате в исходное положение</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-accent-green flex-shrink-0 mt-0.5" />
+                  <span><strong>Если чувствуете боль — остановитесь</strong> — дискомфорт допустим, острая боль нет</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-accent-green flex-shrink-0 mt-0.5" />
+                  <span><strong>Пейте воду во время тренировки</strong> — небольшие глотки между подходами</span>
+                </li>
+              </ul>
+            </div>
+          )}
+
           {/* Карточка цели */}
           <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-lg transition-all hover:shadow-xl">
             <div className="flex items-center gap-3">
@@ -139,6 +188,11 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
             </div>
             <div className="mt-2 flex items-center gap-3 text-sm text-text-secondary">
               <Clock size={16} /> Неделя {plan.current_week || 1}
+              {plan.is_beginner_friendly && (
+                <span className="text-xs bg-accent-blue/10 text-accent-blue px-2 py-0.5 rounded-full ml-2">
+                  Для новичков
+                </span>
+              )}
             </div>
           </div>
 
@@ -157,14 +211,41 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
                         <Zap size={16} className="text-accent-gold" />
                         {day}
                       </p>
-                      <ul className="mt-3 space-y-1.5">
-                        {exercises.map((ex: string, i: number) => (
-                          <li key={i} className="text-text-secondary text-sm flex items-start gap-2">
-                            <span className="text-accent-blue">•</span>
-                            {ex}
-                          </li>
-                        ))}
+                      <ul className="mt-3 space-y-2">
+                        {exercises.map((ex: string, i: number) => {
+                          const isWarmup = ex.includes('РАЗМИНКА');
+                          const isCooldown = ex.includes('ЗАМИНКА');
+                          return (
+                            <li key={i} className={`text-sm flex items-start gap-2 ${isWarmup || isCooldown ? 'opacity-75' : ''}`}>
+                              {isWarmup ? (
+                                <StretchHorizontal size={16} className="text-accent-red flex-shrink-0 mt-0.5" />
+                              ) : isCooldown ? (
+                                <StretchHorizontal size={16} className="text-accent-blue flex-shrink-0 mt-0.5" />
+                              ) : (
+                                <span className="text-accent-blue flex-shrink-0">•</span>
+                              )}
+                              <span className={isWarmup || isCooldown ? 'text-text-secondary italic' : 'text-text-secondary'}>
+                                {ex}
+                              </span>
+                              {!isWarmup && !isCooldown && (
+                                <Link
+                                  to="/technique"
+                                  className="ml-auto text-accent-blue/50 hover:text-accent-blue transition-colors"
+                                  title="Посмотреть технику"
+                                >
+                                  <Info size={14} />
+                                </Link>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
+                      {plan.is_beginner_friendly && (
+                        <div className="mt-3 pt-3 border-t border-border text-xs text-text-secondary">
+                          <Info size={12} className="inline mr-1" />
+                          Не пропускайте разминку и заминку!
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
