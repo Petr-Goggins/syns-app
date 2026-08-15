@@ -1,25 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { exercises, categories, type CategoryId } from '../data/exercises';
 import './ExerciseTechniquePage.css';
 
 export default function ExerciseTechniquePage() {
-  const { exerciseId } = useParams<{ exerciseId: string }>();
-  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-
-  // Автоматическое открытие упражнения при наличии exerciseId в URL
-  useEffect(() => {
-    if (exerciseId) {
-      // Найти упражнение по id
-      const exercise = exercises.find(e => e.id === exerciseId);
-      if (exercise) {
-        setSelectedCategory(exercise.category);
-        setSelectedExerciseId(exercise.id);
-      }
-    }
-  }, [exerciseId]);
 
   const handleCategoryClick = (categoryId: CategoryId) => {
     setSelectedCategory(categoryId);
@@ -56,15 +41,9 @@ export default function ExerciseTechniquePage() {
     return (
       <div className="exercise-technique-page">
         <div className="exercise-detail">
-          <div className="flex items-center gap-2 mb-4">
-            <button 
-              className="back-button" 
-              onClick={() => navigate('/plan')}
-              title="Вернуться к программе тренировок"
-            >
-              ← Назад к программе
-            </button>
-          </div>
+          <button className="back-button" onClick={handleBackToList}>
+            ← Назад к списку
+          </button>
           
           <div className="exercise-header">
             <h1>{selectedExercise.name}</h1>

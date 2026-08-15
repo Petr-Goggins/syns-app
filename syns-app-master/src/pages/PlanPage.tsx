@@ -257,13 +257,13 @@ export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void
                                 {ex}
                               </span>
                               {!isWarmup && !isCooldown && (
-                                <Link
-                                  to="/technique"
-                                  className="ml-auto text-accent-blue/50 hover:text-accent-blue transition-colors"
-                                  title="Посмотреть технику"
+                                <button
+                                  onClick={() => handleOpenTechnique(ex)}
+                                  className="ml-auto text-accent-blue/50 hover:text-accent-blue transition-colors flex items-center justify-center p-1 rounded-full hover:bg-accent-blue/10"
+                                  title="Смотреть технику выполнения"
                                 >
                                   <Info size={14} />
-                                </Link>
+                                </button>
                               )}
                             </li>
                           );
