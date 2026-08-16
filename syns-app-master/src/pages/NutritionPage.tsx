@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { Plus, Sparkles, Search, Clock, Utensils, Filter, X, Repeat, Calendar, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { searchProducts } from '@/services/productService';
 import { searchVkusvillProducts } from '@/services/vkusvillService';
 import { searchPyaterochkaProducts } from '@/services/pyaterochkaService';
 import { generateMealPlan, saveMealPlan, type GeneratedMealPlan } from '@/services/mealPlanService';
@@ -87,7 +88,15 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     console.log('Поиск продукта:', query);
 
     try {
-      // 1. Поиск во ВкусВилл
+      // 1. Поиск через бэкенд (основной метод)
+      const backendResults = await searchProducts(query);
+      if (backendResults && backendResults.length > 0) {
+        setSearchResults(backendResults.map(p => ({ ...p, source: 'Бэкенд' })));
+        setIsSearching(false);
+        return;
+      }
+
+      // 2. Поиск во ВкусВилл (резервный метод)
       const vkusvillResults = await searchVkusvillProducts(query);
       if (vkusvillResults.length > 0) {
         setSearchResults(vkusvillResults.map(p => ({ ...p, source: 'ВкусВилл' })));
@@ -95,7 +104,7 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         return;
       }
 
-      // 2. Поиск в Пятёрочке
+      // 3. Поиск в Пятёрочке (резервный метод)
       const pyaterochkaResults = await searchPyaterochkaProducts(query);
       if (pyaterochkaResults.length > 0) {
         setSearchResults(pyaterochkaResults.map(p => ({ ...p, source: 'Пятёрочка' })));
@@ -103,7 +112,7 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         return;
       }
 
-      // 3. Поиск в Open Food Facts
+      // 4. Поиск в Open Food Facts (резервный метод)
       const openFoodResponse = await fetch(
         `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=true`
       );
@@ -127,10 +136,11 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         return;
       }
 
-      // 4. Ничего не найдено
+      // 5. Ничего не найдено
       setSearchResults([]);
     } catch (err) {
       console.error('Ошибка соединения:', err);
+      toast.error('Ошибка поиска продуктов');
     } finally {
       setIsSearching(false);
     }

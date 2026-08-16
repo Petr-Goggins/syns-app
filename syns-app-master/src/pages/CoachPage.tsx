@@ -14,6 +14,7 @@ import { useCoachStore } from '@/store/coachStore';
 import { useProfileStore } from '@/store/profileStore';
 import { supabase } from '@/lib/supabase';
 import type { CoachData } from '@/types';
+import toast from 'react-hot-toast';
 
 const MAIN_GOAL_OPTIONS = [
   { id: 'lose_weight', label: 'Похудение' },
@@ -184,7 +185,16 @@ export default function CoachPage() {
   };
 
   const handleFinish = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error('Пользователь не авторизован');
+      return;
+    }
+
+    // Проверка обязательных полей
+    if (!form.weight || !form.height || !form.age || !form.main_goal) {
+      toast.error('Заполните все обязательные поля');
+      return;
+    }
 
     // Сохраняем текущий и целевой вес в form.weight и form.goal_amount
     if (currentWeight > 0) {
@@ -228,8 +238,36 @@ export default function CoachPage() {
       set('goal_unit', strengthMode === 'specific' ? 'кг' : '');
     }
 
-    const ok = await saveCoachData(user.id, form);
-    if (ok) navigate('/dashboard');
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          gender: form.gender,
+          age: parseInt(form.age?.toString() || '0'),
+          weight: parseFloat(form.weight?.toString() || '0'),
+          height: parseFloat(form.height?.toString() || '0'),
+          target_weight: targetWeight ? parseFloat(targetWeight) : null,
+          goal: form.main_goal,
+          experience: form.experience_duration,
+          level: form.training_level,
+          injuries: form.injuries,
+          activity_level: form.activity_level || 'moderate',
+          inventory: selectedInventory,
+          focus_muscles: selectedMuscles.join(','),
+          personal_goal: form.personal_goal,
+          preferences: form.health_restrictions,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+      if (error) throw error;
+
+      toast.success('Анкета сохранена!');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      toast.error('Ошибка сохранения анкеты');
+    }
   };
 
   const toggleMuscle = (muscleId: string) => {

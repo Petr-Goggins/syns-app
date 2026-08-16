@@ -3,28 +3,12 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
 import { useProgressStore } from '@/store/progressStore';
-import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, LogOut, Palette, Zap, Utensils, Droplets, Calendar, TrendingUp, Watch } from 'lucide-react';
+import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, LogOut, Palette, Zap, Utensils, Droplets, Calendar, TrendingUp, Watch, Link as LinkIcon, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loadNotificationSettings, saveNotificationSettings, requestNotificationPermission } from '@/lib/notifications';
 import MuscleHeatmap from '@/components/MuscleHeatmap';
 import { calculateWaterNorm, formatWaterNorm } from '@/lib/waterNorm';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-
-const RELIGION_OPTIONS = [
-  { id: 'none', label: 'Нет', icon: '⛔' },
-  { id: 'orthodox', label: 'Православие', icon: '✝️' },
-  { id: 'islam', label: 'Ислам', icon: '🕌' },
-  { id: 'judaism', label: 'Иудаизм', icon: '✡️' },
-  { id: 'buddhism', label: 'Буддизм', icon: '☸️' },
-];
-
-const DIET_OPTIONS = [
-  { id: 'none', label: 'Без ограничений', icon: '🍽️' },
-  { id: 'vegetarian', label: 'Вегетарианство', icon: '🥦' },
-  { id: 'vegan', label: 'Веганство', icon: '🌱' },
-  { id: 'halal', label: 'Халяль', icon: '🕌' },
-  { id: 'kosher', label: 'Кошер', icon: '✡️' },
-];
 
 const THEME_OPTIONS = [
   { id: 'dark-blue', label: 'Тёмно-синяя', icon: '🌙', class: 'theme-dark-blue' },
