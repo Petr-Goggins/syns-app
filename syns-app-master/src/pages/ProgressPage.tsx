@@ -368,7 +368,7 @@ export default function ProgressPage() {
     // Sum calories per day
     const daily: Record<string, number> = {};
     data.forEach(d => {
-      daily[d.log_date] = (daily[d.log_date] || 0) + d.calories;
+      daily[d.date] = (daily[d.date] || 0) + d.calories;
     });
 
     setCalorieData(Object.entries(daily).map(([date, calories]) => ({ date, calories })));
@@ -378,17 +378,17 @@ export default function ProgressPage() {
     const startDate = getStartDate(p);
     const { data, error } = await supabase
       .from('sleep_logs')
-      .select('log_date, hours')
+      .select('date, hours')
       .eq('user_id', userId)
-      .gte('log_date', startDate)
-      .order('log_date', { ascending: true });
+      .gte('date', startDate)
+      .order('date', { ascending: true });
 
     if (error || !data || data.length === 0) {
       setSleepData([]);
       return;
     }
 
-    setSleepData(data.map(d => ({ date: d.log_date, hours: d.hours })));
+    setSleepData(data.map(d => ({ date: d.date, hours: d.hours })));
   };
 
   const fetchMetrics = async (userId: string, p: Period) => {
