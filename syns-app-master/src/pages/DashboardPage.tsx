@@ -5,7 +5,7 @@ import { useWaterStore } from '@/store/waterStore';
 import { useLongPathStore } from '@/store/longPathStore';
 import { useWorkoutLogStore } from '@/store/workoutLogStore';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X, ChevronLeft, ChevronRight as ChevronRightIcon, AlertCircle } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import Modal from '@/components/Modal';
 
@@ -52,6 +52,8 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [quote, setQuote] = useState({ text: '', author: '' });
   const [streak, setStreak] = useState(0);
   const [profile, setProfile] = useState<{ weight: number; goal: string | null } | null>(null);
+  const [showQuestionnaireReminder, setShowQuestionnaireReminder] = useState(false);
+  const [questionnaireDismissed, setQuestionnaireDismissed] = useState(false);
   
   // Модальное окно для добавления воды
   const [showWaterModal, setShowWaterModal] = useState(false);
@@ -77,6 +79,11 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   
   useEffect(() => {
     if (!user) return;
+    
+    // Проверяем, была ли отключена подсказка об анкете
+    const dismissed = localStorage.getItem('questionnaire_reminder_dismissed');
+    setQuestionnaireDismissed(dismissed === 'true');
+    
     const loadDashboard = async () => {
       setLoading(true);
       try {
@@ -93,6 +100,11 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
           } else if (pData) {
             profileData = pData;
             setProfile({ weight: pData.weight || 0, goal: pData.goal });
+            
+            // Проверяем, заполнена ли анкета (есть ли цель)
+            if (!pData.goal && dismissed !== 'true') {
+              setShowQuestionnaireReminder(true);
+            }
           }
         } catch (err) {
           console.error('Ошибка при запросе профиля:', err);
@@ -286,6 +298,11 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     setSleepHours('');
   };
 
+  const handleDismissQuestionnaireReminder = () => {
+    setShowQuestionnaireReminder(false);
+    localStorage.setItem('questionnaire_reminder_dismissed', 'true');
+  };
+
   if (loading) return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>;
 
   // Вычисляем процент выполнения калорий и определяем цвет круга
@@ -305,6 +322,33 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
   return (
     <div className="p-4 max-w-4xl mx-auto animate-fade-in">
+      {/* НАПОМИНАНИЕ ОБ АНКЕТЕ */}
+      {showQuestionnaireReminder && !questionnaireDismissed && (
+        <div className="mb-6 card-modern bg-gradient-to-r from-accent-blue/10 to-transparent border-accent-blue/20 p-4 flex items-center justify-between gap-4 animate-fade-in-up">
+          <div className="flex items-center gap-3 flex-1">
+            <AlertCircle size={24} className="text-accent-blue flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-text">Для персонализации программы пройдите анкету тренера</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => navigate('/coach')}
+              className="btn-primary px-4 py-2 text-sm"
+            >
+              Заполнить
+            </button>
+            <button
+              onClick={handleDismissQuestionnaireReminder}
+              className="p-1 rounded-lg hover:bg-bg-tertiary transition-colors"
+              aria-label="Скрыть"
+            >
+              <X size={18} className="text-text-secondary" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ШАПКА: Цитата дня, Приветствие, Цель */}
       <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0s' }}>
         <p className="text-sm italic text-text-secondary mb-2">"{quote.text}"</p>
