@@ -704,7 +704,12 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 }
 
 // Компонент отображения содержимого плана
-function MealPlanContent({ plan, onReplaceProduct }: { plan: GeneratedMealPlan; onReplaceProduct: (mealType: string, foodIndex: number) => void }) {
+interface MealPlanContentProps {
+  plan: GeneratedMealPlan;
+  onReplaceProduct: (mealType: string, foodIndex: number) => void;
+}
+
+function MealPlanContent({ plan, onReplaceProduct }: MealPlanContentProps) {
   const mealTypeNames: Record<string, string> = {
     breakfast: 'Завтрак',
     lunch: 'Обед',
