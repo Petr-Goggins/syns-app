@@ -5,9 +5,10 @@ import { useWaterStore } from '@/store/waterStore';
 import { useLongPathStore } from '@/store/longPathStore';
 import { useWorkoutLogStore } from '@/store/workoutLogStore';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X, ChevronLeft, ChevronRight as ChevronRightIcon, AlertCircle } from 'lucide-react';
+import { Calendar, Dumbbell, Utensils, Moon, Droplet, Target, Award, TrendingUp, Zap, Clock, Plus, ChevronRight, X, ChevronLeft, ChevronRight as ChevronRightIcon, AlertCircle, Flame } from 'lucide-react';
 import { getPhaseRecommendation } from '@/lib/cycle';
 import Modal from '@/components/Modal';
+import toast from 'react-hot-toast';
 
 type DateFilter = 'today' | 'yesterday' | 'week';
 
@@ -271,9 +272,21 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
   const handleWaterAdd = async (amount: number) => {
     if (!user) return;
-    await waterStore.addWater(user.id, amount);
-    setStats(prev => ({ ...prev, water: Math.round((prev.water + amount / 1000) * 10) / 10 }));
-    setShowWaterModal(false);
+    try {
+      const { error } = await supabase
+        .from('water_logs')
+        .insert({
+          user_id: user.id,
+          date: new Date().toISOString().split('T')[0],
+          amount_ml: amount,
+        });
+      if (error) throw error;
+      setWaterAmount(prev => prev + amount);
+      toast.success(`Добавлено ${amount} мл воды`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Ошибка добавления воды');
+    }
   };
 
   const handleSleepSave = async () => {
