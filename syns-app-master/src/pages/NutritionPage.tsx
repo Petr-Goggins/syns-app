@@ -1,3 +1,44 @@
+function MealPlanContent({ plan, onReplaceProduct }: { plan: GeneratedMealPlan; onReplaceProduct: (mealType: string, foodIndex: number) => void }) {
+  const mealTypeNames: Record<string, string> = {
+    breakfast: 'Завтрак',
+    lunch: 'Обед',
+    dinner: 'Ужин',
+    snack: 'Перекус',
+  };
+
+  return (
+    <div className="space-y-4">
+      {plan.meals.map((meal, mealIdx) => (
+        <div key={mealIdx} className="bg-bg-card p-4 rounded-xl">
+          <h4 className="font-medium text-text mb-2">{mealTypeNames[meal.type]}</h4>
+          <div className="space-y-2">
+            {meal.foods.map((food, foodIdx) => (
+              <div key={foodIdx} className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="text-text">{food.name}</p>
+                  <p className="text-text-secondary text-xs">{food.weight}г • {food.calories} ккал</p>
+                </div>
+                <button
+                  onClick={() => onReplaceProduct(meal.type, foodIdx)}
+                  className="p-2 text-text-secondary hover:text-accent-blue transition"
+                  title="Заменить продукт"
+                >
+                  <Repeat size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 pt-2 border-t border-border flex gap-4 text-xs text-text-secondary">
+            <span>Б: {Math.round(meal.totalProtein)}г</span>
+            <span>Ж: {Math.round(meal.totalFat)}г</span>
+            <span>У: {Math.round(meal.totalCarbs)}г</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -503,6 +544,8 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             <button type="submit" className="btn-primary px-6 py-2 rounded-lg flex items-center gap-2">
               <Plus size={18} /> Добавить
             </button>
+          </div>
+        </form>
 
       {/* Модалка ИИ */}
       {showAIModal && (
@@ -704,43 +747,3 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 }
 
 // Компонент отображения содержимого плана
-function MealPlanContent({ plan, onReplaceProduct }: { plan: GeneratedMealPlan; onReplaceProduct: (mealType: string, foodIndex: number) => void }) {
-  const mealTypeNames: Record<string, string> = {
-    breakfast: 'Завтрак',
-    lunch: 'Обед',
-    dinner: 'Ужин',
-    snack: 'Перекус',
-  };
-
-  return (
-    <div className="space-y-4">
-      {plan.meals.map((meal, mealIdx) => (
-        <div key={mealIdx} className="bg-bg-card p-4 rounded-xl">
-          <h4 className="font-medium text-text mb-2">{mealTypeNames[meal.type]}</h4>
-          <div className="space-y-2">
-            {meal.foods.map((food, foodIdx) => (
-              <div key={foodIdx} className="flex items-center justify-between text-sm">
-                <div>
-                  <p className="text-text">{food.name}</p>
-                  <p className="text-text-secondary text-xs">{food.weight}г • {food.calories} ккал</p>
-                </div>
-                <button
-                  onClick={() => onReplaceProduct(meal.type, foodIdx)}
-                  className="p-2 text-text-secondary hover:text-accent-blue transition"
-                  title="Заменить продукт"
-                >
-                  <Repeat size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 pt-2 border-t border-border flex gap-4 text-xs text-text-secondary">
-            <span>Б: {Math.round(meal.totalProtein)}г</span>
-            <span>Ж: {Math.round(meal.totalFat)}г</span>
-            <span>У: {Math.round(meal.totalCarbs)}г</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
