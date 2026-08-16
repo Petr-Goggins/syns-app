@@ -31,7 +31,7 @@ export const useSleepLogStore = create<SleepLogState>((set, get) => ({
       .from('sleep_logs')
       .select('*')
       .eq('user_id', userId)
-      .eq('log_date', date)
+      .eq('date', date)
       .maybeSingle();
     if (error) {
       set({ loading: false, error: error.message });
@@ -45,7 +45,7 @@ export const useSleepLogStore = create<SleepLogState>((set, get) => ({
       .from('sleep_logs')
       .select('*')
       .eq('user_id', userId)
-      .order('log_date', { ascending: false })
+      .order('date', { ascending: false })
       .limit(limit);
     if (error) return [];
     return (data as SleepLog[]) ?? [];
@@ -72,7 +72,7 @@ export const useSleepLogStore = create<SleepLogState>((set, get) => ({
     } else {
       const { data, error } = await supabase
         .from('sleep_logs')
-        .insert({ user_id: userId, ...entryData })
+        .insert({ user_id: userId, date: entryData.log_date, hours: entryData.hours, quality: entryData.quality })
         .select()
         .single();
       if (error) {

@@ -19,10 +19,10 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   fetchWeightLogs: async (userId: string) => {
     set({ loading: true });
     const { data, error } = await supabase
-      .from('weight_logs')
+      .from('body_measurements')
       .select('*')
       .eq('user_id', userId)
-      .order('log_date', { ascending: true });
+      .order('measurement_date', { ascending: true });
     if (error) {
       set({ loading: false, error: error.message });
       return;
@@ -36,7 +36,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const existing = get().weightLogs.find((w) => w.log_date === today);
     if (existing) {
       const { data, error } = await supabase
-        .from('weight_logs')
+        .from('body_measurements')
         .update({ weight })
         .eq('id', existing.id)
         .select()
@@ -48,8 +48,8 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       }
     } else {
       const { data, error } = await supabase
-        .from('weight_logs')
-        .insert({ user_id: userId, weight, log_date: today })
+        .from('body_measurements')
+        .insert({ user_id: userId, weight, measurement_date: today })
         .select()
         .single();
       if (!error && data) {

@@ -354,11 +354,11 @@ export default function ProgressPage() {
   const fetchCalorieData = async (userId: string, p: Period) => {
     const startDate = getStartDate(p);
     const { data, error } = await supabase
-      .from('nutrition_log')
-      .select('log_date, calories')
+      .from('meals')
+      .select('date, calories')
       .eq('user_id', userId)
-      .gte('log_date', startDate)
-      .order('log_date', { ascending: true });
+      .gte('date', startDate)
+      .order('date', { ascending: true });
 
     if (error || !data || data.length === 0) {
       setCalorieData([]);
@@ -412,10 +412,10 @@ export default function ProgressPage() {
 
     // Avg calories
     const { data: calorieData } = await supabase
-      .from('nutrition_log')
+      .from('meals')
       .select('calories')
       .eq('user_id', userId)
-      .gte('log_date', startDate);
+      .gte('date', startDate);
 
     const avgCalories = calorieData && calorieData.length > 0
       ? Math.round(calorieData.reduce((sum, d) => sum + d.calories, 0) / calorieData.length)
@@ -426,7 +426,7 @@ export default function ProgressPage() {
       .from('sleep_logs')
       .select('hours')
       .eq('user_id', userId)
-      .gte('log_date', startDate);
+      .gte('date', startDate);
 
     const avgSleep = sleepData && sleepData.length > 0
       ? parseFloat((sleepData.reduce((sum, d) => sum + d.hours, 0) / sleepData.length).toFixed(1))
