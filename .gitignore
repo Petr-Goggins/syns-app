@@ -2,7 +2,7 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
 *.js.map
@@ -19,13 +19,22 @@ build/
 *.swp
 *.swo
 
-# Logs
+# Logs and temp files
 *.log
-
-# Temp files
 *.tmp
 
-# OS
+# Python (if present)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# System
 .DS_Store
 Thumbs.db
 ```
