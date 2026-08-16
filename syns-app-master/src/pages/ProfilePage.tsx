@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
-import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, LogOut, Palette, Zap, Utensils, Droplets, Calendar } from 'lucide-react';
+import { useProgressStore } from '@/store/progressStore';
+import { User, Dumbbell, Target, Save, Loader2, Check, Edit3, Bell, LogOut, Palette, Zap, Utensils, Droplets, Calendar, TrendingUp, Watch } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loadNotificationSettings, saveNotificationSettings, requestNotificationPermission } from '@/lib/notifications';
 import MuscleHeatmap from '@/components/MuscleHeatmap';
 import { calculateWaterNorm, formatWaterNorm } from '@/lib/waterNorm';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 const RELIGION_OPTIONS = [
   { id: 'none', label: 'Нет', icon: '⛔' },
@@ -36,14 +38,11 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
   const { coachData, fetchCoachData } = useCoachStore();
+  const progressStore = useProgressStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormDataData] = useState({
     full_name: '',
-    weight: '',
-    height: '',
-    age: '',
-    gender: '',
     activity_level: 'moderate',
     goal: 'maintain',
     religion: 'none',
@@ -56,6 +55,7 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
   const [workoutCalendar, setWorkoutCalendar] = useState<{ date: string; hasWorkout: boolean; color?: string }[]>([]);
   const [stats, setStats] = useState({ totalWorkouts: 0, totalCaloriesBurned: 0, activeDays: 0, daysInApp: 0 });
   const [waterNorm, setWaterNorm] = useState<number>(0);
+  const [weightData, setWeightData] = useState<{ date: string; weight: number }[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -66,7 +66,19 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     const savedTheme = localStorage.getItem('sync_theme') || 'dark-blue';
     setCurrentTheme(savedTheme);
     loadCalendars();
+    progressStore.fetchWeightLogs(user.id);
   }, [user]);
+
+  useEffect(() => {
+    // Преобразуем данные о весе для графика
+    if (progressStore.weightLogs.length > 0) {
+      const data = progressStore.weightLogs.map(log => ({
+        date: new Date(log.log_date).toLocaleDateString('ru', { day: '2-digit', month: '2-digit' }),
+        weight: log.weight,
+      }));
+      setWeightData(data);
+    }
+  }, [progressStore.weightLogs]);
 
   const loadCalendars = async () => {
     // Загружаем календарь питания (последние 30 дней)
@@ -181,10 +193,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
     if (!error && data) {
       setFormDataData({
         full_name: data.full_name || '',
-        weight: data.weight?.toString() || '',
-        height: data.height?.toString() || '',
-        age: data.age?.toString() || '',
-        gender: data.gender || '',
         activity_level: data.activity_level || 'moderate',
         goal: data.goal || 'maintain',
         religion: data.religion || 'none',
@@ -209,10 +217,6 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
       .from('profiles')
       .update({
         full_name: formData.full_name,
-        weight: Number(formData.weight) || 0,
-        height: Number(formData.height) || 0,
-        age: Number(formData.age) || 0,
-        gender: formData.gender,
         activity_level: formData.activity_level,
         goal: formData.goal,
         religion: formData.religion,
@@ -467,36 +471,45 @@ export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => v
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Вес (кг)</label>
-            <input
-              type="number"
-              value={formData.weight}
-              onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-              className="input-field w-full px-4 py-2.5 rounded-lg"
-              placeholder="70"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Рост (см)</label>
-            <input
-              type="number"
-              value={formData.height}
-              onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-              className="input-field w-full px-4 py-2.5 rounded-lg"
-              placeholder="175"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Возраст</label>
-            <input
-              type="number"
-              value={formData.age}
-              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-              className="input-field w-full px-4 py-2.5 rounded-lg"
-              placeholder="25"
-            />
+        {/* Блок Прогресс с графиком веса */}
+        <div className="card-modern space-y-4">
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
+            <TrendingUp size={16} /> Прогресс
+          </h2>
+          {weightData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={weightData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363D" />
+                <XAxis dataKey="date" stroke="#8B949E" tick={{ fontSize: 10 }} />
+                <YAxis stroke="#8B949E" domain={['dataMin - 2', 'dataMax + 2']} />
+                <Tooltip contentStyle={{ backgroundColor: '#161B22', borderColor: '#30363D', color: '#E6EDF3' }} />
+                <Line type="monotone" dataKey="weight" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-text-secondary text-center py-4">
+              Добавьте первый замер веса на странице Отчёты
+            </p>
+          )}
+        </div>
+
+        {/* Раздел Подключения с заглушкой для умных весов */}
+        <div className="card-modern space-y-4 bg-gradient-to-r from-accent-purple/5 to-transparent border-accent-purple/10">
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
+            <Watch size={16} /> Подключения
+          </h2>
+          <div className="flex flex-col items-center text-center py-4">
+            <button
+              type="button"
+              className="btn-secondary px-6 py-3 mb-3 flex items-center gap-2"
+              onClick={() => alert('Функция подключения умных весов будет доступна в будущем')}
+            >
+              <Watch size={18} />
+              Подключить умные весы
+            </button>
+            <p className="text-xs text-text-secondary max-w-xs">
+              Синхронизируйте данные с Google Fit или Apple Health для автоматического отслеживания веса
+            </p>
           </div>
         </div>
 
