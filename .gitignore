@@ -6,45 +6,26 @@ node_modules/
 dist/
 build/
 *.js.map
-*.tsbuildinfo
+*.ts.map
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*
 
-# Logs
-*.log
-
-# IDE specific
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Python artifacts (if any Python files exist in project)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
+# Logs
+*.log
 
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
+# Temp files
+*.tmp
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-
-# Local configuration
-local.properties
-.settings/
 ```

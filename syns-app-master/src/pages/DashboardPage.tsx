@@ -188,14 +188,13 @@ export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () =>
         try {
           const { data: waterLogs, error: waterError } = await supabase
             .from('water_logs')
-            .select('amount')
+            .select('amount_ml')
             .eq('user_id', user.id)
-            .gte('created_at', new Date(dateStr).toISOString())
-            .lt('created_at', new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1)).toISOString());
+            .eq('date', dateStr);
           if (waterError) {
             console.error('Ошибка загрузки water_logs:', waterError);
           } else if (waterLogs) {
-            totalWater = waterLogs.reduce((sum, w) => sum + (w.amount || 0), 0);
+            totalWater = waterLogs.reduce((sum, w) => sum + (w.amount_ml || 0), 0);
           }
         } catch (err) {
           console.error('Ошибка при запросе water_logs:', err);

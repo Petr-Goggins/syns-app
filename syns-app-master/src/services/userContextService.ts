@@ -102,16 +102,16 @@ export async function buildUserContext(userId: string): Promise<string> {
 
   // 4. История питания (последние 7 дней, средние показатели)
   const { data: nutritionLogs } = await supabase
-    .from('nutrition_logs')
+    .from('meals')
     .select('*')
     .eq('user_id', userId)
-    .gte('log_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-    .order('log_date', { ascending: false });
+    .gte('date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+    .order('date', { ascending: false });
 
   if (nutritionLogs && nutritionLogs.length > 0) {
     const avgCalories = Math.round(nutritionLogs.reduce((sum, n) => sum + n.calories, 0) / nutritionLogs.length);
-    const avgProtein = Math.round(nutritionLogs.reduce((sum, n) => sum + n.proteins, 0) / nutritionLogs.length);
-    const avgFat = Math.round(nutritionLogs.reduce((sum, n) => sum + n.fats, 0) / nutritionLogs.length);
+    const avgProtein = Math.round(nutritionLogs.reduce((sum, n) => sum + n.protein, 0) / nutritionLogs.length);
+    const avgFat = Math.round(nutritionLogs.reduce((sum, n) => sum + n.fat, 0) / nutritionLogs.length);
     const avgCarbs = Math.round(nutritionLogs.reduce((sum, n) => sum + n.carbs, 0) / nutritionLogs.length);
     parts.push(`🍎 СРЕДНЕЕ ПИТАНИЕ (7 дней):\n${avgCalories} ккал | Б: ${avgProtein}г | Ж: ${avgFat}г | У: ${avgCarbs}г`);
   } else {
@@ -123,8 +123,8 @@ export async function buildUserContext(userId: string): Promise<string> {
     .from('sleep_logs')
     .select('*')
     .eq('user_id', userId)
-    .gte('log_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-    .order('log_date', { ascending: false });
+    .gte('date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+    .order('date', { ascending: false });
 
   if (sleepLogs && sleepLogs.length > 0) {
     const avgHours = (sleepLogs.reduce((sum, s) => sum + s.hours, 0) / sleepLogs.length).toFixed(1);

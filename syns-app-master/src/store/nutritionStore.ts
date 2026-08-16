@@ -42,10 +42,10 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
   fetchDaily: async (userId: string, date: string) => {
     set({ loading: true });
     const { data, error } = await supabase
-      .from('nutrition_logs')
+      .from('meals')
       .select('*')
       .eq('user_id', userId)
-      .eq('log_date', date)
+      .eq('date', date)
       .order('created_at', { ascending: true });
     if (error) {
       set({ loading: false, error: error.message });
@@ -106,7 +106,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
 
   addEntry: async (userId, entryData) => {
     const { data, error } = await supabase
-      .from('nutrition_logs')
+      .from('meals')
       .insert({ user_id: userId, ...entryData })
       .select()
       .single();
@@ -138,7 +138,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
   },
 
   deleteEntry: async (logId: string) => {
-    await supabase.from('nutrition_logs').delete().eq('id', logId);
+    await supabase.from('meals').delete().eq('id', logId);
     set({ logs: get().logs.filter((l) => l.id !== logId) });
   },
 

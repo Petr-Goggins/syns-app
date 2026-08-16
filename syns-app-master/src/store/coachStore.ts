@@ -24,9 +24,9 @@ export const useCoachStore = create<CoachState>((set, get) => ({
 
   fetchCoachData: async (userId: string) => {
     const { data, error } = await supabase
-      .from('user_coach_data')
+      .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .maybeSingle();
     if (error) return;
     set({ coachData: data as CoachData | null });
@@ -50,9 +50,9 @@ export const useCoachStore = create<CoachState>((set, get) => ({
     const existing = get().coachData;
     if (existing) {
       const { data: updated, error } = await supabase
-        .from('user_coach_data')
+        .from('profiles')
         .update({ ...data, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
+        .eq('id', userId)
         .select();
       if (error) {
         set({ saving: false, error: error.message });
@@ -62,8 +62,8 @@ export const useCoachStore = create<CoachState>((set, get) => ({
       return true;
     } else {
       const { data: created, error } = await supabase
-        .from('user_coach_data')
-        .insert({ user_id: userId, ...data })
+        .from('profiles')
+        .insert({ id: userId, ...data })
         .select();
       if (error) {
         set({ saving: false, error: error.message });

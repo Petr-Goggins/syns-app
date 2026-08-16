@@ -32,26 +32,24 @@ export const useWaterStore = create<WaterState>((set, get) => ({
   loading: false,
   fetchToday: async (userId: string) => {
     set({ loading: true });
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('water_logs')
-      .select('*')
+      .select('amount_ml')
       .eq('user_id', userId)
-      .gte('created_at', start.toISOString())
-      .order('created_at', { ascending: false });
+      .eq('date', today);
     if (error) {
       set({ loading: false });
       return;
     }
-    const today = (data ?? []).filter((l) => isToday(l.created_at));
-    const total = today.reduce((sum, l) => sum + l.amount, 0);
-    set({ logs: today, todayAmount: total, loading: false });
+    const total = (data ?? []).reduce((sum, l) => sum + (l.amount_ml || 0), 0);
+    set({ logs: data as WaterLog[] ?? [], todayAmount: total, loading: false });
   },
   addWater: async (userId: string, amount: number) => {
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('water_logs')
-      .insert({ user_id: userId, amount })
+      .insert({ user_id: userId, date: today, amount_ml: amount })
       .select();
     if (error) return;
     const newLog = (data as WaterLog[])[0];

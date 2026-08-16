@@ -296,7 +296,7 @@ export async function saveMealPlan(plan: GeneratedMealPlan): Promise<string | nu
     );
 
     const { data, error } = await supabase
-      .from('nutrition_logs')
+      .from('meals')
       .insert(entries)
       .select()
       .single();
@@ -331,17 +331,16 @@ export async function replaceProductInPlan(
   try {
     // Находим запись и обновляем
     const { error } = await supabase
-      .from('nutrition_logs')
+      .from('meals')
       .update({
-        custom_name: newProduct.name,
-        grams: newProduct.weight,
-        proteins: newProduct.protein,
-        fats: newProduct.fat,
+        product_name: newProduct.name,
+        weight_grams: newProduct.weight,
+        protein: newProduct.protein,
+        fat: newProduct.fat,
         carbs: newProduct.carbs,
         calories: newProduct.calories,
       })
-      .eq('id', planId)
-      .like('custom_name', `%${oldProductName}%`);
+      .eq('id', planId);
 
     if (error) throw error;
     return true;
@@ -357,14 +356,14 @@ export async function replaceProductInPlan(
 export async function getUserMealPlans(userId: string, dateFrom?: string): Promise<GeneratedMealPlan[]> {
   try {
     const query = supabase
-      .from('nutrition_logs')
+      .from('meals')
       .select('*')
       .eq('user_id', userId)
       .eq('is_generated', true)
-      .order('log_date', { ascending: false });
+      .order('date', { ascending: false });
 
     if (dateFrom) {
-      query.gte('log_date', dateFrom);
+      query.gte('date', dateFrom);
     }
 
     const { data, error } = await query;

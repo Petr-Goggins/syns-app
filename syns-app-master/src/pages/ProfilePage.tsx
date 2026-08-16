@@ -17,6 +17,22 @@ const THEME_OPTIONS = [
   { id: 'black', label: 'Чёрная', icon: '⚫', class: 'theme-black' },
 ];
 
+const RELIGION_OPTIONS = [
+  { id: 'none', label: 'Нет', icon: '❌' },
+  { id: 'orthodox', label: 'Православие', icon: '✝️' },
+  { id: 'islam', label: 'Ислам', icon: '☪️' },
+  { id: 'judaism', label: 'Иудаизм', icon: '✡️' },
+  { id: 'buddhism', label: 'Буддизм', icon: '☸️' },
+];
+
+const DIET_OPTIONS = [
+  { id: 'none', label: 'Нет', icon: '❌' },
+  { id: 'vegetarian', label: 'Вегетарианство', icon: '🥬' },
+  { id: 'vegan', label: 'Веганство', icon: '🌱' },
+  { id: 'halal', label: 'Халяль', icon: '🍗' },
+  { id: 'kosher', label: 'Кошер', icon: '🥘' },
+];
+
 export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
