@@ -1,57 +1,50 @@
 ```
 # Dependencies
 node_modules/
+
+# Build outputs
+dist/
+build/
+*.js.map
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python artifacts (if any Python files exist in project)
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-venv/
-env/
-ENV/
-.venv/
-.env
-.env.local
-.env.*
-
-# Build artifacts
-dist/
-build/
-*.egg-info/
-.eggs/
-
-# Logs
-*.log
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
-
-# OS files
-.DS_Store
-Thumbs.db
+*.so
 
 # Coverage reports
 coverage/
 htmlcov/
 .coverage
 
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+# OS generated files
+.DS_Store
+Thumbs.db
 
-# Compressed files
-*.zip
-*.tar.gz
-*.tgz
-*.tar.bz2
-*.tar.xz
-*.gz
-*.rar
-*.7z
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Local configuration
+local.properties
+.settings/
 ```

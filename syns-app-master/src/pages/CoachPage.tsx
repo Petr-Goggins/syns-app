@@ -196,48 +196,6 @@ export default function CoachPage() {
       return;
     }
 
-    // Сохраняем текущий и целевой вес в form.weight и form.goal_amount
-    if (currentWeight > 0) {
-      set('weight', currentWeight);
-    }
-    
-    if (form.main_goal === 'custom') {
-      set('personal_goal', customGoalText);
-    } else if (form.main_goal === 'increase_strength') {
-      if (strengthMode === 'specific') {
-        const exerciseNames: Record<string, string> = { bench: 'Жим лёжа', squat: 'Присед', deadlift: 'Становая тяга', overhead: 'Жим стоя' };
-        set('personal_goal', `${exerciseNames[strengthExercise] || strengthExercise} ${strengthTarget} кг`);
-      } else {
-        set('personal_goal', 'Общее увеличение силы');
-      }
-    } else if (form.main_goal === 'lose_weight') {
-      set('personal_goal', `Похудение до ${targetWeight} кг`);
-    } else if (form.main_goal === 'gain_muscle') {
-      set('personal_goal', `Набор мышечной массы до ${targetWeight} кг`);
-    }
-
-    if (selectedMuscles.length > 0) {
-      set('focus_muscle', selectedMuscles.join(','));
-    }
-
-    if (selectedInventory.length > 0) {
-      set('inventory', selectedInventory);
-    }
-
-    if (form.main_goal === 'lose_weight') {
-      set('goal_type', 'weight_loss');
-      set('goal_amount', targetWeight);
-      set('goal_unit', 'кг');
-    } else if (form.main_goal === 'gain_muscle') {
-      set('goal_type', 'muscle_gain');
-      set('goal_amount', targetWeight);
-      set('goal_unit', 'кг');
-    } else if (form.main_goal === 'increase_strength') {
-      set('goal_type', 'strength');
-      set('goal_amount', strengthMode === 'specific' ? strengthTarget : null);
-      set('goal_unit', strengthMode === 'specific' ? 'кг' : '');
-    }
-
     try {
       const { error } = await supabase
         .from('profiles')
@@ -247,7 +205,7 @@ export default function CoachPage() {
           age: parseInt(form.age?.toString() || '0'),
           weight: parseFloat(form.weight?.toString() || '0'),
           height: parseFloat(form.height?.toString() || '0'),
-          target_weight: targetWeight ? parseFloat(targetWeight) : null,
+          target_weight: targetWeight ? parseFloat(targetWeight.toString()) : null,
           goal: form.main_goal,
           experience: form.experience_duration,
           level: form.training_level,
@@ -265,7 +223,7 @@ export default function CoachPage() {
       toast.success('Анкета сохранена!');
       navigate('/dashboard');
     } catch (err) {
-      console.error(err);
+      console.error('Ошибка сохранения анкеты:', err);
       toast.error('Ошибка сохранения анкеты');
     }
   };
