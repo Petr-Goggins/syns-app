@@ -149,33 +149,64 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: get().messages.map((m) => (m.id === tempUserMsg.id ? (savedUser as ChatMessage) : m)),
     });
 
-    // Simulate AI response (MVP stub — would call VITE_API_URL in production)
+    // Вызов бэкенда для получения ответа ИИ
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const userData = profile ? {
+        gender: profile.gender,
+        age: profile.age,
+        weight: profile.weight,
+        height: profile.height,
+        goal: profile.goal,
+        activity: profile.activity_level,
+      } : {};
 
-    // Check for plan adjustment commands
-    const lower = content.toLowerCase();
-    let reply: string;
+      const response = await fetch(`${backendUrl}/ai/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: content,
+          user_data: userData,
+        }),
+      });
 
-    if (/убери|замени|убрать|заменить/.test(lower) && /жим|присед|тяга|отжиман|подтяг|упражнен/.test(lower)) {
-      reply = `Понял, уберу/заменю это упражнение в вашем плане. В полном режиме ИИ автоматически обновит план. Сейчас вы можете сгенерировать новый план на странице «Мой план» — алгоритм учтёт ваши пожелания.`;
-    } else if (/короче|короче тренировку|сократи/.test(lower)) {
-      reply = `Хорошо, могу сократить тренировки. В анкете тренера выберите меньшую длительность (20-30 минут), и план перестроится с суперсетами и минимальным отдыхом.`;
-    } else if (/больше углевод|добавь углевод|больше калорий/.test(lower)) {
-      reply = `Понял, увеличу углеводы в рационе. Используйте кнопку «Готовый рацион» в дневнике питания — он генерируется с учётом вашей нормы. Для ручной корректировки добавьте крупы или фрукты в приёмы пищи.`;
-    } else {
-      reply = pickReply(content);
+      if (response.ok) {
+        const data = await response.json();
+        const { data: savedAi } = await supabase
+          .from('chat_messages')
+          .insert({ user_id: userId, role: 'assistant', content: data.reply })
+          .select();
+        set({ messages: [...get().messages, savedAi as ChatMessage], loading: false });
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Ошибка ИИ');
+      }
+    } catch (err) {
+      console.error('Ошибка подключения к ИИ:', err);
+      // Fallback на локальный ответ
+      const lower = content.toLowerCase();
+      let reply: string;
+
+      if (/убери|замени|убрать|заменить/.test(lower) && /жим|присед|тяга|отжиман|подтяг|упражнен/.test(lower)) {
+        reply = `Понял, уберу/заменю это упражнение в вашем плане. В полном режиме ИИ автоматически обновит план. Сейчас вы можете сгенерировать новый план на странице «Мой план» — алгоритм учтёт ваши пожелания.`;
+      } else if (/короче|короче тренировку|сократи/.test(lower)) {
+        reply = `Хорошо, могу сократить тренировки. В анкете тренера выберите меньшую длительность (20-30 минут), и план перестроится с суперсетами и минимальным отдыхом.`;
+      } else if (/больше углевод|добавь углевод|больше калорий/.test(lower)) {
+        reply = `Понял, увеличу углеводы в рационе. Используйте кнопку «Готовый рацион» в дневнике питания — он генерируется с учётом вашей нормы. Для ручной корректировки добавьте крупы или фрукты в приёмы пищи.`;
+      } else {
+        reply = pickReply(content);
+      }
+
+      const { data: savedAi, error: aiErr } = await supabase
+        .from('chat_messages')
+        .insert({ user_id: userId, role: 'assistant', content: reply })
+        .select();
+      if (aiErr) {
+        set({ loading: false, error: aiErr.message });
+        return;
+      }
+      set({ messages: [...get().messages, savedAi as ChatMessage], loading: false });
     }
-
-    await new Promise((r) => setTimeout(r, 900 + Math.random() * 800));
-
-    const { data: savedAi, error: aiErr } = await supabase
-      .from('chat_messages')
-      .insert({ user_id: userId, role: 'assistant', content: reply })
-      .select();
-    if (aiErr) {
-      set({ loading: false, error: aiErr.message });
-      return;
-    }
-    set({ messages: [...get().messages, savedAi as ChatMessage], loading: false });
   },
   clearMessages: async (userId: string) => {
     await supabase.from('chat_messages').delete().eq('user_id', userId);
