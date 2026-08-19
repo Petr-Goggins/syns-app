@@ -1,27 +1,12 @@
-```gitignore
+```
 # Dependencies
 node_modules/
+package-lock.json
 
-# Build outputs
+# Build artifacts
 dist/
 build/
-.next/
-.nuxt/
-out/
-
-# Logs
-*.log
-
-# Environment variables
-.env
-.env.local
-*.env.*
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
+target/
 
 # Python
 __pycache__/
@@ -29,68 +14,36 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-*.so
-.coverage
-htmlcov/
-.pytest_cache/
-.mypy_cache/
+env/
+venv/
+.venv/
+.ENV
+.env
+.env.local
 
-# Node.js
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Logs
+*.log
 
-# OS generated files
+# Environment specific
+.env*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
 
 # Temporary files
 *.tmp
 *.temp
-*.bak
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Unit test coverage reports
-*.gcov
-*.lcov
-*.info
-
-# Local configuration files
-*.local
-
-# Compiled binary files
-*.exe
-*.dll
-*.so
-*.dylib
-*.a
-*.o
-*.obj
-*.out
-
-# Compressed archives
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 ```

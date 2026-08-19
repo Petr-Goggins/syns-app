@@ -221,6 +221,7 @@ export default function CoachPage() {
       if (error) throw error;
 
       toast.success('Анкета сохранена!');
+      // После сохранения анкеты переходим на главную страницу, где будет доступен чат с ИИ
       navigate('/dashboard');
     } catch (err) {
       console.error('Ошибка сохранения анкеты:', err);
