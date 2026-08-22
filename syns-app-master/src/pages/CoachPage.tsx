@@ -113,8 +113,6 @@ export default function CoachPage() {
     goal_amount: null,
     goal_unit: '',
     personal_goal: '',
-    exercise_likes: '',
-    exercise_dislikes: '',
     inventory: [],
     gender: 'male',
     age: null,
@@ -657,22 +655,6 @@ export default function CoachPage() {
                     className="input-field w-full px-3 py-2.5 text-sm min-h-[100px] resize-none"
                   />
                 )}
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <label className="block text-sm font-medium text-text-secondary mb-2">Предпочтения по упражнениям</label>
-                <textarea
-                  value={form.exercise_likes || ''}
-                  onChange={(e) => set('exercise_likes', e.target.value)}
-                  placeholder="Любимые упражнения..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none mb-3"
-                />
-                <textarea
-                  value={form.exercise_dislikes || ''}
-                  onChange={(e) => set('exercise_dislikes', e.target.value)}
-                  placeholder="Нелюбимые упражнения..."
-                  className="input-field w-full px-3 py-2.5 text-sm min-h-[80px] resize-none"
-                />
               </div>
             </>
           )}

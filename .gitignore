@@ -1,12 +1,6 @@
 ```
-# Dependencies
-node_modules/
-package-lock.json
-
-# Build artifacts
-dist/
-build/
-target/
+# Database migrations
+supabase/migrations/*.sql
 
 # Python
 __pycache__/
@@ -18,32 +12,25 @@ env/
 venv/
 .venv/
 .ENV
+.ENV.local
 .env
 .env.local
-
-# Logs
+.env.*
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
-
-# Environment specific
-.env*
-!.env.example
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
+.git/modules/
+*.sublime-workspace
+.pytest_cache/
+.hypothesis/
 .DS_Store
 Thumbs.db
-
-# Coverage
-.coverage
-coverage/
-htmlcov/
-
-# Temporary files
-*.tmp
-*.temp
 ```
