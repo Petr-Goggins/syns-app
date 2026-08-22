@@ -551,6 +551,7 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
             </button>
           </div>
         </form>
+      </div>
 
       {/* Модалка ИИ */}
       {showAIModal && (
@@ -750,5 +751,3 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     </div>
   );
 }
-
-export default NutritionPage;
