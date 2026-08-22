@@ -1,26 +1,36 @@
-# Examples 1:
-(empty)
+```
+# Database migrations
+supabase/migrations/*.sql
 
-# Example 2 (Project with artifacts):
-# Compiled and build artifacts
-*.pyc
+# Python
 __pycache__/
-*.o
-*.obj
-dist/
-build/
-# Dependencies
-.venv/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
 venv/
-node_modules/
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-# Environment
+.venv/
+.ENV
+.ENV.local
 .env
 .env.local
 .env.*
-# Editors
-.vscode/
-.idea/
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/modules/
+*.sublime-workspace
+.pytest_cache/
+.hypothesis/
+.DS_Store
+Thumbs.db
+```

@@ -13,8 +13,11 @@ async def search_products(query: str):
     """
     Поиск продуктов по названию через Open Food Facts.
     """
+    if not query or len(query.strip()) < 2:
+        return []
+    
     params = {
-        "search_terms": query,
+        "search_terms": query.strip(),
         "page_size": 10,
         "json": "true",
     }
@@ -24,7 +27,7 @@ async def search_products(query: str):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=5.0, headers=headers) as client:
+        async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
             response = await client.get(OPENFOODFACTS_API_URL, params=params)
             response.raise_for_status()
             
