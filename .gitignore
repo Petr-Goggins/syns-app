@@ -1,33 +1,25 @@
-```
 # Dependencies
-node_modules/
-
-# Build artifacts
-dist/
-build/
-target/
-
-# Python
+.venv/
+venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
-venv/
-.venv/
-.ENV
-.python-version
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
 
 # Logs
 *.log
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.*
+*.env.*
 
-# IDE
+# Editors
 .vscode/
 .idea/
 *.swp
@@ -38,12 +30,96 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Coverage
+# Testing
+.coverage
 coverage/
 htmlcov/
-.coverage
+.pytest_cache/
+.mypy_cache/
 
-# Compressed files
+# Distribution / packaging
+*.tar.gz
+*.whl
+*.zip
+
+# Python
+*.py[cod]
+*$py.class
+*$py.o
+*$py.d
+
+# Compiled and binary files
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.a
+*.obj
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+.gradle/
+
+# Go
+*.a
+*.o
+*.so
+*.test
+*.prof
+
+# C/C++
+*.i
+*.s
+*.ii
+*.hi
+*.ilk
+*.pdb
+*.lib
+*.obj
+*.o
+*.a
+*.la
+*.lo
+*.so
+*.so.*
+*.dll
+*.dylib
+*.exe
+*.out
+*.app
+*.bin
+
+# Ruby
+*.gem
+*.rbc
+*.sass-cache
+.bundle/
+vendor/bundle/
+
+# Rust
+Cargo.lock
+*.rlib
+target/
+
+# Julia
+julia-*/
+.JuliaUserPrefs.jl
+
+# Zig
+zig*/
+
+# Compression
 *.zip
 *.gz
 *.tar
@@ -62,4 +138,7 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-```
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst

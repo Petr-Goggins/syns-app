@@ -1,9 +1,16 @@
 import { create } from 'zustand';
 
+export interface User {
+  id: string;
+  email?: string;
+  full_name?: string;
+  avatar_url?: string;
+}
+
 interface AuthState {
-  user: any | null;
+  user: User | null;
   loading: boolean;
-  setUser: (user: any) => void;
+  setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
 }
