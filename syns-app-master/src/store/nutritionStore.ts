@@ -88,18 +88,52 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
   },
 
   searchOpenFoodFacts: async (query: string) => {
+    // Валидация входных данных
+    if (!query || typeof query !== 'string' || query.trim().length < 2 || query.trim().length > 100) {
+      return [];
+    }
+
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/product-search?q=${encodeURIComponent(query)}&limit=10`;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('Missing Supabase environment variables');
+        return [];
+      }
+
+      // Санитайзинг query - разрешаем только безопасные символы
+      const sanitizedQuery = encodeURIComponent(query.trim().slice(0, 100));
+      const apiUrl = `${supabaseUrl}/functions/v1/product-search?q=${sanitizedQuery}&limit=10`;
+      
       const res = await fetch(apiUrl, {
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
+          'User-Agent': 'Sync-App/1.0',
         },
       });
-      if (!res.ok) return [];
+      
+      if (!res.ok) {
+        console.error('Open Food Facts API error:', res.status);
+        return [];
+      }
+      
       const data = await res.json();
-      return (data.products ?? []) as FoodProduct[];
-    } catch {
+      // Валидация структуры ответа
+      if (!data || !Array.isArray(data.products)) {
+        return [];
+      }
+      
+      // Санитайзинг результатов
+      return (data.products ?? []).map((p: any) => ({
+        ...p,
+        name: typeof p.name === 'string' ? p.name.slice(0, 200) : '',
+        brand: typeof p.brand === 'string' ? p.brand.slice(0, 100) : '',
+        ingredients: typeof p.ingredients === 'string' ? p.ingredients.slice(0, 1000) : '',
+      })).filter((p: any) => p.name && p.name.length > 0);
+    } catch (error) {
+      console.error('Open Food Facts request failed:', error);
       return [];
     }
   },

@@ -18,7 +18,13 @@ interface RestTimerActions {
   stopTimer: () => void;
 }
 
-export const useRestTimerStore = create<RestTimerState & RestTimerActions>((set, get) => ({
+// Внутренний интерфейс для хранения ID интервала
+interface RestTimerInternal {
+  _intervalId?: number | null;
+}
+
+export const useRestTimerStore = create<RestTimerState & RestTimerActions & RestTimerInternal>((set, get) => ({
+  _intervalId: null,
   isActive: false,
   remainingSeconds: 0,
   initialSeconds: 0,
@@ -26,13 +32,19 @@ export const useRestTimerStore = create<RestTimerState & RestTimerActions>((set,
   onComplete: null,
 
   startTimer: (seconds, exerciseType, onComplete) => {
+    // Валидация секунд
+    if (typeof seconds !== 'number' || seconds <= 0 || seconds > 3600) {
+      console.error('Invalid timer seconds:', seconds);
+      return;
+    }
+
     const intervalId = setInterval(() => {
       const current = get().remainingSeconds;
       if (current <= 1) {
         clearInterval(intervalId);
         const callback = get().onComplete;
         if (callback) callback();
-        set({ isActive: false, remainingSeconds: 0 });
+        set({ isActive: false, remainingSeconds: 0, _intervalId: null });
         // Звуковой сигнал
         try {
           const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==');
@@ -43,8 +55,8 @@ export const useRestTimerStore = create<RestTimerState & RestTimerActions>((set,
       }
     }, 1000);
     
-    // Сохраняем ID интервала в замыкании
-    (get() as any)._intervalId = intervalId;
+    // Сохраняем ID интервала в state
+    set({ _intervalId: intervalId as unknown as number });
     
     set({ 
       isActive: true, 
@@ -56,26 +68,25 @@ export const useRestTimerStore = create<RestTimerState & RestTimerActions>((set,
   },
 
   pauseTimer: () => {
-    const state = get() as any;
+    const state = get();
     if (state._intervalId) {
-      clearInterval(state._intervalId);
-      state._intervalId = null;
+      clearInterval(state._intervalId as unknown as number);
+      set({ _intervalId: null, isActive: false });
     }
-    set({ isActive: false });
   },
 
   resumeTimer: () => {
     const { remainingSeconds, exerciseType, onComplete } = get();
-    if (remainingSeconds > 0) {
+    if (remainingSeconds > 0 && remainingSeconds <= 3600) {
       get().startTimer(remainingSeconds, exerciseType, onComplete || undefined);
     }
   },
 
   resetTimer: () => {
-    const state = get() as any;
+    const state = get();
     if (state._intervalId) {
-      clearInterval(state._intervalId);
-      state._intervalId = null;
+      clearInterval(state._intervalId as unknown as number);
+      set({ _intervalId: null });
     }
     const { initialSeconds, exerciseType, onComplete } = get();
     set({ 
@@ -87,7 +98,9 @@ export const useRestTimerStore = create<RestTimerState & RestTimerActions>((set,
   },
 
   setRemainingTime: (seconds) => {
-    set({ remainingSeconds: seconds });
+    if (typeof seconds === 'number' && seconds >= 0 && seconds <= 3600) {
+      set({ remainingSeconds: seconds });
+    }
   },
 
   tick: () => {
@@ -101,10 +114,10 @@ export const useRestTimerStore = create<RestTimerState & RestTimerActions>((set,
   },
 
   stopTimer: () => {
-    const state = get() as any;
+    const state = get();
     if (state._intervalId) {
-      clearInterval(state._intervalId);
-      state._intervalId = null;
+      clearInterval(state._intervalId as unknown as number);
+      set({ _intervalId: null });
     }
     set({ isActive: false, remainingSeconds: 0, initialSeconds: 0 });
   },

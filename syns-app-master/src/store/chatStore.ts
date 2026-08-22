@@ -151,35 +151,53 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Вызов бэкенда для получения ответа ИИ
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      if (!backendUrl || typeof backendUrl !== 'string') {
+        throw new Error('Backend URL not configured');
+      }
+      
+      // Валидация content
+      if (!content || typeof content !== 'string' || content.trim().length === 0) {
+        return;
+      }
+      
+      const sanitizedContent = content.trim().slice(0, 2000); // Ограничение длины сообщения
+      
       const userData = profile ? {
         gender: profile.gender,
-        age: profile.age,
-        weight: profile.weight,
-        height: profile.height,
+        age: profile.age && profile.age > 0 && profile.age < 150 ? profile.age : undefined,
+        weight: profile.weight && profile.weight > 0 && profile.weight < 500 ? profile.weight : undefined,
+        height: profile.height && profile.height > 50 && profile.height < 300 ? profile.height : undefined,
         goal: profile.goal,
         activity: profile.activity_level,
       } : {};
 
       const response = await fetch(`${backendUrl}/ai/ask`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Sync-App/1.0',
+        },
         body: JSON.stringify({
-          message: content,
+          message: sanitizedContent,
           user_data: userData,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
+        // Валидация ответа от AI
+        if (!data || typeof data.reply !== 'string') {
+          throw new Error('Invalid AI response format');
+        }
         const { data: savedAi } = await supabase
           .from('chat_messages')
-          .insert({ user_id: userId, role: 'assistant', content: data.reply })
+          .insert({ user_id: userId, role: 'assistant', content: data.reply.slice(0, 5000) })
           .select();
         set({ messages: [...get().messages, savedAi as ChatMessage], loading: false });
       } else {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Ошибка ИИ');
+        throw new Error(errorData.detail || `Ошибка ИИ: ${response.status}`);
       }
     } catch (err) {
       console.error('Ошибка подключения к ИИ:', err);

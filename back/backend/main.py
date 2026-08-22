@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import logging
+import re
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 import httpx
 
 from ai_service import ask_ai
@@ -39,18 +40,38 @@ app.include_router(products_router.router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://your-production-domain.com",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
 # ============ МОДЕЛИ ============
 
 class AskRequest(BaseModel):
-    message: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1, max_length=2000)
     user_data: dict = Field(default_factory=dict)
+    
+    @validator('message')
+    def validate_message(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Сообщение не может быть пустым")
+        # Защита от потенциальных injection-атак
+        if '<script' in v.lower() or 'javascript:' in v.lower():
+            raise ValueError("Недопустимый формат сообщения")
+        return v.strip()
+    
+    @validator('user_data')
+    def validate_user_data(cls, v):
+        # Ограничиваем размер и валидируем данные пользователя
+        if len(str(v)) > 5000:
+            raise ValueError("Данные пользователя слишком большие")
+        return v
 
 
 class AskResponse(BaseModel):
@@ -58,13 +79,25 @@ class AskResponse(BaseModel):
 
 
 class GeneratePlanRequest(BaseModel):
-    user_data: dict
+    user_data: dict = Field(..., max_keys=20)
+    
+    @validator('user_data')
+    def validate_user_data(cls, v):
+        if len(str(v)) > 5000:
+            raise ValueError("Данные пользователя слишком большие")
+        return v
 
 
 class GenerateMealPlanRequest(BaseModel):
-    user_data: dict
-    budget: int | None = None
-    favorite_foods: str | None = None
+    user_data: dict = Field(..., max_keys=20)
+    budget: int | None = Field(None, ge=0, le=1000000)
+    favorite_foods: str | None = Field(None, max_length=500)
+    
+    @validator('user_data')
+    def validate_user_data(cls, v):
+        if len(str(v)) > 5000:
+            raise ValueError("Данные пользователя слишком большие")
+        return v
 
 
 # ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
@@ -98,9 +131,7 @@ async def ai_ask(body: AskRequest) -> AskResponse:
     Основной чат с ИИ.
     """
     message = body.message.strip()
-    if not message:
-        raise HTTPException(status_code=400, detail="Сообщение не может быть пустым")
-
+    
     # Формируем системный промт для чата
     profile = format_user_data(body.user_data)
     system_prompt = f"""
