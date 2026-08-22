@@ -24,9 +24,16 @@ async def search_products(query: str):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
+        async with httpx.AsyncClient(timeout=5.0, headers=headers) as client:
             response = await client.get(OPENFOODFACTS_API_URL, params=params)
             response.raise_for_status()
+            
+            # Проверяем, что ответ это JSON, а не HTML
+            content_type = response.headers.get("content-type", "")
+            if "application/json" not in content_type:
+                logger.warning(f"Open Food Facts вернул не JSON для запроса '{query}'")
+                return []
+            
             data = response.json()
             
             products = data.get("products", [])
@@ -48,13 +55,13 @@ async def search_products(query: str):
             return formatted
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP ошибка при поиске '{query}': {e.response.status_code}")
-        raise HTTPException(status_code=e.response.status_code, detail="Ошибка запроса к Open Food Facts")
+        return []
     except httpx.RequestError as e:
         logger.error(f"Ошибка соединения при поиске '{query}': {str(e)}")
-        raise HTTPException(status_code=503, detail="Сервис временно недоступен")
+        return []
     except Exception as e:
         logger.error(f"Неожиданная ошибка при поиске '{query}': {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return []
 
 @router.get("/barcode/{barcode}")
 async def get_product_by_barcode(barcode: str):
@@ -63,7 +70,7 @@ async def get_product_by_barcode(barcode: str):
     """
     url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(url)
             response.raise_for_status()
             data = response.json()
