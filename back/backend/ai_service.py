@@ -68,7 +68,19 @@ async def ask_ai(user_message: str, system_prompt: str) -> str:
             raise RuntimeError("Сервер ИИ не отвечает. Попробуйте позже.")
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP ошибка при запросе к AI: {e.response.status_code}")
-            raise RuntimeError(f"Ошибка AI сервиса: {e.response.status_code}")
+            if e.response.status_code == 401:
+                raise RuntimeError("Ошибка авторизации AI сервиса. Проверьте API ключ.")
+            elif e.response.status_code == 429:
+                raise RuntimeError("Превышен лимит запросов к AI сервису. Попробуйте позже.")
+            elif e.response.status_code >= 500:
+                raise RuntimeError(f"Сервер AI сервиса временно недоступен ({e.response.status_code})")
+            else:
+                raise RuntimeError(f"Ошибка AI сервиса: {e.response.status_code}")
+        except ValueError as e:
+            # Пробрасываем ошибки валидации как есть
+            logger.error(f"Ошибка валидации: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Неожиданная ошибка при запросе к AI: {e}")
+            # Логируем тип исключения для лучшей диагностики
+            logger.error(f"Неожиданная ошибка типа {type(e).__name__} при запросе к AI: {e}")
             raise RuntimeError(f"Ошибка при обращении к ИИ: {str(e)}")

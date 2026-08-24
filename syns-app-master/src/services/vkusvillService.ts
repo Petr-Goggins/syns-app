@@ -1,5 +1,12 @@
 const VKUSVILL_MCP_URL = 'https://mcp001.vkusvill.ru/mcp';
 
+// SECURITY FIX: Validate external API URL - must use HTTPS
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  if (!VKUSVILL_MCP_URL.startsWith('https://')) {
+    console.error('SECURITY WARNING: Vkusvill API must use HTTPS in production');
+  }
+}
+
 interface VkusvillProduct {
   id: string;
   name: string;
@@ -36,22 +43,38 @@ async function mcpRequest(tool: string, args: Record<string, unknown>) {
     headers['mcp-session-id'] = mcpSessionId;
   }
 
-  const response = await fetch(VKUSVILL_MCP_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch(VKUSVILL_MCP_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
 
-  const sessionId = response.headers.get('mcp-session-id');
-  if (sessionId) {
-    mcpSessionId = sessionId;
-  }
+    // SECURITY FIX: Validate response status and handle errors properly
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`Vkusvill API error: ${response.status} - ${errorText}`);
+      throw new Error(`Vkusvill API error: ${response.status}`);
+    }
 
-  const data = await response.json();
-  if (!data.ok) {
-    throw new Error(data.error?.message || 'Ошибка API ВкусВилл');
+    const sessionId = response.headers.get('mcp-session-id');
+    if (sessionId) {
+      mcpSessionId = sessionId;
+    }
+
+    const data = await response.json();
+    if (!data.ok) {
+      throw new Error(data.error?.message || 'Ошибка API ВкусВилл');
+    }
+    return data.data;
+  } catch (error) {
+    // SECURITY FIX: Proper error handling for external API calls
+    console.error('MCP request failed:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to Vkusvill API');
+    }
+    throw error;
   }
-  return data.data;
 }
 
 function parseMarkdownProducts(markdown: string) {

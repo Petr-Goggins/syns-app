@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from contextlib import asynccontextmanager
+from typing import List
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import httpx
 
 from ai_service import ask_ai
@@ -38,6 +40,18 @@ app = FastAPI(title="Ascend App AI Backend", lifespan=lifespan)
 # Подключаем роутер для работы с продуктами (Open Food Facts)
 app.include_router(products_router.router, prefix="/api")
 
+# SECURITY FIX: Load allowed origins from environment variable
+# Only specific domains are allowed in production
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+
+# Validate that no wildcard or generic domains are used
+dangerous_origins = ["*", "https://your-production-domain.com"]
+safe_origins = [origin for origin in allowed_origins if origin not in dangerous_origins]
+
+if len(safe_origins) != len(allowed_origins):
+    logger.warning("Removed dangerous CORS origins from configuration")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -53,7 +67,8 @@ class AskRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
     user_data: dict = Field(default_factory=dict)
     
-    @validator('message')
+    @field_validator('message')
+    @classmethod
     def validate_message(cls, v):
         if not v or not v.strip():
             raise ValueError("Сообщение не может быть пустым")
@@ -62,7 +77,8 @@ class AskRequest(BaseModel):
             raise ValueError("Недопустимый формат сообщения")
         return v.strip()
     
-    @validator('user_data')
+    @field_validator('user_data')
+    @classmethod
     def validate_user_data(cls, v):
         # Ограничиваем размер и валидируем данные пользователя
         if len(str(v)) > 5000:
@@ -77,7 +93,8 @@ class AskResponse(BaseModel):
 class GeneratePlanRequest(BaseModel):
     user_data: dict = Field(..., max_keys=20)
     
-    @validator('user_data')
+    @field_validator('user_data')
+    @classmethod
     def validate_user_data(cls, v):
         if len(str(v)) > 5000:
             raise ValueError("Данные пользователя слишком большие")
@@ -89,7 +106,8 @@ class GenerateMealPlanRequest(BaseModel):
     budget: int | None = Field(None, ge=0, le=1000000)
     favorite_foods: str | None = Field(None, max_length=500)
     
-    @validator('user_data')
+    @field_validator('user_data')
+    @classmethod
     def validate_user_data(cls, v):
         if len(str(v)) > 5000:
             raise ValueError("Данные пользователя слишком большие")

@@ -70,15 +70,28 @@ async def search_products(
 async def get_product_by_barcode(barcode: str):
     """
     Получение продукта по штрих-коду.
+    SECURITY FIX: Добавлена строгая валидация и санитизация входных данных
+    для предотвращения SQL injection и других атак через URL.
     """
-    # Валидация штрих-кода (только цифры и дефисы, длина 8-14 символов)
+    # Строгая валидация штрих-кода (только цифры и дефисы, длина 8-14 символов)
     if not barcode or len(barcode) < 8 or len(barcode) > 14:
         raise HTTPException(status_code=400, detail="Некорректный штрих-код")
     
-    if not barcode.replace("-", "").isdigit():
+    # Санитизация: удаляем любые символы кроме цифр и дефисов
+    sanitized_barcode = ''.join(c for c in barcode if c.isdigit() or c == '-')
+    
+    # Дополнительная проверка после санитизации
+    if len(sanitized_barcode) < 8 or len(sanitized_barcode) > 14:
+        raise HTTPException(status_code=400, detail="Некорректный штрих-код после санитизации")
+    
+    if not sanitized_barcode.replace("-", "").isdigit():
         raise HTTPException(status_code=400, detail="Штрих-код должен содержать только цифры")
     
-    url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
+    # Защита от path traversal атак
+    if '..' in sanitized_barcode or '/' in sanitized_barcode:
+        raise HTTPException(status_code=400, detail="Недопустимые символы в штрих-коде")
+    
+    url = f"https://world.openfoodfacts.org/api/v0/product/{sanitized_barcode}.json"
     
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
