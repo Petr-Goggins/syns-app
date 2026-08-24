@@ -130,10 +130,15 @@ export async function generateMealPlan(
   duration: 'day' | 'week' = 'day',
   varietyLevel: 'minimal' | 'medium' | 'maximal' = 'medium',
   budget?: number,
-  preferences?: string
+  preferences?: string,
+  cookingTime?: '10-15' | '15-30' | '30-60' | '60+',
+  difficulty?: 'simple' | 'medium' | 'complex'
 ): Promise<GeneratedMealPlan | null> {
   try {
     // Формируем запрос к ИИ
+    const cookingTimeText = cookingTime === '10-15' ? '10-15 мин' : cookingTime === '15-30' ? '15-30 мин' : cookingTime === '30-60' ? '30-60 мин' : 'более 60 мин';
+    const difficultyText = difficulty === 'simple' ? 'Простые' : difficulty === 'medium' ? 'Средние' : 'Сложные';
+    
     const prompt = `
 ${userContext}
 
@@ -141,6 +146,8 @@ ${userContext}
 Уровень разнообразия: ${varietyLevel === 'minimal' ? 'Минимальный (одни и те же продукты каждый день)' : varietyLevel === 'medium' ? 'Средний (частичное разнообразие)' : 'Максимальный (уникальные продукты каждый день)'}.
 ${budget ? `Бюджет: ${budget} рублей в день.` : ''}
 ${preferences ? `Предпочтения: ${preferences}` : ''}
+Время на готовку: ${cookingTimeText}.
+Сложность блюд: ${difficultyText}.
 
 Верни ответ в формате JSON согласно системному промпту.`;
 
