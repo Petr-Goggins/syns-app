@@ -91,6 +91,9 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const [productSearchModalOpen, setProductSearchModalOpen] = useState(false);
   const [replacingMealType, setReplacingMealType] = useState<string>('');
   const [replacingFoodIndex, setReplacingFoodIndex] = useState<number>(-1);
+  // Новые состояния для времени готовки и сложности
+  const [cookingTime, setCookingTime] = useState<'10-15' | '15-30' | '30-60' | '60+'>('15-30');
+  const [difficulty, setDifficulty] = useState<'simple' | 'medium' | 'complex'>('medium');
 
   useEffect(() => {
     const loadMealPlans = async () => {
@@ -224,8 +227,8 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   const handleGeneratePlan = async () => {
     setIsGenerating(true);
     try {
-      const userContext = `Пользователь: бюджет ${budget}₽, любимые продукты: ${favoriteFoods}`;
-      const plan = await generateMealPlan(user!.id, userContext, planDuration, varietyLevel, budget, favoriteFoods);
+      const userContext = `Пользователь: бюджет ${budget}₽, любимые продукты: ${favoriteFoods}, время готовки: ${cookingTime === '10-15' ? '10-15 мин' : cookingTime === '15-30' ? '15-30 мин' : cookingTime === '30-60' ? '30-60 мин' : 'более 60 мин'}, сложность: ${difficulty === 'simple' ? 'Простые' : difficulty === 'medium' ? 'Средние' : 'Сложные'}`;
+      const plan = await generateMealPlan(user!.id, userContext, planDuration, varietyLevel, budget, favoriteFoods, cookingTime, difficulty);
       if (plan) {
         setGeneratedPlan(plan);
         setShowAIModal(false);
@@ -624,6 +627,58 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
                   }`}
                 >
                   Максимальный
+                </button>
+              </div>
+            </div>
+
+            {/* Время на готовку */}
+            <div className="mb-4">
+              <label className="text-text-secondary text-sm block mb-2">Время на готовку</label>
+              <select
+                value={cookingTime}
+                onChange={(e) => setCookingTime(e.target.value as any)}
+                className="input-field w-full px-3 py-2 rounded-lg"
+              >
+                <option value="10-15">10-15 мин</option>
+                <option value="15-30">15-30 мин</option>
+                <option value="30-60">30-60 мин</option>
+                <option value="60+">Более 60 мин</option>
+              </select>
+            </div>
+
+            {/* Сложность */}
+            <div className="mb-4">
+              <label className="text-text-secondary text-sm block mb-2">Сложность блюд</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setDifficulty('simple')}
+                  className={`py-2 px-3 rounded-lg text-xs transition ${
+                    difficulty === 'simple'
+                      ? 'bg-accent-green text-bg'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-green'
+                  }`}
+                >
+                  Простые
+                </button>
+                <button
+                  onClick={() => setDifficulty('medium')}
+                  className={`py-2 px-3 rounded-lg text-xs transition ${
+                    difficulty === 'medium'
+                      ? 'bg-accent-gold text-bg'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-gold'
+                  }`}
+                >
+                  Средние
+                </button>
+                <button
+                  onClick={() => setDifficulty('complex')}
+                  className={`py-2 px-3 rounded-lg text-xs transition ${
+                    difficulty === 'complex'
+                      ? 'bg-accent-red text-bg'
+                      : 'bg-bg-card border border-border text-text-secondary hover:border-accent-red'
+                  }`}
+                >
+                  Сложные
                 </button>
               </div>
             </div>
