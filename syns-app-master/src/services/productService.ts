@@ -28,7 +28,7 @@ export const searchProducts = async (query: string) => {
     const response = await axios.get(`${getBackendUrl()}/api/products/search`, {
       params: { query: sanitizedQuery },
       headers: {
-        'User-Agent': 'Sync-App/1.0',
+        'User-Agent': 'Ascend-App/1.0',
       },
       timeout: 15000, // Reduced timeout
     });

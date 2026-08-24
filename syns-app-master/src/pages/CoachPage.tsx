@@ -195,35 +195,39 @@ export default function CoachPage() {
     }
 
     try {
+      // Формируем данные для сохранения в profiles
+      const profileData: any = {
+        id: user.id,
+        gender: form.gender,
+        age: parseInt(form.age?.toString() || '0'),
+        weight: parseFloat(form.weight?.toString() || '0'),
+        height: parseFloat(form.height?.toString() || '0'),
+        target_weight: targetWeight ? parseFloat(targetWeight.toString()) : null,
+        goal: form.main_goal,
+        experience: form.experience_duration,
+        level: form.training_level,
+        injuries: form.injuries || [],
+        activity_level: form.activity_level || 'moderate',
+        inventory: selectedInventory || [],
+        focus_muscles: selectedMuscles || [],
+        personal_goal: form.personal_goal || '',
+        preferences: form.health_restrictions || '',
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log('Сохранение профиля:', profileData);
+
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          gender: form.gender,
-          age: parseInt(form.age?.toString() || '0'),
-          weight: parseFloat(form.weight?.toString() || '0'),
-          height: parseFloat(form.height?.toString() || '0'),
-          target_weight: targetWeight ? parseFloat(targetWeight.toString()) : null,
-          goal: form.main_goal,
-          experience: form.experience_duration,
-          level: form.training_level,
-          injuries: form.injuries,
-          activity_level: form.activity_level || 'moderate',
-          inventory: selectedInventory,
-          focus_muscles: selectedMuscles.join(','),
-          personal_goal: form.personal_goal,
-          preferences: form.health_restrictions,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' });
+        .upsert(profileData, { onConflict: 'id' });
 
       if (error) throw error;
 
       toast.success('Анкета сохранена!');
-      // После сохранения анкеты переходим на главную страницу, где будет доступен чат с ИИ
       navigate('/dashboard');
     } catch (err) {
       console.error('Ошибка сохранения анкеты:', err);
-      toast.error('Ошибка сохранения анкеты');
+      toast.error('Ошибка сохранения анкеты: ' + (err as Error).message);
     }
   };
 

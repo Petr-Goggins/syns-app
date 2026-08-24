@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h1 className="text-xl font-bold text-text flex items-center gap-2">
               <Icons.Zap className="text-accent-blue" size={24} />
-              Sync
+              Ascend
             </h1>
             <button
               onClick={onClose}
@@ -83,7 +83,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 px-3 py-2 text-xs text-text-secondary">
               <Icons.Info size={16} />
-              <span>Sync v1.0.0</span>
+              <span>Ascend v1.0.0</span>
             </div>
           </div>
         </div>

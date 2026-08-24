@@ -38,7 +38,7 @@ const SUGGESTED_REPLIES: Record<string, string[]> = {
     'Каждая тренировка — вклад в ваше будущее «я». Через месяц вы скажете себе спасибо, что не сдались.',
   ],
   default: [
-    'Я ваш ИИ-наставник Sync. Расскажите подробнее о вашей цели — тренировки, питание, сон или мотивация?',
+    'Я ваш ИИ-наставник Ascend. Расскажите подробнее о вашей цели — тренировки, питание, сон или мотивация?',
     'Отличный вопрос! Чтобы дать точный совет, мне нужно знать ваш уровень и оборудование. Заполните профиль, и я составлю персональный план.',
   ],
 };
@@ -176,7 +176,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'User-Agent': 'Sync-App/1.0',
+          'User-Agent': 'Ascend-App/1.0',
         },
         body: JSON.stringify({
           message: sanitizedContent,

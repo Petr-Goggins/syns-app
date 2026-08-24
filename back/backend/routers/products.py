@@ -18,7 +18,7 @@ async def search_products(
     query = query.strip()
     
     headers = {
-        "User-Agent": "SyncApp/1.0 (Fitness & Nutrition Tracker)"
+        "User-Agent": "AscendApp/1.0 (Fitness & Nutrition Tracker)"
     }
 
     try:
