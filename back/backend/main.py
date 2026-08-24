@@ -1,4 +1,4 @@
-"""FastAPI backend for Sync App AI integration."""
+"""FastAPI backend for Ascend App AI integration."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down")
 
 
-app = FastAPI(title="Sync App AI Backend", lifespan=lifespan)
+app = FastAPI(title="Ascend App AI Backend", lifespan=lifespan)
 
 # Подключаем роутер для работы с продуктами (Open Food Facts)
 app.include_router(products_router.router, prefix="/api")
@@ -54,10 +54,10 @@ if len(safe_origins) != len(allowed_origins):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=safe_origins,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -149,7 +149,7 @@ async def ai_ask(body: AskRequest) -> AskResponse:
     # Формируем системный промт для чата
     profile = format_user_data(body.user_data)
     system_prompt = f"""
-Ты — персональный фитнес-наставник и диетолог в приложении Sync. Твоя задача — давать **конкретные, персонализированные советы** по питанию и тренировкам, строго следуя научным рекомендациям.
+Ты — персональный фитнес-наставник и диетолог в приложении Ascend. Твоя задача — давать **конкретные, персонализированные советы** по питанию и тренировкам, строго следуя научным рекомендациям.
 
 ### 1. Данные пользователя:
 {profile}
