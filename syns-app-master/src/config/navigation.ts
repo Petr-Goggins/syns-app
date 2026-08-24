@@ -17,7 +17,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'profile', label: 'Профиль', path: '/profile', icon: 'User' },
   { id: 'cycle', label: 'Биоритмы', path: '/cycle', icon: 'Calendar' },
   { id: 'coach', label: 'Наставник', path: '/coach', icon: 'Sparkles' },
-  { id: 'achievements', label: 'Достижения', path: '/achievements', icon: 'Award' },
+  { id: 'technique', label: 'Техника', path: '/technique', icon: 'BookOpen' },
   { id: 'sleep', label: 'Сон', path: '/sleep', icon: 'Moon' },
   { id: 'settings', label: 'Настройки', path: '/settings', icon: 'Settings' },
 ];
