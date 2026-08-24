@@ -227,7 +227,7 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
   return (
     <div className="flex flex-col h-screen lg:h-screen">
       <TopBar
-        title="💬 Наставник Sync"
+        title="💬 Наставник Ascend"
         onOpenSidebar={onOpenSidebar}
         right={
           messages.length > 0 ? (

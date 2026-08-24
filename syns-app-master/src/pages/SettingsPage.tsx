@@ -117,7 +117,7 @@ export default function SettingsPage({ onOpenSidebar }: { onOpenSidebar: () => v
         </button>
 
         <p className="text-center text-xs text-text-tertiary">
-          Sync · Фитнес-трекер с ИИ-наставником
+          Ascend · Фитнес-трекер с ИИ-наставником
         </p>
       </main>
     </div>

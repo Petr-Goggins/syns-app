@@ -110,7 +110,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
         headers: {
           Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'Sync-App/1.0',
+          'User-Agent': 'Ascend-App/1.0',
         },
       });
       

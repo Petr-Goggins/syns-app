@@ -54,7 +54,7 @@ export default function AuthPage() {
           <div className="w-14 h-14 rounded-2xl bg-accent-blue/15 flex items-center justify-center mb-4">
             <Dumbbell size={28} className="text-accent-blue" />
           </div>
-          <h1 className="text-3xl font-bold text-text tracking-tight">Sync</h1>
+          <h1 className="text-3xl font-bold text-text tracking-tight">Ascend</h1>
           <p className="text-text-secondary mt-1.5">Фитнес-трекер с ИИ-наставником</p>
         </div>
 

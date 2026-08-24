@@ -1,4 +1,4 @@
-// Конфигурация навигации для Sync App
+// Конфигурация навигации для Ascend App
 
 export interface NavItem {
   id: string;

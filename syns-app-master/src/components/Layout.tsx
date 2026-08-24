@@ -18,7 +18,7 @@ export default function Layout({ children, sidebarOpen, onCloseSidebar }: Layout
     <div className="min-h-screen bg-background text-text flex flex-col pb-20 md:pb-0">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 bg-card border-b border-border sticky top-0 z-30">
-        <h1 className="text-xl font-bold text-primary">Sync</h1>
+        <h1 className="text-xl font-bold text-primary">Ascend</h1>
         <button onClick={onCloseSidebar} className="text-text-secondary hover:text-text">
           <Menu size={24} />
         </button>
@@ -39,7 +39,7 @@ export default function Layout({ children, sidebarOpen, onCloseSidebar }: Layout
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h1 className="text-2xl font-bold text-primary">Sync</h1>
+          <h1 className="text-2xl font-bold text-primary">Ascend</h1>
           <button onClick={onCloseSidebar} className="text-text-secondary hover:text-text">
             <X size={24} />
           </button>

@@ -40,7 +40,7 @@ export interface GeneratedMealPlan {
 /**
  * Системный промпт для генерации рациона
  */
-export const MEAL_PLAN_SYSTEM_PROMPT = `Ты — персональный ИИ-наставник по питанию Sync. 
+export const MEAL_PLAN_SYSTEM_PROMPT = `Ты — персональный ИИ-наставник по питанию Ascend. 
 Твоя задача — генерировать персонализированные рационы питания на основе данных пользователя.
 
 ВАЖНО: КАЖДЫЙ РАЗ ГЕНЕРИРУЙ УНИКАЛЬНЫЙ РАЦИОН. Не повторяй одни и те же блюда.
@@ -385,7 +385,7 @@ export async function getUserMealPlans(userId: string, dateFrom?: string): Promi
           totalFat: 0,
           totalCarbs: 0,
           shoppingList: [],
-          sources: ['Сгенерировано ИИ Sync'],
+          sources: ['Сгенерировано ИИ Ascend'],
           isSaved: true,
         });
       }

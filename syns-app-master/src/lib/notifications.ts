@@ -1,4 +1,4 @@
-// Система уведомлений для Sync (веб-версия)
+// Система уведомлений для Ascend (веб-версия)
 export interface NotificationConfig {
   enabled: boolean;
   remindBeforeWorkout: boolean;

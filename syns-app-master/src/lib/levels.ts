@@ -1,4 +1,4 @@
-// Система уровней и званий в Sync
+// Система уровней и званий в Ascend
 export interface LevelInfo {
   level: number;
   title: string;
