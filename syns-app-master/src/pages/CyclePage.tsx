@@ -3,8 +3,10 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { ChevronLeft, ChevronRight, CalendarDays, Info, Activity } from 'lucide-react';
 import { calculateCyclePhase, getPhaseRecommendation } from '@/lib/cycle';
+import { useLayout } from '@/hooks/useLayout';
 
-export default function CyclePage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function CyclePage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const [cycleLength, setCycleLength] = useState<number>(28);
   const [lastPeriodDate, setLastPeriodDate] = useState<string>('');

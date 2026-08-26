@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { Moon, Trash2, ChevronLeft, ChevronRight, Calendar, Plus, Smile, Meh, Frown, Sun, Cloud, CloudRain } from 'lucide-react';
+import { useLayout } from '@/hooks/useLayout';
 
-export default function SleepLogPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function SleepLogPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

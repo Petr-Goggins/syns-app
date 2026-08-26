@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { LogOut, Palette, Info, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '@/components/TopBar';
+import { useLayout } from '@/hooks/useLayout';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
@@ -23,7 +24,8 @@ const THEME_SWATCHES: Record<string, { bg: string; card: string; accent: string 
   'black': { bg: '#0A0A0A', card: '#121212', accent: '#BB86FC' },
 };
 
-export default function SettingsPage({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+export default function SettingsPage() {
+  const { onOpenSidebar } = useLayout();
   const navigate = useNavigate();
   const { theme, setTheme, initTheme } = useSettingsStore();
   const user = useAuthStore((s) => s.user);

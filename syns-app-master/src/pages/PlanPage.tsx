@@ -12,8 +12,10 @@ import {
   safetyGuidelines,
   type WarmupExercise 
 } from '@/data/warmup';
+import { useLayout } from '@/hooks/useLayout';
 
-export default function PlanPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function PlanPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const { profile, fetchProfile } = useProfileStore();
   const { coachData, fetchCoachData } = useCoachStore();

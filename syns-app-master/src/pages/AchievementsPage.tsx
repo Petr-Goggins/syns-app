@@ -1,8 +1,10 @@
 import { Lock } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { ACHIEVEMENTS } from '@/data/achievements';
+import { useLayout } from '@/hooks/useLayout';
 
-export default function AchievementsPage({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+export default function AchievementsPage() {
+  const { onOpenSidebar } = useLayout();
   const unlocked = ACHIEVEMENTS.filter((a) => a.unlocked);
   const locked = ACHIEVEMENTS.filter((a) => !a.unlocked);
 

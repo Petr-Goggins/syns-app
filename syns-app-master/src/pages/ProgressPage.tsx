@@ -5,6 +5,7 @@ import { useProfileStore } from '@/store/profileStore';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Dumbbell, Flame, Moon, Activity, AlertCircle, CheckCircle, TrendingDown, MessageCircle } from 'lucide-react';
+import { useLayout } from '@/hooks/useLayout';
 
 type Period = 'week' | 'month' | 'year';
 
@@ -45,6 +46,7 @@ interface Metrics {
 const EXERCISES = ['Присед', 'Жим лёжа', 'Становая', 'Жим гантелей', 'Тяга штанги', 'Подтягивания'];
 
 export default function ProgressPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const profile = useProfileStore((s) => s.profile);
   const fetchProfile = useProfileStore((s) => s.fetchProfile);

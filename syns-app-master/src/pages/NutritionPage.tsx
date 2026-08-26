@@ -7,6 +7,7 @@ import { searchProducts } from '@/services/productService';
 import { searchVkusvillProducts } from '@/services/vkusvillService';
 import { searchPyaterochkaProducts } from '@/services/pyaterochkaService';
 import { generateMealPlan, saveMealPlan, type GeneratedMealPlan } from '@/services/mealPlanService';
+import { useLayout } from '@/hooks/useLayout';
 
 interface MealPlan {
   id: string;
@@ -65,7 +66,8 @@ function MealPlanContent({ plan, onReplaceProduct }: MealPlanContentProps) {
   );
 }
 
-export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function NutritionPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [selectedDiet, setSelectedDiet] = useState<string>('none');

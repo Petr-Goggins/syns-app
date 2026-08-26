@@ -9,6 +9,7 @@ import { loadNotificationSettings, saveNotificationSettings, requestNotification
 import MuscleHeatmap from '@/components/MuscleHeatmap';
 import { calculateWaterNorm, formatWaterNorm } from '@/lib/waterNorm';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useLayout } from '@/hooks/useLayout';
 
 const THEME_OPTIONS = [
   { id: 'dark-blue', label: 'Тёмно-синяя', icon: '🌙', class: 'theme-dark-blue' },
@@ -33,7 +34,8 @@ const DIET_OPTIONS = [
   { id: 'kosher', label: 'Кошер', icon: '🥘' },
 ];
 
-export default function ProfilePage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function ProfilePage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();

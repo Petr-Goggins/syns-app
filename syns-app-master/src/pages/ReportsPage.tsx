@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Calendar, TrendingUp, Dumbbell, Plus, X, Save, Loader2, AlertCircle } from 'lucide-react';
 import Modal from '@/components/Modal';
+import { useLayout } from '@/hooks/useLayout';
 
 type Period = 'week' | 'month' | '3months';
 type Tab = 'weight' | 'strength' | 'history';
@@ -26,7 +27,8 @@ interface BodyMeasurement {
   created_at: string;
 }
 
-export default function ReportsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function ReportsPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const [period, setPeriod] = useState<Period>('month');
   const [activeTab, setActiveTab] = useState<Tab>('weight');

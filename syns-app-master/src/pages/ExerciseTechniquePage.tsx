@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { exercises, categories, type CategoryId } from '../data/exercises';
 import './ExerciseTechniquePage.css';
+import { useLayout } from '@/hooks/useLayout';
 
 export default function ExerciseTechniquePage() {
+  const { onOpenSidebar } = useLayout();
   const { exerciseId } = useParams<{ exerciseId: string }>();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | null>(null);
