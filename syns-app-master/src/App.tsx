@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthInit } from '@/hooks/useAuthInit';
+import { protectedLoader, authPageLoader } from '@/lib/authLoader';
 import BottomNav from '@/components/BottomNav';
 import Sidebar from '@/components/Sidebar';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import AuthPage from '@/pages/AuthPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ChatPage from '@/pages/ChatPage';
@@ -47,7 +47,8 @@ function MainLayout() {
       
       {/* Основной контент со сдвигом для десктопа */}
       <div className={isDesktop ? "lg:ml-60 pb-20 lg:pb-0" : "pb-20"}>
-        <Outlet />
+        {/* Передаём onOpenSidebar во все дочерние страницы через context */}
+        <Outlet context={{ onOpenSidebar: () => setSidebarOpen(true) }} />
       </div>
       
       {/* BottomNav только для мобилок */}
@@ -56,67 +57,67 @@ function MainLayout() {
   );
 }
 
-function AppRoutes() {
-  const user = useAuthStore((s) => s.user);
-  const loading = useAuthStore((s) => s.loading);
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce-dot"
-              style={{ animationDelay: `${i * 0.16}s` }}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
+// Компонент для отображения лоадера во время инициализации
+function LoadingScreen() {
   return (
-    <Routes>
-      <Route
-        path="/auth"
-        element={user ? <Navigate to="/" replace /> : <AuthPage />}
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="long-path" element={<LongPathPage />} />
-        <Route path="coach" element={<CoachPage />} />
-        <Route path="plan" element={<PlanPage />} />
-        <Route path="nutrition" element={<NutritionPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="cycle" element={<CyclePage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="workouts" element={<WorkoutLogPage />} />
-        <Route path="sleep" element={<SleepLogPage />} />
-        <Route path="achievements" element={<AchievementsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="progress" element={<ProgressPage />} />
-        <Route path="technique" element={<ExerciseTechniquePage />} />
-        <Route path="technique/:exerciseId?" element={<ExerciseTechniquePage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce-dot"
+            style={{ animationDelay: `${i * 0.16}s` }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
+// Создаём роутер с loader'ами (как middleware)
+const router = createBrowserRouter([
+  {
+    path: '/auth',
+    element: <AuthPage />,
+    loader: authPageLoader, // ← Проверка ДО рендера: если юзер залогинен - редирект
+  },
+  {
+    path: '/',
+    element: <MainLayout />,
+    loader: protectedLoader, // ← Проверка ДО рендера: если не авторизован - редирект на /auth
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'long-path', element: <LongPathPage /> },
+      { path: 'coach', element: <CoachPage /> },
+      { path: 'plan', element: <PlanPage /> },
+      { path: 'nutrition', element: <NutritionPage /> },
+      { path: 'reports', element: <ReportsPage /> },
+      { path: 'cycle', element: <CyclePage /> },
+      { path: 'chat', element: <ChatPage /> },
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'workouts', element: <WorkoutLogPage /> },
+      { path: 'sleep', element: <SleepLogPage /> },
+      { path: 'achievements', element: <AchievementsPage /> },
+      { path: 'settings', element: <SettingsPage /> },
+      { path: 'progress', element: <ProgressPage /> },
+      { path: 'technique', element: <ExerciseTechniquePage /> },
+      { path: 'technique/:exerciseId', element: <ExerciseTechniquePage /> },
+    ],
+  },
+]);
+
 export default function App() {
+  const loading = useAuthStore((s) => s.loading);
   useAuthInit();
+
+  // Показываем лоадер только при первичной инициализации auth
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <BrowserRouter>
+    <>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -129,7 +130,7 @@ export default function App() {
           },
         }}
       />
-      <AppRoutes />
-    </BrowserRouter>
+      <RouterProvider router={router} />
+    </>
   );
 }

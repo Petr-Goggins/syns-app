@@ -3,8 +3,10 @@ import { useLongPathStore, UserGoalType } from '../store/longPathStore';
 import { useWorkoutLogStore } from '../store/workoutLogStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 import { Trophy, Target, TrendingUp, Calendar, Award, ArrowRight } from 'lucide-react';
+import { useLayout } from '@/hooks/useLayout';
 
 const LongPathPage: React.FC = () => {
+  const { onOpenSidebar } = useLayout();
   const { 
     userGoal, 
     levels, 

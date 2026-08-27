@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import TopBar from '@/components/TopBar';
+import { useLayout } from '@/hooks/useLayout';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -96,6 +97,7 @@ const STEPS = [
 ];
 
 export default function CoachPage() {
+  const { onOpenSidebar } = useLayout();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { saveCoachData, saving } = useCoachStore();
@@ -262,7 +264,7 @@ export default function CoachPage() {
 
   return (
     <div>
-      <TopBar title="Анкета тренера" />
+      <TopBar title="Анкета тренера" onOpenSidebar={onOpenSidebar} />
       <main className="p-4 lg:p-8 max-w-2xl mx-auto animate-slide-up">
         <div className="flex gap-1.5 mb-6">
           {Array.from({ length: totalSteps }).map((_, i) => (

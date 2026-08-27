@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Send, Trash2, Sparkles, Utensils, ShoppingBag, RotateCcw, X } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
+import { useLayout } from '@/hooks/useLayout';
 import { useProfileStore } from '@/store/profileStore';
 import { useChatStore } from '@/store/chatStore';
 import { buildUserContext } from '@/services/userContextService';
@@ -25,7 +26,8 @@ interface ChatLocationState {
   };
 }
 
-export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+export default function ChatPage() {
+  const { onOpenSidebar } = useLayout();
   const location = useLocation();
   const state = location.state as ChatLocationState | undefined;
   const user = useAuthStore((s) => s.user);

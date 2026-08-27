@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { useLayout } from '@/hooks/useLayout';
 import { useWaterStore } from '@/store/waterStore';
 import { useLongPathStore } from '@/store/longPathStore';
 import { useWorkoutLogStore } from '@/store/workoutLogStore';
@@ -27,7 +28,8 @@ interface DailyStats {
   progress: number;
 }
 
-export default function DashboardPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function DashboardPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const waterStore = useWaterStore();

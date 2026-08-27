@@ -46,8 +46,10 @@ const AI_TIPS = {
 };
 
 import { Plus, Dumbbell, Trash2, ChevronLeft, ChevronRight, Search, Calendar, Zap, Timer, TrendingUp, Lightbulb, Play, Pause, RotateCcw } from 'lucide-react';
+import { useLayout } from '@/hooks/useLayout';
 
-export default function WorkoutLogPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+export default function WorkoutLogPage() {
+  const { onOpenSidebar } = useLayout();
   const user = useAuthStore((s) => s.user);
   const workoutLogStore = useWorkoutLogStore();
   const restTimerStore = useRestTimerStore();
