@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { Plus, Sparkles, Search, Clock, Utensils, Filter, X, Repeat, Calendar, ArrowRight } from 'lucide-react';
+import { Plus, Sparkles, Search, Clock, Utensils, Filter, X, Repeat, Calendar, ArrowRight, Mic, MicOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { searchProducts } from '@/services/productService';
 import { searchVkusvillProducts } from '@/services/vkusvillService';
@@ -94,6 +94,7 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
   // Новые состояния для времени готовки и сложности
   const [cookingTime, setCookingTime] = useState<'10-15' | '15-30' | '30-60' | '60+'>('15-30');
   const [difficulty, setDifficulty] = useState<'simple' | 'medium' | 'complex'>('medium');
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const loadMealPlans = async () => {
@@ -141,8 +142,43 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
       searchPyaterochkaProducts(trimmedQuery),
     ]);
     const mergedResults = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
-    setSearchResults(mergedResults);
-    if (mergedResults.length === 0) toast.error('Продукты не найдены');
+    
+    if (mergedResults.length > 0) {
+      setSearchResults(mergedResults);
+      setIsSearching(false);
+      return;
+    }
+
+    // Fallback to Open Food Facts
+    try {
+      const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(trimmedQuery)}&json=true&page_size=20`);
+      const data = await response.json();
+      
+      if (data.products && data.products.length > 0) {
+        const offResults = data.products.map((product: any) => ({
+          id: product.code || `off_${product._id}`,
+          name: product.product_name || product.product_name_ru || trimmedQuery,
+          calories: product.nutriments?.['energy-kcal_100g'] || product.nutriments?.energy || 0,
+          proteins: product.nutriments?.proteins_100g || 0,
+          fats: product.nutriments?.fat_100g || 0,
+          carbs: product.nutriments?.carbohydrates_100g || 0,
+          nutritional_info: {
+            calories: product.nutriments?.['energy-kcal_100g'] || product.nutriments?.energy || 0,
+            protein: product.nutriments?.proteins_100g || 0,
+            fat: product.nutriments?.fat_100g || 0,
+            carbs: product.nutriments?.carbohydrates_100g || 0,
+          },
+          source: 'Open Food Facts',
+        }));
+        setSearchResults(offResults);
+      } else {
+        toast.error('Продукты не найдены');
+      }
+    } catch (err) {
+      console.error('Open Food Facts error:', err);
+      toast.error('Продукты не найдены');
+    }
+    
     setIsSearching(false);
   };
 
@@ -283,6 +319,49 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
     setSearchResults([]);
   };
 
+  const toggleVoiceRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error('Голосовой ввод не поддерживается в вашем браузере');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'ru-RU';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast('Слушаю...', { icon: '🎤' });
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setProductName(transcript);
+      setIsListening(false);
+      toast.success('Распознано: ' + transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      toast.error('Ошибка распознавания: ' + event.error);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
   return (
     <div className="p-4 max-w-5xl mx-auto animate-fade-in">
       <h1 className="text-2xl font-bold text-text mb-6">Питание</h1>
@@ -334,14 +413,28 @@ export default function NutritionPage({ onOpenSidebar }: { onOpenSidebar?: () =>
 
       <form onSubmit={handleAddMeal} className="card-modern p-4 md:p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input
-            type="text"
-            placeholder="Название продукта"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            className="input-field w-full px-3 py-2.5 rounded-lg"
-            required
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Название продукта"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              className="input-field w-full px-3 py-2.5 rounded-lg pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={toggleVoiceRecognition}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition ${
+                isListening 
+                  ? 'bg-accent-red text-white animate-pulse' 
+                  : 'bg-bg-tertiary text-text-secondary hover:text-accent-blue'
+              }`}
+              title={isListening ? 'Остановить запись' : 'Голосовой ввод'}
+            >
+              {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+            </button>
+          </div>
           <select
             value={mealType}
             onChange={(e) => setMealType(e.target.value as any)}

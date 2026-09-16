@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Send, Trash2, Sparkles, Utensils, ShoppingBag, RotateCcw, X } from 'lucide-react';
+import { Send, Trash2, Sparkles, Utensils, ShoppingBag, RotateCcw, X, Image as ImageIcon, Camera, Upload } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -39,6 +39,9 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [productSearchResults, setProductSearchResults] = useState<any[]>([]);
   const [replacingProduct, setReplacingProduct] = useState<{mealType: string, productName: string} | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Обработка контекста из ProgressPage
@@ -224,6 +227,108 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Пожалуйста, выберите изображение');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Размер файла не должен превышать 5 МБ');
+      return;
+    }
+
+    setSelectedImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
+  const analyzeFormWithAI = async () => {
+    if (!selectedImage || !user) return;
+
+    setAnalyzingImage(true);
+    
+    try {
+      // Convert image to base64
+      const base64Image = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(selectedImage);
+      });
+
+      // Send to multimodal AI (using OpenRouter with vision model)
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${(import.meta.env.VITE_OPENROUTER_API_KEY as string) || ''}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'qwen/qwen-2-vl-7b-instruct:free',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a fitness expert specialized in exercise form analysis. Analyze the photo and provide specific feedback on form, technique, and recommendations for improvement. Be constructive and specific.'
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Оцени форму на фото и дай рекомендации по улучшению. Укажи на ошибки в технике и предложи исправления.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: base64Image
+                  }
+                }
+              ]
+            }
+          ],
+          max_tokens: 1000
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze image');
+      }
+
+      const data = await response.json();
+      const analysis = data.choices[0]?.message?.content || 'Не удалось получить анализ';
+
+      // Add analysis as a message
+      setMessages([...messages, {
+        id: `analysis-${Date.now()}`,
+        user_id: user.id,
+        role: 'assistant',
+        content: analysis,
+        created_at: new Date().toISOString()
+      }]);
+
+      toast.success('Анализ формы завершён');
+      handleRemoveImage();
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast.error('Ошибка при анализе изображения');
+    } finally {
+      setAnalyzingImage(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen lg:h-screen">
       <TopBar
@@ -310,16 +415,70 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
 
       {/* Input */}
       <div className="border-t border-border bg-bg p-4 lg:p-6">
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="max-w-3xl mx-auto mb-3 animate-fade-in">
+            <div className="relative inline-block">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="max-h-48 rounded-lg border border-border"
+              />
+              <button
+                onClick={handleRemoveImage}
+                className="absolute -top-2 -right-2 p-1.5 bg-accent-red text-white rounded-full hover:bg-accent-red/80 transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <button
+              onClick={analyzeFormWithAI}
+              disabled={analyzingImage}
+              className="mt-2 btn-primary px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-40"
+            >
+              {analyzingImage ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Анализирую...
+                </>
+              ) : (
+                <>
+                  <Camera size={16} />
+                  Оценить форму
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="max-w-3xl mx-auto flex gap-3 items-end">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Напишите сообщение..."
-            rows={1}
-            className="input-field flex-1 px-4 py-3 text-sm resize-none max-h-32"
-            style={{ minHeight: '48px' }}
-          />
+          <div className="flex-1 relative">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Напишите сообщение..."
+              rows={1}
+              className="input-field w-full px-4 py-3 text-sm resize-none max-h-32 pr-24"
+              style={{ minHeight: '48px' }}
+            />
+            <div className="absolute right-2 bottom-2 flex gap-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+                id="image-upload"
+              />
+              <label
+                htmlFor="image-upload"
+                className="p-2 rounded-lg bg-bg-tertiary text-text-secondary hover:text-accent-blue hover:bg-bg-card transition cursor-pointer"
+                title="Загрузить фото для оценки формы"
+              >
+                <ImageIcon size={18} />
+              </label>
+            </div>
+          </div>
           <button
             type="submit"
             disabled={!input.trim() || loading}
