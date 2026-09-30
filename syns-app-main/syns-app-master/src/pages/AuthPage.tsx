@@ -40,7 +40,7 @@ export default function AuthPage() {
         }
       }
     } catch (err: any) {
-      console.error('❌ Auth error:', err);
+      console.error('Auth error:', err);
       setError(err.message || 'Произошла ошибка. Попробуйте ещё раз.');
     } finally {
       setLoading(false);
