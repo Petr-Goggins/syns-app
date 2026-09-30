@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Send, Trash2, Sparkles, Utensils, ShoppingBag, RotateCcw, X, Image as ImageIcon, Camera, Upload } from 'lucide-react';
+import { Send, Trash2, Sparkles, Utensils, ShoppingBag, RotateCcw, X, Image as ImageIcon, Camera, Upload, BookOpen, Sunrise, Sun, Moon, Cookie, Save, Check } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -109,12 +109,12 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
     if (plan) {
       setCurrentMealPlan(plan);
       // Добавляем сообщение в чат
-      const summary = `🍽️ Рацион на ${duration === 'day' ? 'день' : 'неделю'}:\n\n` +
+      const summary = `Рацион на ${duration === 'day' ? 'день' : 'неделю'}:\n\n` +
         `Калории: ${plan.totalCalories} ккал\n` +
         `Белки: ${plan.totalProtein.toFixed(1)}г | Жиры: ${plan.totalFat.toFixed(1)}г | Углеводы: ${plan.totalCarbs.toFixed(1)}г\n\n` +
         `${plan.meals.map(m => `**${m.type === 'breakfast' ? 'Завтрак' : m.type === 'lunch' ? 'Обед' : m.type === 'dinner' ? 'Ужин' : 'Перекус'}**\n` +
           `${m.foods.map(f => `• ${f.name} — ${f.weight}г (${f.calories} ккал)`).join('\n')}`).join('\n\n')}\n\n` +
-        `📚 Источники:\n${plan.sources.join('\n')}`;
+        `Источники:\n${plan.sources.join('\n')}`;
       
       await sendMessage(user.id, profile, `Сгенерируй рацион на ${duration === 'day' ? 'день' : 'неделю'}`);
       // Сохраняем ответ как системное сообщение с планом
@@ -505,7 +505,7 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
           <div className="bg-bg-secondary p-6 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-border shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-text">
-                🍽️ Рацион на {currentMealPlan.duration === 'day' ? 'день' : 'неделю'}
+                <Utensils className="w-5 h-5 inline mr-1" /> Рацион на {currentMealPlan.duration === 'day' ? 'день' : 'неделю'}
               </h2>
               <button 
                 onClick={() => setCurrentMealPlan(null)} 
@@ -542,9 +542,9 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
               {currentMealPlan.meals.map((meal, idx) => (
                 <div key={idx} className="card-modern p-4">
                   <h3 className="font-semibold text-text mb-2 capitalize">
-                    {meal.type === 'breakfast' ? '🌅 Завтрак' : 
-                     meal.type === 'lunch' ? '☀️ Обед' : 
-                     meal.type === 'dinner' ? '🌙 Ужин' : '🍿 Перекус'}
+                    {meal.type === 'breakfast' ? <span className="flex items-center gap-2"><Sunrise size={16} /> Завтрак</span> :
+                     meal.type === 'lunch' ? <span className="flex items-center gap-2"><Sun size={16} /> Обед</span> :
+                     meal.type === 'dinner' ? <span className="flex items-center gap-2"><Moon size={16} /> Ужин</span> : <span className="flex items-center gap-2"><Cookie size={16} /> Перекус</span>}
                   </h3>
                   <ul className="space-y-2 mb-3">
                     {meal.foods.map((food, fIdx) => (
@@ -586,7 +586,7 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
 
             {/* Источники */}
             <div className="card-modern p-4 mb-4 bg-accent-blue/5">
-              <h3 className="font-semibold text-text mb-2">📚 Научные источники</h3>
+              <h3 className="font-semibold text-text mb-2 flex items-center gap-2"><BookOpen size={16} /> Научные источники</h3>
               <ul className="text-xs text-text-secondary space-y-1">
                 {currentMealPlan.sources.map((source, idx) => (
                   <li key={idx}>• {source}</li>
@@ -605,7 +605,7 @@ export default function ChatPage({ onOpenSidebar }: { onOpenSidebar: () => void 
                     : 'bg-accent-green text-bg hover:opacity-90'
                 }`}
               >
-                {currentMealPlan.isSaved ? '✓ Сохранено' : '💾 Сохранить в дневник'}
+                {currentMealPlan.isSaved ? <><Check size={16} className="inline" /> Сохранено</> : <><Save size={16} className="inline" /> Сохранить в дневник</>}
               </button>
               <button
                 onClick={() => handleGenerateMealPlan('week')}

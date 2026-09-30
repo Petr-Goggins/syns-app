@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLongPathStore, UserGoalType } from '../store/longPathStore';
 import { useWorkoutLogStore } from '../store/workoutLogStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
-import { Trophy, Target, TrendingUp, Calendar, Award, ArrowRight } from 'lucide-react';
+import { Trophy, Target, TrendingUp, Calendar, Award, ArrowRight, Dumbbell, Flame, PersonStanding, Scale, LineChart, Footprints } from 'lucide-react';
 
 const LongPathPage: React.FC = () => {
   const { 
@@ -25,12 +25,12 @@ const LongPathPage: React.FC = () => {
         <h2 className="text-2xl font-bold mb-6 text-center">Выберите свою большую цель</h2>
         <div className="grid gap-4">
           {[
-            { id: 'squat_150', title: 'Присед 150 кг', icon: '🏋️', type: 'strength' as UserGoalType },
-            { id: 'bench_100', title: 'Жим 100 кг', icon: '💪', type: 'strength' as UserGoalType },
-            { id: 'deadlift_200', title: 'Становая 200 кг', icon: '🔥', type: 'strength' as UserGoalType },
-            { id: 'run_10km', title: '10 км бег', icon: '🏃', type: 'cardio' as UserGoalType },
-            { id: 'lose_10kg', title: 'Похудеть на 10 кг', icon: '⚖️', type: 'weight_loss' as UserGoalType },
-            { id: 'gain_5kg', title: 'Набрать 5 кг массы', icon: '📈', type: 'muscle_gain' as UserGoalType },
+            { id: 'squat_150', title: 'Присед 150 кг', icon: Dumbbell, type: 'strength' as UserGoalType },
+            { id: 'bench_100', title: 'Жим 100 кг', icon: PersonStanding, type: 'strength' as UserGoalType },
+            { id: 'deadlift_200', title: 'Становая 200 кг', icon: Flame, type: 'strength' as UserGoalType },
+            { id: 'run_10km', title: '10 км бег', icon: Footprints, type: 'cardio' as UserGoalType },
+            { id: 'lose_10kg', title: 'Похудеть на 10 кг', icon: Scale, type: 'weight_loss' as UserGoalType },
+            { id: 'gain_5kg', title: 'Набрать 5 кг массы', icon: LineChart, type: 'muscle_gain' as UserGoalType },
           ].map((goal) => (
             <button
               key={goal.id}
@@ -38,7 +38,7 @@ const LongPathPage: React.FC = () => {
               className="p-6 rounded-2xl border border-border bg-bg-secondary hover:shadow-lg transition-all flex items-center justify-between group"
             >
               <div className="flex items-center gap-4">
-                <span className="text-4xl">{goal.icon}</span>
+                <goal.icon className="w-9 h-9 text-accent-blue" />
                 <div className="text-left">
                   <h3 className="font-bold text-lg group-hover:text-accent-blue transition-colors">{goal.title}</h3>
                   <p className="text-sm text-text-secondary">Нажмите для старта</p>
@@ -75,7 +75,7 @@ const LongPathPage: React.FC = () => {
           <p className="text-gray-500 mt-1">Ваш путь к вершине</p>
         </div>
         <div className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-4 py-2 rounded-full font-bold flex items-center gap-2">
-          🔥 {streak} дней подряд
+          <Flame size={16} /> {streak} дней подряд
         </div>
       </div>
 

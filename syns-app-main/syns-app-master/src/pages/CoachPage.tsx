@@ -6,8 +6,7 @@ import {
   Check,
   Target,
   Dumbbell,
-  Sparkles,
-} from 'lucide-react';
+  Sparkles, AlertTriangle } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachStore } from '@/store/coachStore';
@@ -473,7 +472,7 @@ export default function CoachPage() {
                         step="5"
                       />
                       {isFemale && strengthTarget > 100 && (
-                        <p className="text-xs text-accent-red mt-2">⚠️ Для женщин такой вес может быть нереалистичен.</p>
+                        <p className="text-xs text-accent-red mt-2 flex items-center gap-1"><AlertTriangle size={12} /> Для женщин такой вес может быть нереалистичен.</p>
                       )}
                     </>
                   )}
