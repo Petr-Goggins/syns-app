@@ -58,13 +58,13 @@ Supabase (персистентность: профили, планы, логи, 
 ### 🔴 Критические
 1. **CORS-конфигурация не работает** (`back/backend/main.py:44-61`): код вычисляет `safe_origins` из `ALLOWED_ORIGINS` и фильтрует опасные значения, но в `add_middleware` передаётся `allow_origins=["*"]` вместе с `allow_credentials=True` — «SECURITY FIX» фактически нейтрализован. Запросы с credentials с wildcard-ориджином браузером блокируются, а реальная защита отсутствует.
 2. **Репозиторий не самодостаточен**: вложенная полная копия `syns-app-main/syns-app-master/` импортирует `@/lib/supabase` (33 файла), но файл `src/lib/supabase.ts` **отсутствует** — сборка фронтенда невозможна из текущего дерева.
-3. **Дублирование расходящихся копий**: корневые `back/` и `src/` — более старая версия тех же файлов, что внутри `syns-app-main/` (nested-версии новее: фоновая индексация RAG через `asyncio.to_thread`, fallback по 3 ENDPOINТАМ OFF, роутинг `useParams/useNavigate` в ExerciseTechniquePage, хелперы `getExerciseById/getExerciseByName`).
+3. **Дублирование расходящихся копий**: корневые `back/` и `src/` — более старая версия тех же файлов, что внутри `syns-app-main/` (nested-версии новее: фоновая индексация RAG через `asyncio.to_thread`, fallback по 3 эндпоинтам OFF, роутинг `useParams/useNavigate` в ExerciseTechniquePage, хелперы `getExerciseById/getExerciseByName`).
 
 ### 🟠 Высокие
 4. **RAG реализован, но не подключён**: `search_knowledge()` не вызывается ни из одного эндпоинта — системные промты содержат только статические правила, база знаний (PDF) не используется. Кроме того, `knowledge_base/` пуста (только `.gitkeep`).
 5. **Отсутствует `routers/__init__.py`** — импорт `from routers import products` работает только благодаря implicit namespace packages (хрупко).
 6. **Нет rate limiting** на `/ai/ask` (расходование бесплатного лимита OpenRouter), нет тестов, нет CI, нет Dockerfile.
-7. **Задеплоенный артефакт**: `backend.log` в корне (uvicorn `Address already in use`), мусорный корневой `package.json` c единственной зависимостью `react-body-selector` и `node_modules` без lock-согласования с фронтендом.
+7. **Нецелевые артефакты в VCS**: `backend.log` в корне (uvicorn `Address already in use`), мусорный корневой `package.json` c единственной зависимостью `react-body-selector` и `node_modules` без lock-согласования с фронтендом.
 
 ### 🟡 Средние
 8. `GeneratePlanRequest.user_data: dict = Field(..., max_keys=20)` — `max_keys` неприменим к `dict` в Pydantic v2 (игнорируется); то же для `GenerateMealPlanRequest`.
@@ -78,7 +78,7 @@ Supabase (персистентность: профили, планы, логи, 
 
 ## 4. План реконструкции (рекомендации)
 
-### Этап 1 —归一化 структуры (убрать дубли)
+### Этап 1 —Унификация структуры (убрать дубли)
 - Признать единым источником кода содержимое `syns-app-main/syns-app-master/` (оно новее).
 - Поднять его в canonical layout: `frontend/` + `backend/`, удалить устаревшие копии `back/` и `src/` из корня, удалить `backend.log`, `node_modules` из VCS, добавить в `.gitignore`.
 - Восстановить отсутствующий `frontend/src/lib/supabase.ts` (клиент из env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
